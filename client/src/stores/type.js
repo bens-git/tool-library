@@ -10,10 +10,11 @@ export const useTypeStore = defineStore("type", {
     userTypes: [],
     totalUserTypes: 0,
     totalTypes: 0,
-    paginateTypes: true,
     search: "",
     selectedCategoryId: null,
     selectedUsageId: null,
+    selectedBrandId: null,
+    selectedTypeId: null,
     dateRange: [
       new Date(new Date().setHours(9, 0, 0, 0)),
       new Date(new Date().setHours(17, 0, 0, 0)),
@@ -58,7 +59,6 @@ export const useTypeStore = defineStore("type", {
       try {
         const { data } = await apiClient.get("/paginated-types", {
           params: {
-            paginate: this.paginateTypes,
             page: this.page,
             itemsPerPage: this.itemsPerPage,
             sortBy: this.sortBy,
@@ -66,6 +66,8 @@ export const useTypeStore = defineStore("type", {
             search: this.search,
             categoryId: this.selectedCategoryId,
             usageId: this.selectedUsageId,
+            brandId: this.selectedBrandId,
+            typeId: this.selectedTypeId,
             startDate: this.dateRange[0].toISOString(),
             endDate: this.dateRange[this.dateRange.length - 1].toISOString(),
             location: this.location,
@@ -116,7 +118,6 @@ export const useTypeStore = defineStore("type", {
       try {
         const { data } = await apiClient.get("/user/types", {
           params: {
-            paginate: true,
             page: this.page,
             itemsPerPage: this.itemsPerPage,
             sortBy: this.sortBy,
@@ -149,6 +150,7 @@ export const useTypeStore = defineStore("type", {
         loadingStore.stopLoading("fetchUserTypes");
       }
     },
+
     resetFilters() {
       this.search = "";
       this.selectedCategoryId = null;

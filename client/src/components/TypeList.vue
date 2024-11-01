@@ -6,37 +6,53 @@
         <v-row>
           <!-- Search Field -->
           <v-col cols="12" md="3">
-            <v-text-field dense v-model="typeStore.search" label="Search" prepend-inner-icon="mdi-magnify"
+            <v-text-field density="compact" v-model="typeStore.search" label="Search" prepend-inner-icon="mdi-magnify"
               variant="outlined" hide-details single-line @input="debounceSearch" />
           </v-col>
 
-          <!-- Category and Usage Dropdowns -->
+          <!-- Type -->
           <v-col cols="12" md="3">
-            <v-select dense v-model="typeStore.selectedCategoryId" :items="categoryStore.categories" label="Category"
-              item-title="name" item-value="id" :clearable="true" @update:modelValue="debounceSearch" />
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-select v-model="typeStore.selectedUsageId" :items="usageStore.usages" label="Usage" item-title="name"
-              item-value="id" :clearable="true" @update:modelValue="debounceSearch" />
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-date-input dense v-model="typeStore.dateRange" label="Dates" prepend-icon="" persistent-placeholder
-              multiple="range" :min="minStartDate" @update:modelValue="debounceSearch"></v-date-input>
+            <v-autocomplete density="compact" v-model="typeStore.selectedTypeId" :items="typeStore.allTypes"
+              label="Type" item-title="name" item-value="id" :clearable="true" @update:modelValue="debounceSearch" />
           </v-col>
 
+          <!-- Category -->
+          <v-col cols="12" md="2">
+            <v-autocomplete density="compact" v-model="typeStore.selectedCategoryId" :items="categoryStore.categories"
+              label="Category" item-title="name" item-value="id" :clearable="true"
+              @update:modelValue="debounceSearch" />
+          </v-col>
 
+          <!-- Usage -->
+          <v-col cols="12" md="2">
+            <v-autocomplete density="compact" v-model="typeStore.selectedUsageId" :items="usageStore.usages"
+              label="Usage" item-title="name" item-value="id" :clearable="true" @update:modelValue="debounceSearch" />
+          </v-col>
+
+          <!-- Brand -->
+          <v-col cols="12" md="2">
+            <v-autocomplete density="compact" v-model="typeStore.selectedBrandId" :items="brandStore.brands"
+              label="Brand" item-title="name" item-value="id" :clearable="true" @update:modelValue="debounceSearch" />
+          </v-col>
 
         </v-row>
         <v-row>
-          <!-- Location Picker Button -->
 
-          <v-col cols="12" md="5">
-            <v-text-field label="Select location" v-model="typeStore.address" readonly
+          <v-col cols="12" md="3">
+            <v-date-input density="compact" v-model="typeStore.dateRange" label="Dates" prepend-icon=""
+              persistent-placeholder multiple="range" :min="minStartDate"
+              @update:modelValue="debounceSearch"></v-date-input>
+          </v-col>
+
+
+          <!-- Location Picker -->
+          <v-col cols="12" md="4">
+            <v-text-field density="compact" label="Select location" v-model="typeStore.address" readonly
               @click="openLocationPicker"></v-text-field>
 
           </v-col>
 
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="4">
             <v-slider label="Radius (km)" show-ticks="always" tick-size="10" v-model="typeStore.radius" step="10"
               thumb-label="always" :max="100" :min="1"></v-slider>
           </v-col>
@@ -110,6 +126,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useCategoryStore } from '@/stores/category';
 import { useUsageStore } from '@/stores/usage';
+import { useBrandStore } from '@/stores/brand';
 import { useTypeStore } from '@/stores/type';
 import { useUserStore } from '@/stores/user';
 import { useLocationStore } from '@/stores/location';
@@ -120,14 +137,12 @@ import LocationPicker from './LocationPicker.vue'; // Import your location picke
 
 const categoryStore = useCategoryStore();
 const usageStore = useUsageStore();
+const brandStore = useBrandStore();
 const typeStore = useTypeStore();
 const userStore = useUserStore();
 const locationStore = useLocationStore();
 const router = useRouter();
 
-
-
-const location = ref('');
 const radius = ref(10); // Default radius in kilometers
 const latitude = ref(null);
 const longitude = ref(null);
@@ -144,20 +159,6 @@ const handleLocationSelected = ({ lat, lng }) => {
   locationPickerDialog.value = false;
 };
 
-const searchLocations = async () => {
-  try {
-    const response = await axios.post('/api/search-locations', {
-      latitude: latitude.value,
-      longitude: longitude.value,
-      radius: radius.value
-    });
-    locations.value = response.data.locations;
-  } catch (error) {
-    console.error('Error fetching locations:', error);
-  }
-};
-
-
 const apiHost = process.env.VUE_APP_API_HOST;
 const environment = process.env.VUE_APP_ENVIRONMENT;
 
@@ -171,9 +172,6 @@ const fullImageUrl = (imagePath) => {
   return `${baseURL}/${imagePath}`;
 };
 
-
-
-const menuOpen = ref(false);
 const dialog = ref(false);
 const selectedType = ref(null);
 
@@ -191,7 +189,7 @@ const headers = [
     key: 'actions',
   },
   {
-    title: 'Name',
+    title: 'Type',
     align: 'start',
     sortable: true,
     key: 'name',
@@ -215,7 +213,13 @@ const headers = [
     key: 'usages',
   },
   {
-    title: 'Units',
+    title: 'Brands',
+    align: 'start',
+    sortable: false,
+    key: 'brand_names',
+  },
+  {
+    title: 'Items',
     align: 'start',
     sortable: false,
     key: 'item_count',
@@ -243,10 +247,6 @@ const goToLogin = () => {
   router.push({ name: 'login-form' }); // Adjust the route name as necessary
 };
 
-const deleteItem = () => {
-  // Add delete logic here
-};
-
 // Computed properties for date constraints
 const today = new Date();
 today.setHours(0, 0, 0, 0);
@@ -254,22 +254,6 @@ today.setHours(0, 0, 0, 0);
 const startOfDayInMillis = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 const minStartDate = computed(() => today);
-
-const minEndDate = computed(() => {
-  if (typeStore.dateRange[0]) {
-    return typeStore.dateRange[0];
-  }
-  return today;
-});
-
-const maxStartDate = computed(() => {
-  if (typeStore.dateRange[typeStore.dateRange.length - 1]) {
-    const endDate = new Date(typeStore.dateRange[typeStore.dateRange.length - 1]);
-    endDate.setHours(0, 0, 0, 0); // Set time to 00:00:00
-    return endDate;
-  }
-  return today;
-});
 
 // Watchers to ensure dates are correctly updated
 watch(() => typeStore.dateRange[0], (newStartDate) => {
@@ -341,7 +325,8 @@ onMounted(async () => {
   initializeLocation();
   categoryStore.fetchCategories();
   usageStore.fetchUsages();
-  typeStore.paginateTypes = true
+  brandStore.fetchBrands();
+  typeStore.fetchAllTypes();
   typeStore.fetchPaginatedTypes();
 })
 </script>

@@ -141,7 +141,7 @@ export default {
       normalizePath,
       isActiveRoute,
       links: [
-        { text: "CATALOG", route: "tool-list" },
+        { text: "CATALOG", route: "type-list" },
       ],
     };
   },

@@ -23,8 +23,23 @@
             bought at different times.
           </v-card-subtitle>
           <v-card-text>
-            <v-text-field v-model="itemStore.search" label="Search" prepend-inner-icon="mdi-magnify" variant="outlined"
-              hide-details single-line @input="debounceSearch('items')"></v-text-field>
+            <v-row>
+              <v-col cols="4" md="4">
+                <v-text-field density="compact" v-model="itemStore.search" label="Search"
+                  prepend-inner-icon="mdi-magnify" variant="outlined" hide-details single-line
+                  @input="debounceSearch('items')"></v-text-field>
+              </v-col>
+              <v-col cols="4" md="4">
+                <v-select density="compact" v-model="typeStore.selectedTypeId" :items="typeStore.allTypes" label="Type"
+                  item-title="name" item-value="id" :clearable="true" @update:modelValue="debounceSearch('items')" />
+              </v-col>
+              <v-col cols="4" md="4">
+                <v-select density="compact" v-model="typeStore.selectedBrandId" :items="brandStore.brands" label="Brand"
+                  item-title="name" item-value="id" :clearable="true" @update:modelValue="debounceSearch('items')" />
+              </v-col>
+
+            </v-row>
+
             <v-data-table-server :search="itemStore.search" v-model:items-per-page="itemStore.itemsPerPage"
               :items-length="itemStore.totalItems" :headers="itemHeaders" @update:options="itemStore.updateOptions"
               :items="itemStore.items" item-value="name" mobile-breakpoint="sm">
@@ -312,17 +327,13 @@ const brandStore = useBrandStore();
 const userStore = useUserStore();
 
 const activeTab = ref(0);
-const toolSearch = ref('');
-const typeSearch = ref('');
-const categorySearch = ref('');
-const usageSearch = ref('');
 const isEdit = ref('');
 
 
 const itemHeaders = [
   { title: 'Name', value: 'item_name' },
   { title: 'Type', value: 'type_name' },
-
+  { title: 'Brand', value: 'brand_name' },
   { title: 'Actions', value: 'actions', sortable: false },
 ];
 const typeHeaders = [
@@ -372,9 +383,11 @@ const selectedBrand = ref(null);
 onMounted(() => {
   itemStore.fetchUserItems();
   typeStore.fetchUserTypes();
+  typeStore.fetchAllTypes();
   categoryStore.fetchUserCategories();
   usageStore.fetchUserUsages();
   brandStore.fetchUserBrands();
+  brandStore.fetchBrands();
 });
 
 

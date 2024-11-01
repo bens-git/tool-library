@@ -39,6 +39,7 @@ class TypeController extends Controller
             ->leftJoin('type_usage', 'types.id', '=', 'type_usage.type_id')
             ->leftJoin('usages', 'type_usage.usage_id', '=', 'usages.id')
             ->leftJoin('items', 'items.type_id', '=', 'types.id')
+            ->leftJoin('brands', 'items.brand_id', '=', 'brands.id')
             ->leftJoin('users as owner', 'items.owned_by', '=', 'owner.id')
             ->leftJoin('locations as owner_location', 'owner.location_id', '=', 'owner_location.id')
             ->leftJoin('rentals', function ($join) use ($startDate, $endDate) {
@@ -58,6 +59,8 @@ class TypeController extends Controller
                 DB::raw('GROUP_CONCAT(DISTINCT categories.id ORDER BY categories.id ASC SEPARATOR ", ") as category_ids'),
                 DB::raw('GROUP_CONCAT(DISTINCT usages.name ORDER BY usages.name ASC SEPARATOR ", ") as usages'),
                 DB::raw('GROUP_CONCAT(DISTINCT usages.id ORDER BY usages.id ASC SEPARATOR ", ") as usage_ids'),
+                DB::raw('GROUP_CONCAT(DISTINCT brands.name ORDER BY brands.name ASC SEPARATOR ", ") as brand_names'),
+                DB::raw('GROUP_CONCAT(DISTINCT brands.id ORDER BY brands.id ASC SEPARATOR ", ") as brand_ids'),
 
 
                 // Subquery for available items count based on distance
@@ -101,7 +104,7 @@ class TypeController extends Controller
 
 
         // Apply distance filter for items within the radius
-        if (!empty($latitude) && !empty($longitude) && !empty($radius) && $request->paginate && $request->paginate != 'false') {
+        if (!empty($latitude) && !empty($longitude) && !empty($radius)) {
 
             // Apply the distance filtering in the WHERE clause
             $query->where(function ($q) use ($longitude, $latitude, $distance) {
@@ -140,6 +143,16 @@ class TypeController extends Controller
             $query->where('type_usage.usage_id', '=', $request->input('usageId'));
         }
 
+        // Apply brand filter if provided
+        if ($request->filled('brandId')) {
+            $query->where('items.brand_id', '=', $request->input('brandId'));
+        }
+
+        // Apply type filter if provided
+        if ($request->filled('typeId')) {
+            $query->where('types.id', '=', $request->input('typeId'));
+        }
+
         // Apply the HAVING clause to filter types with no items
         $query->havingRaw('available_item_count > 0 OR rented_item_count > 0');
 
@@ -149,15 +162,11 @@ class TypeController extends Controller
 
         // Apply pagination
 
-        if ($request->paginate && $request->paginate != 'false') {
 
-            $types = $query->paginate($itemsPerPage, ['*'], 'page', $page);
-            $typesArray = $types->items();
-            $totalCount = $types->total();
-        } else {
-            $typesArray = $query->get()->toArray();
-            $totalCount = count($typesArray);
-        }
+
+        $types = $query->paginate($itemsPerPage, ['*'], 'page', $page);
+        $typesArray = $types->items();
+        $totalCount = $types->total();
 
         $typeIds = array_column($typesArray, 'id');
 
@@ -393,16 +402,9 @@ class TypeController extends Controller
 
 
         // Apply pagination
-
-        if ($request->paginate && $request->paginate != 'false') {
-
-            $types = $query->paginate($itemsPerPage, ['*'], 'page', $page);
-            $typesArray = $types->items();
-            $totalCount = $types->total();
-        } else {
-            $typesArray = $query->get()->toArray();
-            $totalCount = count($typesArray);
-        }
+        $types = $query->paginate($itemsPerPage, ['*'], 'page', $page);
+        $typesArray = $types->items();
+        $totalCount = $types->total();
 
         $typeIds = array_column($typesArray, 'id');
 

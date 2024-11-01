@@ -44,7 +44,7 @@ const login = async () => {
         if (!responseStore.response?.success) {
             errors.value = responseStore.response.errors.errors || {}; // Ensure it's an object
         } else {
-            router.push({ name: 'tool-list' }); // Use router to navigate to login page after logout
+            router.push({ name: 'type-list' }); // Use router to navigate to login page after logout
         }
 
     } catch (error) {

@@ -63,7 +63,7 @@ export const useItemStore = defineStore("item", {
       }
     },
 
-    async fetchUserItems(typeId) {
+    async fetchUserItems() {
       const responseStore = useResponseStore();
       const loadingStore = useLoadingStore();
       const typeStore = useTypeStore();
@@ -77,7 +77,8 @@ export const useItemStore = defineStore("item", {
             itemsPerPage: this.itemsPerPage,
             sortBy: this.sortBy,
             order: this.order,
-            typeId: typeId,
+            typeId: typeStore.selectedTypeId,
+            brandId: typeStore.selectedBrandId,
             search: this.search,
             startDate: typeStore.dateRange[0],
             endDate: typeStore.dateRange[typeStore.dateRange.length - 1],

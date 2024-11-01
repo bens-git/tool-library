@@ -30,6 +30,7 @@ class ItemController extends Controller
         $page = $request->input('page', 1);
         $itemsPerPage = $request->input('itemsPerPage', 10);
         $typeId = $request->input('typeId');
+        $brandId = $request->input('brandId');
         $search = $request->input('search', '');
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
@@ -45,11 +46,14 @@ class ItemController extends Controller
             ->join('types', 'items.type_id', '=', 'types.id')
             ->leftJoin('brands', 'items.brand_id', '=', 'brands.id');
 
-        // Apply search filter
+        // Apply type filter
         if (!empty($typeId)) {
             $query->where('type_id', '=', $typeId);
         }
-
+        // Apply brand filter
+        if (!empty($brandId)) {
+            $query->where('brand_id', '=', $brandId);
+        }
 
         if (!empty($search)) {
             $query->where(function ($query) use ($search) {

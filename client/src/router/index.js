@@ -10,8 +10,8 @@ import { useUserStore } from "@/stores/user"; // Adjust the import path as neces
 
 const routes = [
   {
-    path: "/tool-list",
-    name: "tool-list",
+    path: "/type-list",
+    name: "type-list",
     component: TypeList,
   },
 
@@ -69,7 +69,7 @@ const routes = [
   },
   {
     path: "/:catchAll(.*)",
-    redirect: "/tool-list",
+    redirect: "/type-list",
   },
   {
     path: "/email-verified",
@@ -93,7 +93,7 @@ router.beforeEach((to, from, next) => {
     userStore.user
   ) {
     // Redirect to home page if user is already logged in
-    return next({ name: "tool-list" });
+    return next({ name: "type-list" });
   }
 
   if (requiresAuth && !isAuthenticated) {
