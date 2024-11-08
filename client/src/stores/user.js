@@ -65,6 +65,48 @@ export const useUserStore = defineStore("user", {
       }
     },
 
+    loginToDiscord() {
+      // Discord OAuth2 parameters
+      const clientId = process.env.VUE_APP_DISCORD_CLIENT_ID;
+      const redirectUri = encodeURIComponent(
+        process.env.VUE_APP_DISCORD_REDIRECT_URI
+      );
+
+      const responseType = "code"; // OAuth response type
+      const scope = "identify"; // Permissions requested
+
+      // Construct the Discord OAuth2 authorization URL
+      const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
+
+      // Redirect to Discord's OAuth2 page
+      window.location.href = discordAuthUrl;
+    },
+
+    async linkWithDiscord(code) {
+      const loadingStore = useLoadingStore();
+      const responseStore = useResponseStore();
+      responseStore.clearResponse();
+      loadingStore.startLoading("linkWithDiscord");
+
+      try {
+        const response = await axios.post("/link-with-discord", { code: code });
+        await this.getUser();
+        responseStore.setResponse(true, response.data.message);
+      } catch (error) {
+        responseStore.setResponse(
+          false,
+          error.response.data?.message
+            ? error.response.data?.message
+            : error.response.data?.[0]?.message
+              ? error.response.data?.[0]?.message
+              : "",
+          [error.response.data.errors]
+        );
+      } finally {
+        loadingStore.stopLoading("linkWithDiscord");
+      }
+    },
+
     async logout() {
       const loadingStore = useLoadingStore();
       const responseStore = useResponseStore();

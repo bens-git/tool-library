@@ -25,12 +25,15 @@
       </v-btn>
     </div>
 
+
+
     <v-spacer />
 
     <v-menu v-if="userStore.user">
       <template v-slot:activator="{ props }">
         <v-btn color="primary" v-bind="props">
-          {{ userStore.user.name }} <v-icon right>mdi-menu-down</v-icon>
+          {{ userStore.user.discord_username ? userStore.user.discord_username : userStore.user.name }} <v-icon
+            right>mdi-menu-down</v-icon>
         </v-btn>
       </template>
       <v-list>
@@ -46,11 +49,15 @@
         <v-list-item @click="editProfile">
           <v-list-item-title>Edit Profile</v-list-item-title>
         </v-list-item>
+        <v-list-item @click="userStore.loginToDiscord()">
+          <v-list-item-title>Link With Discord</v-list-item-title>
+        </v-list-item>
         <v-list-item @click="confirmLogout">
           <v-list-item-title>Logout</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>
+
 
     <v-btn v-if="!userStore.user" to="login-form" text>
       Login
@@ -77,75 +84,63 @@
   </v-app-bar>
 </template>
 
-<script>
+<script setup>
 import { computed, ref } from "vue";
 import { useDisplay } from "vuetify";
 import { useUserStore } from "@/stores/user";
 import { useRouter, useRoute } from "vue-router";
 
-export default {
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
-    const { smAndDown } = useDisplay();
-    const isSmallScreen = computed(() => smAndDown.value);
-    const userStore = useUserStore();
-    const logoutDialog = ref(false);
 
-    // Safeguard to handle undefined or null paths
-    const normalizePath = (path) => {
-      return path ? path.replace(/\/+$/, "").trim() : "";
-    };
+const route = useRoute();
+const router = useRouter();
+const { smAndDown } = useDisplay();
+const isSmallScreen = computed(() => smAndDown.value);
+const userStore = useUserStore();
+const logoutDialog = ref(false);
 
-    const isActiveRoute = (linkRoute) => {
-      return normalizePath(route.path) === normalizePath(linkRoute);
-    };
+const links = [
+  { text: "CATALOG", route: "type-list" },
+];
 
-    const confirmLogout = () => {
-      logoutDialog.value = true;
-    };
-
-    const logout = async () => {
-      logoutDialog.value = false;
-      await userStore.logout();
-      router.push({ name: "login-form" });
-    };
-
-    const editProfile = () => {
-      router.push({ name: "edit-user" });
-    };
-
-    const myMangement = () => {
-      router.push({ name: "my-tools" });
-    };
-
-    const myRentals = () => {
-      router.push({ name: "my-rentals" });
-    };
-
-    const myLoans = () => {
-      router.push({ name: "my-loans" });
-    };
-
-    return {
-      route,
-      isSmallScreen,
-      userStore,
-      logoutDialog,
-      confirmLogout,
-      logout,
-      editProfile,
-      myMangement,
-      myRentals,
-      myLoans,
-      normalizePath,
-      isActiveRoute,
-      links: [
-        { text: "CATALOG", route: "type-list" },
-      ],
-    };
-  },
+// Safeguard to handle undefined or null paths
+const normalizePath = (path) => {
+  return path ? path.replace(/\/+$/, "").trim() : "";
 };
+
+const isActiveRoute = (linkRoute) => {
+  return normalizePath(route.path) === normalizePath(linkRoute);
+};
+
+const confirmLogout = () => {
+  logoutDialog.value = true;
+};
+
+const logout = async () => {
+  logoutDialog.value = false;
+  await userStore.logout();
+  router.push({ name: "login-form" });
+};
+
+const editProfile = () => {
+  router.push({ name: "edit-user" });
+};
+
+const myMangement = () => {
+  router.push({ name: "my-tools" });
+};
+
+const myRentals = () => {
+  router.push({ name: "my-rentals" });
+};
+
+const myLoans = () => {
+  router.push({ name: "my-loans" });
+};
+
+
+
+
+
 </script>
 
 <style>

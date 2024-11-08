@@ -139,7 +139,7 @@ class RentalController extends Controller
         Mail::to($user->email)->send(new ConfirmRentalEmail($user, $item, $rental));
 
         //send load confirmation email
-        Mail::to($item->owner->email)->send(new ConfirmLoanEmail($item->owner, $item, $rental));
+        Mail::to($item->owner->email)->send(new ConfirmLoanEmail($item->owner, $user, $item, $rental));
 
         return response()->json([
             'message' => 'Rental successfully created.',

@@ -156,6 +156,10 @@ class TypeController extends Controller
         // Apply the HAVING clause to filter types with no items
         $query->havingRaw('available_item_count > 0 OR rented_item_count > 0');
 
+        //Require discord user
+        $query->where('owner.discord_user_id', '!=', null);
+
+
         // Apply sorting
         $query->orderBy($sortBy, $order);
 
@@ -395,6 +399,8 @@ class TypeController extends Controller
         if ($request->filled('usageId')) {
             $query->where('type_usage.usage_id', '=', $request->input('usageId'));
         }
+
+
 
 
         // Apply sorting

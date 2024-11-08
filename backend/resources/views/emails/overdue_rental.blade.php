@@ -7,7 +7,7 @@
 
 <body>
     <h1>Rental Overdue Notice</h1>
-    <p>Dear {{ $rental->renter->name }},</p>
+    <p>Dear {{ $rental->renter->discord_username }},</p>
     <p>This is a reminder that the following rental item is overdue for return:</p>
 
     <p><strong>Item:</strong> {{ $itemName }}</p>

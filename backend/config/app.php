@@ -54,6 +54,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
     'front_end_url' => env('APP_FRONT_END_URL', 'http://localhost'),
+    'discord_redirect_uri' => env('APP_DISCORD_REDIRECT_URI', 'http://localhost'),
+    'discord_client_id' => env('APP_DISCORD_CLIENT_ID', 'http://localhost'),
+    'discord_client_secret' => env('APP_DISCORD_CLIENT_SECRET', 'http://localhost'),
 
     'asset_url' => env('ASSET_URL', null),
 

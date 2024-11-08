@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Http;
 
 class Coordinates
 {
@@ -366,5 +367,69 @@ class AuthController extends Controller
         $user->save();
 
         return response()->json(['message' => 'Password updated successfully.']);
+    }
+
+
+    public function linkWithDiscord(Request $request)
+    {
+        $code = $request->code;
+        if (!$code) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+        //  return config('app.discord_redirect_uri');
+        $response = Http::asForm()->post('https://discord.com/api/oauth2/token', [
+            'client_id' => config('app.discord_client_id'),
+            'client_secret' => config('app.discord_client_secret'),
+            'grant_type' => 'authorization_code',
+            'code' => $code,
+            'redirect_uri' => config('app.discord_redirect_uri'),
+        ]);
+
+        $data = $response->json();
+
+        if (!isset($data['access_token'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        // Fetch user info from Discord
+        $userResponse = Http::withToken($data['access_token'])->get('https://discord.com/api/users/@me');
+
+        $discordUser = $userResponse->json();
+
+
+        if (isset($discordUser['id'])) {
+
+            //if logged in, associate this discord user with the logged in user
+            $user = User::find(Auth::id());
+
+
+            if ($user) {
+
+
+                $user->discord_user_id = $discordUser['id'];
+                $user->discord_username = $discordUser['username'];
+                $user->discord_discriminator = $discordUser['discriminator'];
+                $user->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Discord Linked',
+                ], 200);
+            }
+        }
+
+
+        if (!isset($data['access_token'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
     }
 }

@@ -13,13 +13,15 @@ class ConfirmLoanEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $user;
+    public $owner;
+    public $renter;
     public $item;
     public $rental;
 
-    public function __construct(User $user, Item $item, Rental $rental)
+    public function __construct(User $owner, User $renter, Item $item, Rental $rental)
     {
-        $this->user = $user;
+        $this->owner = $owner;
+        $this->renter = $renter;
         $this->item = $item;
         $this->rental = $rental;
     }
@@ -27,6 +29,6 @@ class ConfirmLoanEmail extends Mailable
     public function build()
     {
         return $this->subject('Item loaned')
-                    ->view('emails.loan');
+            ->view('emails.loan');
     }
 }

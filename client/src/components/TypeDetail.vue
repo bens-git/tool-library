@@ -240,6 +240,12 @@ const openCalendarDialog = async (item) => {
 
 const openConfirmationDialog = () => {
   showCalendarDialog.value = false;
+  //if no discord link, route to discord auth
+  if (!userStore.user.discord_user_id) {
+    router.push({ name: "route-to-discord-link" });
+
+    return false
+  }
   showConfirmationDialog.value = true;
 };
 
@@ -249,10 +255,7 @@ const bookRental = async () => {
   router.push('/my-rentals');
 };
 
-const checkDateRange = async (item) => {
-  await itemStore.checkDateRange(itemStore.value.id, selectedDateRange.value);
-  showConfirmationDialog.value = false;
-};
+
 
 
 // Computed properties for date constraints

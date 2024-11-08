@@ -81,4 +81,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
     Route::delete('/usages/{id}', [UsageController::class, 'destroy']);
     Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
+    Route::post('/link-with-discord', [AuthController::class, 'linkWithDiscord']);
 });

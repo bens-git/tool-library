@@ -4,14 +4,15 @@
     <v-card-text>
 
       <v-autocomplete density="compact" v-model="localItem.type_id" :items="typeStore.allTypes" label="Item Type"
-        item-title="name" item-value="id" :rules="[typeRules]" :error-messages="typeErrors"
-        hint="Select the tool type this item belongs to, like 'Mitre Saw' or 'Hammer'."
+        item-title="name" item-value="id" :rules="[typeRules]" :error-messages="typeErrors" hint="e.g., soldering iron"
         :persistent-hint="true"></v-autocomplete><br>
 
       <v-autocomplete density="compact" v-model="localItem.brand_id" :items="brandStore.brands" label="Brand" clearable
         item-title="name" item-value="id" :rules="[typeRules]" :error-messages="brandErrors"></v-autocomplete>
 
-      <v-textarea density="compact" v-model="localItem.description" label="Description"></v-textarea>
+
+      <v-textarea density="compact" v-model="localItem.description" label="Description"
+        placeholder="e.g., this soldering iron is like no other in the collection. Its handle is worn smooth from years of use, and faint scorch marks trace stories of intricate repairs and ambitious builds. It’s storied and irreplaceable."></v-textarea>
 
       <v-text-field density="compact" v-model="localItem.serial" label="Serial"></v-text-field>
       <v-text-field density="compact" v-model="localItem.purchase_value" label="Purchase Value" type="number"

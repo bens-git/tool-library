@@ -13,7 +13,7 @@
         {{ $rental->location->state }},
         {{ $rental->location->country }}
     </p>
-    <p><b> Contact the owner, {{ $item->owner->name}}, on <a href='https://discord.gg/sFqqtaVu'>Discord</a> to find the exact location!</b></p>
+    <p><b> Contact the owner, {{ $item->owner->discord_username}}, on <a href='https://discord.gg/sFqqtaVu'>Discord</a> to arrange the exact location!</b></p>
     <p>Pickup time: {{ $rental->starts_at }}</p>
     <p>Return time: {{ $rental->ends_at }}</p>
     <p>Thank you!</p>
