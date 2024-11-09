@@ -49,7 +49,7 @@
         <v-list-item @click="editProfile">
           <v-list-item-title>Edit Profile</v-list-item-title>
         </v-list-item>
-        <v-list-item @click="userStore.loginToDiscord()">
+        <v-list-item @click="routeToDiscordLink">
           <v-list-item-title>Link With Discord</v-list-item-title>
         </v-list-item>
         <v-list-item @click="confirmLogout">
@@ -124,6 +124,11 @@ const logout = async () => {
 const editProfile = () => {
   router.push({ name: "edit-user" });
 };
+
+const routeToDiscordLink = () => {
+  router.push({ name: "route-to-discord-link" });
+};
+
 
 const myMangement = () => {
   router.push({ name: "my-tools" });

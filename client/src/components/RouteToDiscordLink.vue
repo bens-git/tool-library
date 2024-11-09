@@ -6,8 +6,9 @@
         <v-card-text>
 
             <v-alert v-if="!userStore.user.discord_id"
-                text="You must link your Tool-Library account to your Discord account prior to renting, or loaning tools."
+                text="By clicking the 'Link To Discord' button, your Tool-Library account will be securely linked to your Discord account. This action will connect your account IDs and enable enhanced integration between the two platforms. This action is required prior to renting or loaning tools."
                 title="Discord Not Authenticated" type="warning"></v-alert>
+            <br>
 
             <v-btn color="primary" @click="userStore.loginToDiscord()">
                 Link With Discord

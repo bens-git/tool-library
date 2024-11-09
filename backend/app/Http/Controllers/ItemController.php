@@ -120,6 +120,9 @@ class ItemController extends Controller
             $query->where('owned_by', '!=', $user->id);
         }
 
+        //Require discord user
+        $query->where('users.discord_user_id', '!=', null);
+
         // Select items with their images as an array
         $query->select(
             DB::raw("CONCAT(
