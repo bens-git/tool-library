@@ -9,6 +9,7 @@ use App\Http\Controllers\RentalController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\UsageController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\JobController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,48 +39,58 @@ Route::put('/user/password-with-token', [AuthController::class, 'resetPasswordWi
 
 
 Route::get('/items/{id}', [ItemController::class, 'show']);
-Route::get('/paginated-types', [TypeController::class, 'getPaginatedTypes']);
-Route::get('/all-types', [TypeController::class, 'getAllTypes']);
+Route::get('/types-with-items', [TypeController::class, 'getTypesWithItems']);
+Route::get('/types', [TypeController::class, 'index']);
 Route::get('/types/{id}', [TypeController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/usages', [TypeController::class, 'getUsages']);
 Route::get('/brands', [BrandController::class, 'getUsages']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::put('/user/password', [AuthController::class, 'updatePassword']);
-    Route::put('/user/{userId}', [AuthController::class, 'update']);
-    Route::put('/user/location/{locationId}', [AuthController::class, 'updateLocation']);
-    Route::get('/user/location', [AuthController::class, 'getLocation']);
-    Route::get('/user/items', [ItemController::class, 'index'])->name('user.items');
-    Route::get('/user/types', [TypeController::class, 'getUserTypes'])->name('user.types');
-    Route::get('/user/categories', [CategoryController::class, 'getUserCategories'])->name('user.categories');
-    Route::get('/user/usages', [UsageController::class, 'getUserUsages'])->name('user.usages');
-    Route::get('/user/brands', [BrandController::class, 'getUserBrands'])->name('user.brands');
-    Route::get('/rented-dates', [RentalController::class, 'getRentedDates']);
-    Route::get('/item/rented-dates', [RentalController::class, 'getItemRentedDates']);
-    Route::get('/item/unavailable-dates', [ItemController::class, 'getItemUnavailableDates']);
-    Route::post('/rentals', [RentalController::class, 'bookRental']);
-    Route::get('/user/rentals', [RentalController::class, 'getUserRentals']);
-    Route::get('/user/loans', [RentalController::class, 'getUserLoans']);
-    Route::get('/items', [ItemController::class, 'index']);
-    Route::post('/items', [ItemController::class, 'store']);
-    Route::post('/types', [TypeController::class, 'store']);
-    Route::post('/categories', [CategoryController::class, 'store']);
-    Route::post('/usages', [UsageController::class, 'store']);
-    Route::post('/brands', [BrandController::class, 'store']);
-    Route::post('/update-item/{id}', [ItemController::class, 'update']);
-    Route::post('/update-type/{id}', [TypeController::class, 'update']);
-    Route::post('/update-category/{id}', [CategoryController::class, 'update']);
-    Route::post('/update-usage/{id}', [UsageController::class, 'update']);
-    Route::post('/update-brand/{id}', [BrandController::class, 'update']);
-    Route::post('/update-item-availability/{id}', [ItemController::class, 'updateItemAvailability']);
-    Route::patch('/rentals/{id}', [RentalController::class, 'update']);
+    Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
+    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+    Route::delete('/items/{id}', [ItemController::class, 'destroy']);
+    Route::delete('/jobs/{id}', [JobController::class, 'destroy']);
+    Route::delete('/types/{id}', [TypeController::class, 'destroy']);
+    Route::delete('/usages/{id}', [UsageController::class, 'destroy']);
     Route::delete('/user', [AuthController::class, 'deleteUser']);
     Route::delete('/user/rentals/{id}', [RentalController::class, 'destroy']);
-    Route::delete('/items/{id}', [ItemController::class, 'destroy']);
-    Route::delete('/types/{id}', [TypeController::class, 'destroy']);
-    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
-    Route::delete('/usages/{id}', [UsageController::class, 'destroy']);
-    Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
+
+    Route::get('/item/rented-dates', [RentalController::class, 'getItemRentedDates']);
+    Route::get('/items/{id}/unavailable-dates', [ItemController::class, 'getItemUnavailableDates']);
+    Route::get('/items', [ItemController::class, 'index']);
+    Route::get('/jobs', [JobController::class, 'index']);
+    Route::get('/rented-dates', [RentalController::class, 'getRentedDates']);
+    Route::get('/me/brands', [BrandController::class, 'index'])->name('user.brands');
+    Route::get('/user/categories', [CategoryController::class, 'getUserCategories'])->name('user.categories');
+    Route::get('/me/items', [ItemController::class, 'index'])->name('user.items');
+    Route::get('/user/loans', [RentalController::class, 'getUserLoans']);
+    Route::get('/me/location', [AuthController::class, 'getLocation']);
+    Route::get('/user/rentals', [RentalController::class, 'getUserRentals']);
+    Route::get('/me/types', [TypeController::class, 'index'])->name('user.types');
+    Route::get('/user/usages', [UsageController::class, 'getUserUsages'])->name('user.usages');
+    Route::get('/resources', [TypeController::class, 'getResources']);
+
+    Route::patch('/items/{id}/availability', [ItemController::class, 'updateItemAvailability']);
+    Route::patch('/rentals/{id}', [RentalController::class, 'update']);
+
+    Route::post('/brands', [BrandController::class, 'store']);
+    Route::post('/categories', [CategoryController::class, 'store']);
+    Route::post('/items', [ItemController::class, 'store']);
+    Route::post('/items/{id}/image', [ItemController::class, 'storeImage']);
+    Route::post('/jobs', [JobController::class, 'store']);
     Route::post('/link-with-discord', [AuthController::class, 'linkWithDiscord']);
+    Route::post('/rentals', [RentalController::class, 'bookRental']);
+    Route::post('/types', [TypeController::class, 'store']);
+    Route::post('/update-category/{id}', [CategoryController::class, 'update']);
+    Route::post('/update-usage/{id}', [UsageController::class, 'update']);
+    Route::post('/usages', [UsageController::class, 'store']);
+    
+    Route::put('/user/{userId}', [AuthController::class, 'update']);
+    Route::put('/jobs/{id}', [JobController::class, 'update']);
+    Route::put('/user/location/{locationId}', [AuthController::class, 'updateLocation']);
+    Route::put('/user/password', [AuthController::class, 'updatePassword']);
+    Route::put('/types/{id}', [TypeController::class, 'update']);
+    Route::put('/items/{id}', [ItemController::class, 'update']);
+    Route::put('/brands/{id}', [BrandController::class, 'update']);
 });

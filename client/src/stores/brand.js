@@ -3,104 +3,94 @@ import { defineStore } from "pinia";
 import apiClient from "@/axios";
 import { useLoadingStore } from "./loading";
 import { useResponseStore } from "./response";
+import useApi from "@/stores/api";
 
 export const useBrandStore = defineStore("brand", {
   state: () => ({
-    brands: [],
-    totalBrands: 0,
-    userBrands: [],
-    totalUserBrands: 0,
+    myBrandsListPage: 1,
+    myBrandsListItemsPerPage: 10,
+    myBrandsListSortBy: [{ key: "name", order: "asc" }],
+    myBrandsListFilters: { brandId: null, search: null },
+    myBrandsListBrands: [],
+    myBrandsListTotalBrands: 0,
   }),
   actions: {
-    async fetchBrands() {
-      try {
-        const response = await apiClient.get("/brands");
-        this.brands = response.data.data;
-        this.totalCategories = response.data.count;
-      } catch (error) {
-        console.error("Error fetching brands:", error);
-      }
+    async fetchMyBrands() {
+      const { fetchRequest } = useApi();
+      const data = await fetchRequest(
+        "me/brands", // API endpoint
+        {
+          page: this.myBrandsListPage,
+          itemsPerPage: this.myBrandsListItemsPerPage,
+          sortBy: this.myBrandsListSortBy,
+          typeId: this.myBrandsListFilters.typeId,
+          brandId: this.myBrandsListFilters.brandId,
+          resource: this.myBrandsListFilters.resource,
+          search: this.myBrandsListFilters.search,
+        }
+      );
+      this.myBrandsListBrands = data.data;
+      this.myBrandsListTotalBrands = data.total;
     },
 
-    async fetchUserBrands() {
-      try {
-        const response = await apiClient.get("/user/brands", {
-          params: {
-            paginate: true,
-            page: this.page,
-            itemsPerPage: this.itemsPerPage,
-            sortBy: this.sortBy,
-            search: this.search,
-          },
-        });
-        this.userBrands = response.data.brands;
-        this.totalUserBrands = response.data.count;
-      } catch (error) {
-        console.error("Error fetching brands:", error);
-      }
+    async fetchInitialItemFormBrands(search) {
+      const { fetchRequest } = useApi();
+
+      const brands = await fetchRequest(
+        "brands", // API endpoint
+        {
+          itemsPerPage: 1000,
+          sortBy: null,
+          search: search,
+          brandId: null,
+        }
+      );
+
+      return brands.data;
+    },
+
+    async fetchAutocompleteSelectBrands(search) {
+      const { fetchRequest } = useApi();
+
+      const brands = await fetchRequest(
+        "brands", // API endpoint
+        {
+          itemsPerPage: 1000,
+          sortBy: null,
+          search: search,
+          brandId: null,
+        }
+      );
+
+      return brands.data;
     },
 
     async createBrand(brandData) {
-      const responseStore = useResponseStore();
-      const loadingStore = useLoadingStore();
-      loadingStore.startLoading("createBrand");
-
-      try {
-        const response = await apiClient.post("/brands", brandData, {
-          headers: { "Content-Category": "multipart/form-data" },
-        });
-        this.brands.push(response.data);
-        this.totalBrands++;
-        responseStore.setResponse(true, "Brand created successfully");
-      } catch (error) {
-        console.log(error.response.data);
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("createBrand");
+      const { sendRequest } = useApi();
+      const data = await sendRequest(`brands`, "POST", brandData);
+      if (data) {
+        this.myBrandsListBrands.push(data.data);
+        this.myBrandsListTotalBrands++;
       }
     },
 
-    async updateBrand(brandData) {
-      const responseStore = useResponseStore();
-      const loadingStore = useLoadingStore();
-      loadingStore.startLoading("updateBrand");
+    async updateMyBrand(brand) {
+      const { sendRequest } = useApi();
 
-      try {
-        // Create a new FormData object
-        const formData = new FormData();
+      const data = await sendRequest(
+        `brands/${brand.id}`, // API endpoint
+        "put", // HTTP method
+        brand // Payload
+      );
 
-        // Append all item data fields to formData
-        for (const [key, value] of brandData.entries()) {
-          formData.append(key, value);
-        }
-
-        // Send POST request with FormData
-        const response = await apiClient.post(
-          `/update-brand/${brandData.get("id")}`,
-          formData,
-          {
-            headers: { "Content-Brand": "multipart/form-data" },
-          }
+      if (data?.success) {
+        // Find and update the brand in the store
+        const updatedIndex = this.myBrandListItems.findIndex(
+          (brand) => brand.id === data.data.id
         );
-
-        // Find and update the item in the store
-        const updatedBrandIndex = this.userBrands.findIndex(
-          (brand) => brand.id === response.data.id
-        );
-        if (updatedBrandIndex !== -1) {
-          this.userBrands[updatedBrandIndex] = response.data;
+        if (updatedIndex !== -1) {
+          this.myBrandsListItems[updatedIndex] = data.data;
         }
-
-        responseStore.setResponse(true, "Brand updated successfully");
-      } catch (error) {
-        console.log(error);
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("updateBrand");
       }
     },
 

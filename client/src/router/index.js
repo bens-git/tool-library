@@ -3,6 +3,8 @@ import EmailVerified from "@/components/EmailVerified.vue";
 import EditUser from "@/components/EditUser.vue";
 import LoginForm from "@/components/LoginForm.vue";
 import TypeList from "@/components/TypeList.vue";
+import ProjectList from "@/components/ProjectList.vue";
+import JobList from "@/components/JobList.vue";
 import MyManagement from "@/components/MyManagement.vue";
 import MyRentals from "@/components/MyRentals.vue";
 import MyLoans from "@/components/MyLoans.vue";
@@ -15,6 +17,18 @@ const routes = [
     path: "/type-list",
     name: "type-list",
     component: TypeList,
+  },
+
+  {
+    path: "/project-list",
+    name: "project-list",
+    component: ProjectList,
+  },
+
+  {
+    path: "/job-list",
+    name: "job-list",
+    component: JobList,
   },
 
   {

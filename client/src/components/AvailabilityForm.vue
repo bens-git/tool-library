@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-card-title>Unavailable Dates - {{ localItem.item_name }}</v-card-title>
+    <v-card-title>Unavailable Dates - {{ localItem.name }}</v-card-title>
     <v-card-text>
       <v-date-input 
         v-model="localItem.unavailableDates" 
@@ -62,18 +62,13 @@ onMounted(async () => {
 });
 
 const saveItem = async () => {
-  try {
+ 
     await itemStore.updateItemAvailability(localItem.value.id, localItem.value.unavailableDates);
 
     if (responseStore.response.success) {
       closeModal();
-    } else {
-      console.log('Error:', responseStore.response.message);
     }
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    responseStore.setResponse(false, error.response?.data?.message || 'An unexpected error occurred', [error.response?.data?.errors || []]);
-  }
+  
 };
 
 const removeUnavailableDate = (index) => {

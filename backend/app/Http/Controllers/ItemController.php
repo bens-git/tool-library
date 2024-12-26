@@ -9,8 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ItemImage;
-use App\Models\ItemUnavailableDate;
+use App\Models\Type;
 use App\Models\Brand;
+use App\Models\ItemUnavailableDate;
+use Carbon\Carbon;
 
 class ItemController extends Controller
 {
@@ -25,22 +27,22 @@ class ItemController extends Controller
 
 
         // Get request parameters
-        $sortBy = $request->input('sortBy.0.key', 'items.id'); // Default sort by id
-        $order = $request->input('sortBy.0.order', 'asc'); // Default order ascending
-        $page = $request->input('page', 1);
-        $itemsPerPage = $request->input('itemsPerPage', 10);
-        $typeId = $request->input('typeId');
         $brandId = $request->input('brandId');
-        $search = $request->input('search', '');
-        $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
         $hideOwn = $request->input('hideOwn');
+        $itemsPerPage = $request->input('itemsPerPage', 10);
         $latitude = $request->input('location.lat');
         $longitude = $request->input('location.lng');
+        $page = $request->input('page', 1);
         $radius = $request->input('radius');
+        $resource = $request->input('resource');
+        $search = $request->input('search', '');
+        $sortBy = $request->input('sortBy');
+        $startDate = $request->input('startDate');
+        $typeId = $request->input('typeId');
 
         // Build the query
-        $query = Item::query()
+        $query = Item::with('type', 'brand')
             ->join('users', 'items.owned_by', '=', 'users.id')
             ->join('locations', 'users.location_id', '=', 'locations.id')
             ->join('types', 'items.type_id', '=', 'types.id')
@@ -55,11 +57,14 @@ class ItemController extends Controller
             $query->where('brand_id', '=', $brandId);
         }
 
+        // Apply resource filter
+        if (!empty($resource)) {
+            $query->where('types.resource', '=', $resource);
+        }
+
         if (!empty($search)) {
             $query->where(function ($query) use ($search) {
-                $query->where('users.name', 'like', '%' . $search . '%')
-                    ->orWhere('items.id', 'like', '%' . $search . '%')
-                    ->orWhere('types.name', 'like', '%' . $search . '%');
+                $query->where('items.code', 'like', '%' . $search . '%');
             });
         }
 
@@ -105,8 +110,8 @@ class ItemController extends Controller
             });
         }
 
-        // Check if the path is 'user/items' and filter by user if so
-        if ($request->path() == 'api/user/items') {
+        // Check if the path is 'me/items' and filter by user if so
+        if ($request->path() == 'api/me/items') {
             $user = $request->user();
             $query->where('owned_by', $user->id);
         }
@@ -125,11 +130,7 @@ class ItemController extends Controller
 
         // Select items with their images as an array
         $query->select(
-            DB::raw("CONCAT(
-            LOWER(REGEXP_REPLACE(LEFT(users.name, 3), '[^a-zA-Z0-9]', '')), '_', 
-            LOWER(REGEXP_REPLACE(LEFT(types.name, 3), '[^a-zA-Z0-9]', '')), '_', 
-            items.id
-        ) AS item_name"),
+            'items.code',
             'items.owned_by',
             'type_id',
             'items.created_at',
@@ -140,22 +141,32 @@ class ItemController extends Controller
             'purchase_value',
             'purchased_at',
             'serial',
-            'types.name AS type_name',
             'brands.name AS brand_name',
             'items.brand_id',
+            'types.resource',
             DB::raw('  CONCAT_WS(" ", COALESCE(locations.city, ""), COALESCE(locations.state, ""), COALESCE(locations.country, "")) as location')
-        )
+        )->with(['type', 'brand'])
             ->groupBy('items.id', 'users.name', 'types.name', 'brands.name');
 
         // Apply sorting
-        $items = $query->orderBy($sortBy, $order);
-        if ($request->paginate) {
+        if ($sortBy) {
+            foreach ($sortBy as $sort) {
+                $key = $sort['key'] ?? 'id';
+                $order = strtolower($sort['order'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
+
+                $query->orderBy($key, $order);
+            }
+        }
+
+
+        //paginate or not depending on items per page
+        if ($request->itemsPerPage == -1) {
+            $itemsArray = $query->get()->toArray();
+            $totalCount = count($itemsArray);
+        } else {
             $items = $query->paginate($itemsPerPage, ['*'], 'page', $page);
             $itemsArray = $items->items();
             $totalCount = $items->total();
-        } else {
-            $itemsArray = $query->get()->toArray();
-            $totalCount = count($itemsArray);
         }
 
         $itemIds = array_column($itemsArray, 'id');
@@ -188,8 +199,8 @@ class ItemController extends Controller
         }
 
         return response()->json([
-            'items' => $itemsArray,
-            'count' => $totalCount,
+            'data' => $itemsArray,
+            'total' => $totalCount,
         ]);
     }
 
@@ -204,41 +215,99 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'purchase_value' => 'required|numeric|min:0', // Adjust according to your needs
-            'type_id' => 'required|integer|exists:types,id', // Ensure type_id exists in the types table
+            'description' => 'nullable|string',
+            'serial' => 'nullable|string',
+            'purchase_value' => 'nullable|numeric',
+            'purchased_at' => 'required|date',
+            'manufactured_at' => 'nullable|date',
+        ]);
+
+
+        $user = auth()->user();
+
+        // Decode the validated JSON
+        $type = Type::findOrFail($request->type['id']);
+        if ($request->brand) {
+            $brand = Brand::findOrFail($request->brand['id']);
+        }
+
+        $discordUserName = $user->discord_username;
+        $typeName = $type['name'];
+        $dateString = Carbon::parse($request->purchased_at)->format('d-m-y');
+
+        $code = $discordUserName . '_' .
+            strtolower(str_replace(' ', '', $typeName)) . '_' .
+            $dateString;
+
+        $uniqueCode = getUniqueString('items', 'code', $code);
+
+
+        $item = new Item();
+        $item->type_id = $type->id;              // Store the ID from the validated JSON
+        $item->brand_id = $brand->id ?? null;       // Optional: Store other fields from the JSON
+        $item->description = $request->description;
+        $item->serial = $request->serial;
+        $item->purchase_value = $request->purchase_value;
+        $item->purchased_at = Carbon::parse($request->purchased_at)->format('Y-m-d H:i:s');
+        $item->manufactured_at = $request->manufactured_at ? Carbon::parse($request->manufactured_at)->format('Y-m-d H:i:s') : null;
+        $item->owned_by = $user->id;
+        $item->code = $uniqueCode;
+        $item->save();
+
+
+        $response['data'] = $item;
+        $response['message'] = 'Item created';
+
+        return response()->json(['success' => true, 'data' => $item, 'message' => 'Item created']);
+    }
+
+
+
+    /**
+     * Store a newly created image in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function storeImage(Request $request, $id)
+    {
+
+        $validated = $request->validate([
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Image validation rules
-            'purchased_at' => 'nullable|date', // Validate created_at as a nullable date
-            'manufactured_at' => 'nullable|date', // Validate manufactured_at as a nullable date
         ]);
         $user = auth()->user();
-        $validated['owned_by'] = $user->id;
 
-        $item = Item::create($validated);
+        $validated['created_by'] = $user->id;
+
+        $item = Item::findOrFail($id);
+
 
         // Assuming you have validated the request as shown earlier
-        if ($request->hasFile('newImages')) {
-            foreach ($request->file('newImages') as $image) {
-                // Generate a unique filename based on the current date and user ID
-                $timestamp = now()->format('YmdHis'); // Current date and time
-                $userId = auth()->id(); // Authenticated user's ID
-                $extension = $image->getClientOriginalExtension(); // Get the image's original extension
-                $filename = "{$timestamp}_{$userId}.{$extension}";
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
 
-                // Store the image with the unique filename
-                $imagePath = $image->storeAs('images', $filename, 'public'); // Store in `storage/app/public/images`
+            // Generate a unique filename based on the current date and user ID
+            $timestamp = now()->format('YmdHis'); // Current date and time
+            $userId = auth()->id(); // Authenticated user's ID
+            $extension = $image->getClientOriginalExtension(); // Get the image's original extension
+            $filename = "{$timestamp}_{$userId}.{$extension}";
 
-                // Save image path to the database
-                ItemImage::create([
-                    'item_id' => $item->id, // Replace $itemId with the actual item ID
-                    'path' => $imagePath,
-                    'created_by' => $userId, // Assuming you are using authentication
-                ]);
-            }
+            // Store the image with the unique filename
+            $imagePath = $image->storeAs('images', $filename, 'public'); // Store in `storage/app/public/images`
+
+            // Save image path to the database
+            ItemImage::create([
+                'item_id' => $item->id, // Replace $itemId with the actual item ID
+                'path' => $imagePath,
+                'created_by' => $userId, // Assuming you are using authentication
+            ]);
         }
 
 
-        return response()->json($item);
+        return response()->json(['success' => true, 'message' => 'Image created']);
     }
 
     /**
@@ -281,48 +350,55 @@ class ItemController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'purchase_value' => 'required|numeric|min:0', // Adjust according to your needs
-            'type_id' => 'required|integer|exists:types,id', // Ensure type_id exists in the types table
-            'newImages.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'removedImages' => 'nullable|array',
+            'purchase_value' => 'nullable|numeric|min:0', // Adjust according to your needs
             'description' => 'nullable|string', // Ensure description is a nullable string
-            'purchased_at' => 'nullable|date', // Validate created_at as a nullable date
+            'serial' => 'nullable|string',
+            'purchased_at' => 'required|date', // Validate created_at as a nullable date
             'manufactured_at' => 'nullable|date', // Validate manufactured_at as a nullable date
-            'brand_id' => 'nullable|integer|exists:brands,id', // Ensure type_id exists in the brands table
+            'images' => 'nullable|array', // Validate manufactured_at as a nullable date
+            'images.*.id' => 'required|integer',
+            'images.*.path' => 'required|string',
         ]);
 
 
-        $item = Item::findOrFail($id);
-        $item->fill($request->except('newImages', 'removedImages'));
-        $item->save();
 
-        // Handle new images
-        if ($request->hasFile('newImages')) {
-            foreach ($request->file('newImages') as $image) {
-                // Generate a unique filename based on the current date and user ID
-                $timestamp = now()->format('YmdHis'); // Current date and time
-                $userId = auth()->id(); // Authenticated user's ID
-                $extension = $image->getClientOriginalExtension(); // Get the image's original extension
-                $filename = "{$timestamp}_{$userId}.{$extension}";
+        $item = DB::transaction(function () use ($request, $id) {
 
-                // Store the image with the unique filename
-                $imagePath = $image->storeAs('images', $filename, 'public'); // Store in `storage/app/public/images`
-
-                // Save image path to the database
-                ItemImage::create([
-                    'item_id' => $item->id, // Replace $itemId with the actual item ID
-                    'path' => $imagePath,
-                    'created_by' => $userId, // Assuming you are using authentication
-                ]);
+            // Decode the validated JSON
+            $type = Type::findOrFail($request->type['id']);
+            if ($request->brand) {
+                $brand = Brand::findOrFail($request->brand['id']);
             }
-        }
 
 
-        if ($request->removedImages) {
-            foreach ($request->removedImages as $imageId) {
-                // Find the image by ID
+            $item = Item::findOrFail($id);
+            $item->type_id = $type->id;
+            $item->brand_id = $brand->id ?? null;       // Optional: Store other fields from the JSON
+            $item->description = $request->description;
+            $item->serial = $request->serial;
+            $item->purchase_value = $request->purchase_value;
+            $item->purchased_at = Carbon::parse($request->purchased_at)->format('Y-m-d H:i:s');
+            $item->manufactured_at = $request->manufactured_at ? Carbon::parse($request->manufactured_at)->format('Y-m-d H:i:s') : null;
+            $item->save();
+
+
+            $postedImageIds = collect($request['images'])->pluck('id')->filter()->toArray(); // Get posted image IDs
+
+            // Fetch existing images from the database for the given item
+            $existingImages = ItemImage::where('item_id', $id)->get();
+
+
+            // Get IDs of existing images
+            $existingImageIds = $existingImages->pluck('id')->toArray();
+
+
+            // Determine which images to delete
+            $imageIdsToDelete = array_diff($existingImageIds, $postedImageIds);
+
+
+            foreach ($imageIdsToDelete as $imageId) {
+
                 $image = ItemImage::find($imageId);
-
 
                 // Check if the image exists
                 if ($image) {
@@ -333,9 +409,10 @@ class ItemController extends Controller
                     $image->delete();
                 }
             }
-        }
+            return $item;
+        });
 
-        return response()->json($item);
+        return response()->json(['data' => $item, 'message' => 'Item updated']);
     }
     /**
      * Remove the specified resource from storage.
@@ -368,9 +445,9 @@ class ItemController extends Controller
         return response()->json(['message' => 'Item and associated images deleted successfully']);
     }
 
-    public function getItemUnavailableDates(Request $request)
+    public function getItemUnavailableDates($itemId)
     {
-        $itemId = $request->query('itemId');
+        $itemId;
 
         // Fetch unavailable dates for the specified itemId
         $unavailableDates = ItemUnavailableDate::where('item_id', $itemId)
@@ -384,10 +461,12 @@ class ItemController extends Controller
         });
 
         // Convert to a plain array if needed
-        $datesArray = $dates->all();
+        $response['data'] = $dates->all();
 
-        return response()->json(['itemUnavailableDates' => $datesArray]);
+        return response()->json($response);
     }
+
+
 
     function convertToUTCAndMySQLDate($isoDate)
     {
@@ -397,47 +476,50 @@ class ItemController extends Controller
         // Format the DateTime object to MySQL DATETIME format
         return $dateTime->format('Y-m-d H:i:s');
     }
-    public function updateItemAvailability(Request $request)
+    public function updateItemAvailability(Request $request, $itemId)
     {
         // Validate the incoming request data
         $validatedData = $request->validate([
             'unavailableDates' => 'nullable|array',
             'unavailableDates.*' => 'date', // Validates that each item is a valid date
-            'id' => 'required|integer|exists:items,id',
+            'itemId' => 'required|integer|exists:items,id'
         ]);
 
-        // Extracting validated data
-        $itemId = $validatedData['id'];
-        $unavailableDates = $validatedData['unavailableDates'] ?? [];
-
-        // Delete existing unavailable dates for this item
-        ItemUnavailableDate::where('item_id', $itemId)->delete();
+        DB::transaction(function () use ($validatedData) {
 
 
+            // Extracting validated data
+            $unavailableDates = $validatedData['unavailableDates'] ?? [];
+
+            // Delete existing unavailable dates for this item
+            ItemUnavailableDate::where('item_id', $validatedData['itemId'])->delete();
 
 
-        // Insert new unavailable dates
-        if (!empty($unavailableDates)) {
 
 
-            // Convert each ISO 8601 date to UTC and MySQL format
-            $convertedDates = array_map(function ($date) {
-                return $this->convertToUTCAndMySQLDate($date);
-            }, $validatedData['unavailableDates']);
+            // Insert new unavailable dates
+            if (!empty($unavailableDates)) {
 
-            $dataToInsert = [];
-            foreach ($convertedDates as $date) {
-                $dataToInsert[] = [
-                    'item_id' => $itemId,
-                    'unavailable_date' => $date,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+
+                // Convert each ISO 8601 date to UTC and MySQL format
+                $convertedDates = array_map(function ($date) {
+                    return $this->convertToUTCAndMySQLDate($date);
+                }, $validatedData['unavailableDates']);
+
+                $dataToInsert = [];
+                foreach ($convertedDates as $date) {
+                    $dataToInsert[] = [
+                        'item_id' => $validatedData['itemId'],
+                        'unavailable_date' => $date,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                // Insert the new records in one query
+                ItemUnavailableDate::insert($dataToInsert);
             }
-
-            // Insert the new records in one query
-            ItemUnavailableDate::insert($dataToInsert);
-        }
+        });
         return response()->json(['message' => 'Item availability updated successfully.']);
     }
 }

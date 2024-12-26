@@ -17,11 +17,15 @@ class CreateUsersTable extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('password_reset_token')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
             $table->foreignId('location_id')->constrained('locations')->onDelete('cascade');
+            $table->string('discord_user_id')->nullable();
+            $table->string('discord_username')->nullable();
+            $table->string('discord_discriminator',4)->nullable();
             $table->index('email');
             $table->index('location_id');
         });

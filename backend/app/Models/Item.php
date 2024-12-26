@@ -32,4 +32,15 @@ class Item extends Model
     {
         return $this->belongsTo(User::class, 'owned_by');
     }
+
+
+    public function type()
+    {
+        return $this->belongsTo(Type::class);
+    }
+
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
+    }
 }

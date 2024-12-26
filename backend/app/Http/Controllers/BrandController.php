@@ -45,15 +45,15 @@ class BrandController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function getUserBrands(Request $request)
+    public function index(Request $request)
     {
 
         // Get request parameters
-        $page = $request->input('page', 1);
+        $brandId = $request->input('brandId');
         $itemsPerPage = $request->input('itemsPerPage', 10);
-        $sortBy = $request->input('sortBy.0.key', 'brands.name'); // Default sort by id
-        $order = $request->input('sortBy.0.order', 'asc'); // Default order ascending
+        $page = $request->input('page', 1);
         $search = $request->input('search', '');
+        $sortBy = $request->input('sortBy');
 
 
         $query = Brand::query();
@@ -65,19 +65,26 @@ class BrandController extends Controller
             });
         }
 
-        $query->orderBy('name', 'ASC');
-
-        $user = $request->user();
-        $query->where('created_by', $user->id);
+        // Check if the path is 'me/items' and filter by user if so
+        if ($request->path() == 'api/me/brands') {
+            $user = $request->user();
+            $query->where('created_by', $user->id);
+        }
 
         // Apply sorting
-        $query->orderBy($sortBy, $order);
+        if ($sortBy) {
+            foreach ($sortBy as $sort) {
+                $key = $sort['key'] ?? 'id';
+                $order = strtolower($sort['order'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
 
+                $query->orderBy($key, $order);
+            }
+        }
 
-        // Apply pagination
-
-        if ($request->paginate && $request->paginate != 'false') {
-
+        if ($request->itemsPerPage == -1) {
+            $brandsArray = $query->get()->toArray();
+            $totalCount = count($brandsArray);
+        } else {
             $brands = $query->paginate($itemsPerPage, ['*'], 'page', $page);
             $brandsArray = $brands->items();
             $totalCount = $brands->total();
@@ -85,62 +92,11 @@ class BrandController extends Controller
 
         // Return response
         return response()->json([
-            'count' => $totalCount,
-            'brands' => $brandsArray
+            'total' => $totalCount,
+            'data' => $brandsArray
         ]);
     }
 
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function getUserBrands1(Request $request)
-    {
-
-        // Get request parameters
-        $page = $request->input('page', 1);
-        $itemsPerPage = $request->input('itemsPerPage', 10);
-        $sortBy = $request->input('sortBy.0.key', 'brands.name'); // Default sort by id
-        $order = $request->input('sortBy.0.order', 'asc'); // Default order ascending
-        $search = $request->input('search', '');
-
-        dd($page);
-
-        $query = Brand::query();
-
-        // Apply search filter if needed
-        if (!empty($search)) {
-            $query->where(function ($query) use ($search) {
-                $query->where('brands.name', 'like', '%' . $search . '%');
-            });
-        }
-
-        $query->orderBy('name', 'ASC');
-
-        $user = $request->user();
-        $query->where('created_by', $user->id);
-
-        // Apply sorting
-        $query->orderBy($sortBy, $order);
-
-
-        // Apply pagination
-
-        if ($request->paginate && $request->paginate != 'false') {
-
-            $brands = $query->paginate($itemsPerPage, ['*'], 'page', $page);
-            $brandsArray = $brands->items();
-            $totalCount = $brands->total();
-        }
-
-        // Return response
-        return response()->json([
-            'count' => $totalCount,
-            'brands' => $brandsArray
-        ]);
-    }
 
 
     /**
@@ -161,7 +117,10 @@ class BrandController extends Controller
 
         $brand = Brand::create($validated);
 
-        return response()->json($brand);
+        $response['data']=$brand;
+        $response['message']='Brand created';
+
+        return response()->json($response);
     }
 
 
@@ -193,7 +152,7 @@ class BrandController extends Controller
 
 
 
-        return response()->json($brand);
+        return response()->json(['data' => $brand, 'message' => 'Brand updated']);
     }
 
     /**

@@ -23,6 +23,7 @@ class CreateItemsTable extends Migration
             $table->foreignId('owned_by')->constrained('users')->onDelete('cascade');
             $table->foreignId('type_id')->constrained('types');
             $table->foreignId('gps_tracker_id')->nullable()->constrained('gps_trackers');
+            $table->foreignId('brand_id')->nullable()->constrained('brands');
             $table->timestamps();
             $table->unique('id');
             $table->index('owned_by');

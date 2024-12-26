@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import axios from "../axios";
 import { useResponseStore } from "./response";
 import { useLoadingStore } from "./loading";
+import useApi from "@/stores/api";
 
 export const useLocationStore = defineStore("location", {
   state: () => ({
@@ -69,21 +70,11 @@ export const useLocationStore = defineStore("location", {
     },
 
     async fetchUserLocation() {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      loadingStore.startLoading("fetchUserLocation");
+      const { fetchRequest } = useApi();
 
-      try {
-        const response = await axios.get(`/user/location`);
-        return response.data.location;
-      } catch (error) {
-        responseStore.clearResponse();
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("fetchUserLocation");
-      }
+      const data = await fetchRequest("me/location");
+
+      return data.data
     },
   },
 });

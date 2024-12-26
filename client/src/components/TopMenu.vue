@@ -44,12 +44,12 @@
           <v-list-item-title>My Loans</v-list-item-title>
         </v-list-item>
         <v-list-item @click="myMangement">
-          <v-list-item-title>My Tools</v-list-item-title>
+          <v-list-item-title>My Tools & Materials</v-list-item-title>
         </v-list-item>
         <v-list-item @click="editProfile">
           <v-list-item-title>Edit Profile</v-list-item-title>
         </v-list-item>
-        <v-list-item @click="routeToDiscordLink">
+         <v-list-item @click="routeToDiscordLink">
           <v-list-item-title>Link With Discord</v-list-item-title>
         </v-list-item>
         <v-list-item @click="confirmLogout">
@@ -99,7 +99,9 @@ const userStore = useUserStore();
 const logoutDialog = ref(false);
 
 const links = [
-  { text: "CATALOG", route: "type-list" },
+{ text: "TOOLS", route: "type-list" },
+// { text: "JOBS", route: "job-list" },
+// { text: "PROJECTS", route: "project-list" },
 ];
 
 // Safeguard to handle undefined or null paths

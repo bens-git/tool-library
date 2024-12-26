@@ -316,10 +316,8 @@ class AuthController extends Controller
 
         // Check if the user has an associated location
         if ($user && $user->location) {
-            return response()->json([
-                'success' => true,
-                'location' => $user->location
-            ]);
+            $data['data']=$user->location;
+            return response()->json($data);
         }
 
         // If the user has no associated location, return a not found response
