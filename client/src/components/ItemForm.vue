@@ -210,7 +210,6 @@ const saveItem = async () => {
     }
   }
 
-  console.log(localItem.value);
   //add new images
   if (localItem.value.id) {
     for (const image of newImages.value) {

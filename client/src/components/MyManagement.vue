@@ -102,6 +102,20 @@
               item-value="name"
               mobile-breakpoint="sm"
             >
+              <!-- Image column -->
+              <template v-slot:[`item.image`]="{ item }">
+                <v-img
+                  v-if="item.images?.length > 0"
+                  :src="fullImageUrl(item.images[0].path)"
+                  max-height="200"
+                  max-width="200"
+                  min-height="200"
+                  min-width="200"
+                  alt="Type Image"
+                ></v-img>
+                <v-icon v-else>mdi-image-off</v-icon>
+                <!-- Fallback icon if no image is available -->
+              </template>
               <template v-slot:[`item.actions`]="{ item }">
                 <v-icon
                   v-if="userStore.user && item.owned_by == userStore.user.id"
@@ -601,6 +615,7 @@ import TypeForm from "./TypeForm.vue";
 import CategoryForm from "./CategoryForm.vue";
 import UsageForm from "./UsageForm.vue";
 import BrandForm from "./BrandForm.vue";
+import useApi from "@/stores/api";
 
 const itemStore = useItemStore();
 const typeStore = useTypeStore();
@@ -611,10 +626,12 @@ const userStore = useUserStore();
 
 const activeTab = ref(0);
 const isEdit = ref("");
+const { fullImageUrl } = useApi();
 
 const myItemsListHeaders = [
-  { title: "Code", value: "code" },
-  { title: "Type", value: "type.name" },
+{ title: "Image", value: "image" },
+{ title: "Code", value: "code" },
+{ title: "Type", value: "type.name" },
   { title: "Brand", value: "brand.name" },
   { title: "Resource", value: "resource" },
   { title: "Actions", value: "actions", sortable: false },
