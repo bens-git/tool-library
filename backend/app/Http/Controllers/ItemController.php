@@ -274,10 +274,14 @@ class ItemController extends Controller
      */
     public function storeImage(Request $request, $id)
     {
-
         $validated = $request->validate([
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Image validation rules
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:6999', // Image validation rules
+        ], [
+            'image.max' => 'The uploaded file size must not exceed 7 MB.',
+            'image.image' => 'The uploaded file must be an image.',
+
         ]);
+
         $user = auth()->user();
 
         $validated['created_by'] = $user->id;
@@ -285,28 +289,28 @@ class ItemController extends Controller
         $item = Item::findOrFail($id);
 
 
-        // Assuming you have validated the request as shown earlier
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
+        DB::transaction(function () use ($request, $item) {
+            // Assuming you have validated the request as shown earlier
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
 
-            // Generate a unique filename based on the current date and user ID
-            $timestamp = now()->format('YmdHis'); // Current date and time
-            $userId = auth()->id(); // Authenticated user's ID
-            $extension = $image->getClientOriginalExtension(); // Get the image's original extension
-            $filename = "{$timestamp}_{$userId}.{$extension}";
+                // Generate a unique filename based on the current date and user ID
+                $timestamp = now()->format('YmdHis'); // Current date and time
+                $userId = auth()->id(); // Authenticated user's ID
+                $extension = $image->getClientOriginalExtension(); // Get the image's original extension
+                $filename = "{$timestamp}_{$userId}.{$extension}";
 
-            // Store the image with the unique filename
-            $imagePath = $image->storeAs('images', $filename, 'public'); // Store in `storage/app/public/images`
+                // Store the image with the unique filename
+                $imagePath = $image->storeAs('images', $filename, 'public'); // Store in `storage/app/public/images`
 
-            // Save image path to the database
-            ItemImage::create([
-                'item_id' => $item->id, // Replace $itemId with the actual item ID
-                'path' => $imagePath,
-                'created_by' => $userId, // Assuming you are using authentication
-            ]);
-        }
-
-
+                // Save image path to the database
+                ItemImage::create([
+                    'item_id' => $item->id, // Replace $itemId with the actual item ID
+                    'path' => $imagePath,
+                    'created_by' => $userId, // Assuming you are using authentication
+                ]);
+            }
+        });
         return response()->json(['success' => true, 'message' => 'Image created']);
     }
 
