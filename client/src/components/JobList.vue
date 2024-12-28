@@ -62,14 +62,14 @@
         </v-row>
       </template>
       <v-data-table-server
-        v-model:items-per-page="jobStore.itemsPerPage"
+        v-model:items-per-page="jobStore.jobsListItemsPerPage"
         :headers="headers"
-        :items="jobStore.jobs"
-        :items-length="jobStore.totalJobs"
+        :items="jobStore.jobsListJobs"
+        :items-length="jobStore.jobsListTotalJobs"
         loading-text="Loading... Please wait"
-        :search="jobStore.search"
+        :search="jobStore.jobsListFilters.search"
         item-value="id"
-        @update:options="jobStore.updateOptions"
+        @update:options="jobStore.updateJobsListOptions"
         mobile-breakpoint="sm"
       >
         <!-- Image column -->

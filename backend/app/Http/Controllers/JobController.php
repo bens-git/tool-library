@@ -61,7 +61,7 @@ class JobController extends Controller
 
         // Return response
         return response()->json([
-            'count' => $total,
+            'total' => $total,
             'data' => $jobArray
         ]);
     }

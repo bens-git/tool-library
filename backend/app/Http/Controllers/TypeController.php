@@ -210,7 +210,7 @@ class TypeController extends Controller
 
         // Combine types with their images
         foreach ($typesArray as &$type) {
-            $type['images'] = $images[$type['id']]??null;
+            $type['images'] = $images[$type['id']] ?? null;
         }
 
 
@@ -556,7 +556,7 @@ class TypeController extends Controller
         // Delete the item itself
         $type->delete();
 
-        return response()->json(['message' => 'Type and associated images deleted successfully']);
+        return response()->json(['success' => true, 'message' => 'Type deleted']);
     }
 
 

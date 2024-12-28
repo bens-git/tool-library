@@ -100,7 +100,7 @@ const logoutDialog = ref(false);
 
 const links = [
 { text: "TOOLS", route: "type-list" },
-// { text: "JOBS", route: "job-list" },
+//{ text: "JOBS", route: "job-list" },
 // { text: "PROJECTS", route: "project-list" },
 ];
 

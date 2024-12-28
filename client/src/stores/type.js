@@ -168,7 +168,7 @@ export const useTypeStore = defineStore("type", {
       this.myTypesListTotalTypes = data.total;
     },
 
-    async createType(typeData) {
+    async postType(typeData) {
       const { sendRequest } = useApi();
 
       const data = await sendRequest("types", "post", typeData);
@@ -179,7 +179,6 @@ export const useTypeStore = defineStore("type", {
         this.myTypesListTotalTypes++;
         return data.data;
       }
-
     },
 
     async saveMyType(type) {
@@ -202,21 +201,22 @@ export const useTypeStore = defineStore("type", {
       }
     },
 
-    
-
     async deleteUserType(typeId) {
-      const { sendRequest } = useApi();
-      await sendRequest(
-        "delete", // HTTP method
-        `types/${typeId}`, // API endpoint
-        null, // Payload
-        () => {
-          this.userTypes = this.userTypes.filter((type) => type.id !== typeId);
+      console.log('delete',typeId)
 
-          this.totalUserTypes -= 1;
-          this.myTypesListSelectedType = null;
-        }
+      const { sendRequest } = useApi();
+      const data = await sendRequest(
+        `types/${typeId}`, // API endpoint
+        "delete" // HTTP method
       );
+      if (data?.success) {
+        this.myTypesListTypes = this.myTypesListTypes.filter(
+          (type) => type.id !== typeId
+        );
+
+        this.myTypesListTotalTypes -= 1;
+        this.myTypesListSelectedType = null;
+      }
     },
   },
 });

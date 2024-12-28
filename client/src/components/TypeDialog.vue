@@ -5,105 +5,97 @@
         <v-btn
           class="text-none font-weight-regular"
           :prepend-icon="isEdit ? 'mdi-edit' : 'mdi-plus'"
-          :text="isEdit ? 'Edit Job' : 'Create Job'"
+          :text="isEdit ? `EDIT ${resource}` : `CREATE ${resource}`"
           variant="tonal"
           v-bind="activatorProps"
         ></v-btn>
       </template>
       <v-card
         :prepend-icon="isEdit ? 'mdi-edit' : 'mdi-plus'"
-        :title="isEdit ? 'Edit Job' : 'Create Job'"
+        :title="isEdit ? `EDIT ${resource}` : `CREATE ${resource}`"
       >
-        <v-card-text v-if="localJob">
+        <v-card-text v-if="localType">
           <v-row dense>
             <v-col cols="12" md="4" sm="6">
               <v-text-field
-              density="compact"
-              v-model="localJob.name"
+                density="compact"
+                v-model="localType.name"
+                :error-messages="responseStore?.response?.errors?.name"
                 label="Name"
-                :error-messages="responseStore.response?.errors?.name"
-              ></v-text-field>
+              />
             </v-col>
             <v-col cols="12" md="4" sm="6">
               <v-textarea
                 density="compact"
-                v-model="localJob.description"
+                v-model="localType.description"
                 label="Description"
-                placeholder=""
-                :error-messages="responseStore.response?.errors?.description"
               ></v-textarea>
             </v-col>
 
             <v-col cols="12" md="4" sm="6">
+              <v-textarea
+                density="compact"
+                v-model="localType.notes"
+                label="Notes"
+              ></v-textarea>
+            </v-col>
+
+            <v-col cols="12" md="4" sm="6">
+              <v-text-field
+                density="compact"
+                v-model="localType.code"
+                label="Code"
+              ></v-text-field>
+              </v-col
+            >
+
+            <v-col cols="12" md="4" sm="6">
               <v-autocomplete
                 density="compact"
-                v-model="localJob.material_id"
-                :items="materials"
-                label="Material"
-                clearable
+                :multiple="true"
+                v-model="localType.category_ids"
+                :items="categoryStore.categories"
+                label="Category"
                 item-title="name"
                 item-value="id"
-                :error-messages="responseStore.response?.errors?.material_id"
+                :error-messages="responseStore?.response?.errors?.category_ids"
               ></v-autocomplete>
-
-              <!-- create material dialog -->
-              <TypeDialog :isEdit="false" resource="MATERIAL"/>
-            </v-col>
+              </v-col
+            >
 
             <v-col cols="12" md="4" sm="6">
               <v-autocomplete
                 density="compact"
-                v-model="localJob.product_id"
-                :items="materials"
-                label="Product"
-                clearable
+                :multiple="true"
+                v-model="localType.usage_ids"
+                :items="usageStore.usages"
+                label="Usage"
                 item-title="name"
                 item-value="id"
-                :error-messages="responseStore.response?.errors?.product_id"
-              ></v-autocomplete
-            ></v-col>
+                :error-messages="responseStore?.response?.errors?.usage_ids"
+              ></v-autocomplete>
+              </v-col
+            >
+
 
             <v-col cols="12" md="4" sm="6">
               <v-autocomplete
                 density="compact"
-                v-model="localJob.type_id"
-                :items="toolTypes"
-                label="Tool Type"
-                clearable
-                item-title="name"
-                item-value="id"
-                :error-messages="responseStore.response?.errors?.type_id"
-              ></v-autocomplete
-            ></v-col>
-
-            <v-col v-if="localJob.image_path" cols="12" md="4" sm="6">
-              <v-row>
-                <v-col cols="4">
-                  <v-img
-                    :src="fullImageUrl(localJob.image_path)"
-                    class="mb-2"
-                    aspect-ratio="1"
-                  >
-                    <v-btn icon color="red" @click="removeImage" class="mt-2">
-                      <v-icon>mdi-delete</v-icon>
-                    </v-btn>
-                  </v-img>
-                </v-col>
-              </v-row>
-            </v-col>
+                v-model="localType.resource"
+                :items="['TOOL', 'MATERIAL']"
+                label="Resource"
+                :disabled="true"
+                :error-messages="responseStore?.response?.errors?.resource"
+              ></v-autocomplete>
+              </v-col
+            >
           </v-row>
         </v-card-text>
         <v-divider></v-divider>
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-file-input
-            density="compact"
-            @change="handleFileChange"
-            label="Upload Image"
-            prepend-icon="mdi-camera"
-            accept="image/*"
-          ></v-file-input>
+         
 
           <v-btn text="Close" variant="plain" @click="dialog = false"></v-btn>
 
@@ -129,10 +121,11 @@
 </template>
 <script setup>
 import { shallowRef, ref, watch, onMounted } from "vue";
-import { useJobStore } from "@/stores/job";
 import { useTypeStore } from "@/stores/type";
+import { useCategoryStore } from "@/stores/category";
+import { useUsageStore } from "@/stores/usage";
 import { useResponseStore } from "@/stores/response";
-import TypeDialog from "./TypeDialog.vue";
+import ItemDialog from "./TypeDialog.vue";
 
 // Create a local state variable to sync with modelValue
 //const localModelValue = ref(props.modelValue);
@@ -146,28 +139,28 @@ import TypeDialog from "./TypeDialog.vue";
 // );
 const dialog = shallowRef(false);
 
-const jobStore = useJobStore();
 const typeStore = useTypeStore();
+const categoryStore = useCategoryStore();
+const usageStore = useUsageStore();
 const responseStore = useResponseStore();
 
 // const apiBaseUrl = process.env.VUE_APP_API_HOST;
 
-const localJob = ref(null);
-const toolTypes = ref([]);
-const materials = ref([]);
-const newImages = ref(null);
+const localType = ref(null);
 
 // onMounted(async () => {
+//   console.log("mount");
 //   tools.resource = "TOOL";
 //   tools.value = (await typeStore.fetchTypes()).data;
 //   tools.resource = "MATERIAL";
 //   materials.value = (await typeStore.fetchTypes()).data;
-//   initializeLocalJob();
+//   initializeLocalType();
 // });
 
 const props = defineProps({
   isEdit: Boolean,
-  job: Object,
+  type: Object,
+  resource: String,
 });
 
 // Watch the dialog's state
@@ -180,13 +173,14 @@ watch(dialog, (newVal) => {
 });
 
 // Function to initialize
-const initializeLocalJob = () => {
-  if (props.isEdit && props.job) {
-    localJob.value = {
-      ...props.job,
+const initializeLocalType = () => {
+  console.log("init");
+  if (props.isEdit && props.type) {
+    localType.value = {
+      ...props.type,
     };
   } else {
-    localJob.value = {
+    localType.value = {
       name: "",
       description: "",
       material_id: null,
@@ -194,45 +188,35 @@ const initializeLocalJob = () => {
       tool_id: null,
       created_by: null,
       image_path: null,
+      resource: props.resource
     };
   }
 };
 
 // const emit = defineEmits(["update:modelValue", "close"]);
 
-const onOpen = () => {
-  initializeLocalJob();
+const onOpen =async () => {
+  await categoryStore.fetchCategories()
+  await usageStore.fetchUsages()
+  initializeLocalType();
 };
 
 const onClose = () => {
+  console.log("Dialog closed");
 };
 
 const save = () => {
+  console.log("save");
   dialog.value = false;
 };
 
 const create = async () => {
-  const newJob = await jobStore.postJob(localJob.value);
-  if (newJob && newJob.id) {
-    localJob.value = newJob;
+  const newType = await typeStore.postType(localType.value);
+  if (newType && newType.id) {
+    localType.value = newType;
   }
 
-  //add new images
-  if (localJob.value.id) {
-    for (const image of newImages.value) {
-      await jobStore.postImage(localJob.value.id, image);
-    }
-  }
-
-  if (responseStore.response.success) {
-    dialog.value = false;
-  }
 };
 
-const handleFileChange = (event) => {
-  const files = event.target.files;
-  if (files.length) {
-    newImages.value.push(...Array.from(files));
-  }
-};
+
 </script>

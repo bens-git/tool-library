@@ -129,7 +129,7 @@ const saveType = async () => {
   if (props.isEdit) {
     await typeStore.saveMyType(localType.value);
   } else {
-    const newType = await typeStore.createType(localType.value);
+    const newType = await typeStore.postType(localType.value);
     if(newType && newType.id){
       localType.value=newType
     }

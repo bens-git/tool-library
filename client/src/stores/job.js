@@ -1,56 +1,51 @@
 import { defineStore } from "pinia";
-import useApi  from "@/stores/api";
+import useApi from "@/stores/api";
 
 export const useJobStore = defineStore("job", {
   state: () => ({
-    jobs: [],
-    totalJobs: 0,
-    selectedJob: null,
-    search: "",
-    page: 1,
-    itemsPerPage: 10,
-    sortBy: [{ key: "name", order: "asc" }],
+    jobsListJobs: [],
+    jobsListTotalJobs: 0,
+    jobsListSelectedJob: null,
+    jobsListFilters: { search: "" },
+    jobsListPage: 1,
+    jobsListItemsPerPage: 10,
+    jobsListSortBy: [{ key: "name", order: "asc" }],
   }),
   getters: {},
 
   actions: {
-    updateOptions({ page, itemsPerPage, sortBy }) {
-      this.page = page;
-      this.itemsPerPage = itemsPerPage;
-      this.sortBy = sortBy;
+    updateJobsListOptions({ page, itemsPerPage, sortBy }) {
+      this.jobsListPage = page;
+      this.jobsListItemsPerPage = itemsPerPage;
+      this.jobsListSortBy = sortBy;
 
       this.fetchJobs();
     },
 
     async fetchJobs() {
       const { fetchRequest } = useApi();
-      await fetchRequest(
+      const data = await fetchRequest(
         "jobs", // API endpoint
         {
-          page: this.page,
-          itemsPerPage: this.itemsPerPage,
-          sortBy: this.sortBy,
-          search: this.search,
-        },
-        (data) => {
-          this.jobs = data.data;
-          this.totalJobs = data.count;
+          page: this.jobsListPage,
+          itemsPerPage: this.jobsListItemsPerPage,
+          sortBy: this.jobsListSortBy,
+          search: this.jobsListFilters.search,
         }
       );
+      this.jobsListJobs = data.data;
+      this.jobsListTotalJobs = data.total;
     },
 
-    async createJob(formData) {
+    async postJob(formData) {
       const { sendRequest } = useApi();
-      await sendRequest(
-        "post", // HTTP method
-        "jobs", // API endpoint
-        formData, // Payload
-        (data) => {
-          this.selectedJob = data;
-          this.jobs.push(data);
-          this.totalJobs++;
-        }
-      );
+      const data = await sendRequest(`jobs`, "POST", formData);
+      if (data?.success) {
+        this.jobsListSelecteJob = data.data;
+        this.jobsListJobs.push(data.data);
+        this.jobsListTotalJobs++;
+        return data.data;
+      }
     },
 
     async saveJob(formData) {

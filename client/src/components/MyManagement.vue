@@ -245,27 +245,6 @@
                 >
                   mdi-delete
                 </v-icon>
-                <v-dialog v-model="isDeleteTypeDialogVisible" max-width="400">
-                  <v-card>
-                    <v-card-title class="headline"
-                      >Confirm Deletion</v-card-title
-                    >
-                    <v-card-text
-                      >Are you sure you want to delete this type?</v-card-text
-                    >
-                    <v-card-actions>
-                      <v-btn
-                        color="primary"
-                        text
-                        @click="isDeleteTypeDialogVisible = false"
-                        >Cancel</v-btn
-                      >
-                      <v-btn color="red" text @click="deleteType(item)"
-                        >Delete</v-btn
-                      >
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
               </template>
             </v-data-table-server>
           </v-card-text>
@@ -596,6 +575,22 @@
           @close-modal="showBrandModal = false"
         />
       </v-dialog>
+
+      <v-dialog v-model="isDeleteTypeDialogVisible" max-width="400">
+        <v-card>
+          <v-card-title class="headline">Confirm Deletion</v-card-title>
+          <v-card-text>Are you sure you want to delete {{selectedType.name}}?</v-card-text>
+          <v-card-actions>
+            <v-btn
+              color="primary"
+              text
+              @click="isDeleteTypeDialogVisible = false"
+              >Cancel</v-btn
+            >
+            <v-btn color="red" text @click="deleteUserType(item)">Delete</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-card>
   </v-container>
 </template>
@@ -629,9 +624,9 @@ const isEdit = ref("");
 const { fullImageUrl } = useApi();
 
 const myItemsListHeaders = [
-{ title: "Image", value: "image" },
-{ title: "Code", value: "code" },
-{ title: "Type", value: "type.name" },
+  { title: "Image", value: "image" },
+  { title: "Code", value: "code" },
+  { title: "Type", value: "type.name" },
   { title: "Brand", value: "brand.name" },
   { title: "Resource", value: "resource" },
   { title: "Actions", value: "actions", sortable: false },
@@ -743,6 +738,7 @@ const confirmDeleteItem = (item) => {
 };
 
 const confirmDeleteType = (type) => {
+  console.log(type)
   selectedType.value = type;
   isDeleteTypeDialogVisible.value = true;
 };
@@ -763,22 +759,20 @@ const confirmDeleteBrand = (usage) => {
 };
 
 const deleteItem = async (item) => {
-  isDeleteItemDialogVisible.value = false;
   try {
     await itemStore.deleteItem(item.id);
     console.log("Item deleted successfully");
+    isDeleteItemDialogVisible.value = false;
   } catch (error) {
     console.error("Failed to delete item:", error.message);
   }
 };
-const deleteType = async (type) => {
-  isDeleteTypeDialogVisible.value = false;
-  try {
-    await typeStore.deleteType(type.id);
-    console.log("Type deleted successfully");
-  } catch (error) {
-    console.error("Failed to delete type:", error.message);
-  }
+const deleteUserType = async () => {
+
+    await typeStore.deleteUserType(selectedType.value.id);
+    isDeleteTypeDialogVisible.value = false;
+
+  
 };
 
 const deleteCategory = async (category) => {
