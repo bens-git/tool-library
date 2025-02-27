@@ -3,7 +3,7 @@
     <v-card title="Management" flat style="min-width: 90vw; min-height: 90vh">
       <v-tabs v-model="activeTab" grow>
         <v-tab>My Items</v-tab>
-        <v-tab>My Types</v-tab>
+        <v-tab>My Archetypes</v-tab>
         <v-tab>My Categories</v-tab>
         <v-tab>My Usages</v-tab>
         <v-tab>My Brands</v-tab>
@@ -29,8 +29,8 @@
             >
           </v-card-title>
           <v-card-subtitle>
-            Manage individual units of tools—each item is a specific instance of
-            a tool type, like two 'Mitre Saws' bought at different times.
+            Manage tool elements—each tool is a specific element of
+            a tool archetype, like two 'Mitre Saws' bought at different times.
           </v-card-subtitle>
           <v-card-text>
             <v-row>
@@ -49,9 +49,9 @@
               <v-col cols="3" md="3">
                 <v-autocomplete
                   density="compact"
-                  v-model="itemStore.myItemsListFilters.typeId"
-                  :items="autocompleteTypes"
-                  label="Select a type"
+                  v-model="itemStore.myItemsListFilters.resourcearchetypeId"
+                  :items="autocompleteResourceArchetypes"
+                  label="Select a Resource Archetype"
                   item-title="name"
                   item-value="id"
                   hide-no-data
@@ -59,7 +59,7 @@
                   return-object
                   clearable
                   @update:model-value="debounceSearch('items')"
-                  @update:search="debouncedAutocompleteTypeSearch"
+                  @update:search="debouncedAutocompleteResourceArchetypeSearch"
                 ></v-autocomplete>
               </v-col>
               <v-col cols="3" md="3">
@@ -111,7 +111,7 @@
                   max-width="200"
                   min-height="200"
                   min-width="200"
-                  alt="Type Image"
+                  alt="ResourceArchetype Image"
                 ></v-img>
                 <v-icon v-else>mdi-image-off</v-icon>
                 <!-- Fallback icon if no image is available -->
@@ -178,48 +178,48 @@
         </v-card>
       </div>
 
-      <!-- My Types Tab -->
+      <!-- My ResourceArchetypes Tab -->
       <div v-if="activeTab === 1">
         <v-card>
           <v-card-title>
-            My Types
+            My ResourceArchetypes
             <v-btn
               class="ms-auto"
               @click="
                 [
                   (isEdit = false),
-                  (selectedType = null),
-                  (showTypeModal = true),
+                  (selectedResourceArchetype = null),
+                  (showResourceArchetypeModal = true),
                 ]
               "
               color="primary"
               dark
-              >Create Type</v-btn
+              >Create ResourceArchetype</v-btn
             >
           </v-card-title>
 
           <v-card-subtitle>
-            Define tool types, such as 'Mitre Saw' or 'Hammer,' to group similar
-            tools in your inventory
+            Define tool archetypes, such as 'Mitre Saw' or 'Hammer,' to group similar
+            elements in your inventory
           </v-card-subtitle>
 
           <v-card-text>
             <v-text-field
               density="compact"
-              v-model="typeStore.search"
+              v-model="resourceArchetypeStore.search"
               label="Search"
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
               hide-details
               single-line
-              @input="debounceSearch('types')"
+              @input="debounceSearch('resource_archetypes')"
             ></v-text-field>
             <v-data-table-server
-              @update:options="typeStore.updateMyTypesListOptions"
-              v-model:items-per-page="typeStore.myTypesListItemsPerPage"
-              :headers="typeHeaders"
-              :items="typeStore.myTypesListTypes"
-              :items-length="typeStore.myTypesListTotalTypes"
+              @update:options="resourceArchetypeStore.updateMyResourceArchetypesListOptions"
+              v-model:items-per-page="resourceArchetypeStore.myResourceArchetypesListItemsPerPage"
+              :headers="resourcearchetypeHeaders"
+              :items="resourceArchetypeStore.myResourceArchetypesListResourceArchetypes"
+              :items-length="resourceArchetypeStore.myResourceArchetypesListTotalResourceArchetypes"
               item-value="name"
               mobile-breakpoint="sm"
             >
@@ -231,8 +231,8 @@
                   @click="
                     () => {
                       isEdit = true;
-                      selectedType = item;
-                      showTypeModal = true;
+                      selectedResourceArchetype = item;
+                      showResourceArchetypeModal = true;
                     }
                   "
                 >
@@ -241,7 +241,7 @@
                 <v-icon
                   v-if="userStore.user && item.created_by === userStore.user.id"
                   size="small"
-                  @click="confirmDeleteType(item)"
+                  @click="confirmDeleteResourceArchetype(item)"
                 >
                   mdi-delete
                 </v-icon>
@@ -540,12 +540,12 @@
         />
       </v-dialog>
 
-      <v-dialog v-model="showTypeModal" max-width="600px">
-        <TypeForm
-          :showTypeModal="showTypeModal"
+      <v-dialog v-model="showResourceArchetypeModal" max-width="600px">
+        <ResourceArchetypeForm
+          :showResourceArchetypeModal="showResourceArchetypeModal"
           :isEdit="isEdit"
-          :type="selectedType"
-          @close-modal="showTypeModal = false"
+          :resourceArchetype="selectedResourceArchetype"
+          @close-modal="showResourceArchetypeModal = false"
         />
       </v-dialog>
 
@@ -576,18 +576,18 @@
         />
       </v-dialog>
 
-      <v-dialog v-model="isDeleteTypeDialogVisible" max-width="400">
+      <v-dialog v-model="isDeleteResourceArchetypeDialogVisible" max-width="400">
         <v-card>
           <v-card-title class="headline">Confirm Deletion</v-card-title>
-          <v-card-text>Are you sure you want to delete {{selectedType.name}}?</v-card-text>
+          <v-card-text>Are you sure you want to delete {{selectedResourceArchetype.name}}?</v-card-text>
           <v-card-actions>
             <v-btn
               color="primary"
               text
-              @click="isDeleteTypeDialogVisible = false"
+              @click="isDeleteResourceArchetypeDialogVisible = false"
               >Cancel</v-btn
             >
-            <v-btn color="red" text @click="deleteUserType(item)">Delete</v-btn>
+            <v-btn color="red" text @click="deleteUserResourceArchetype(item)">Delete</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -598,7 +598,7 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useItemStore } from "@/stores/item";
-import { useTypeStore } from "@/stores/type";
+import { useResourceArchetypeStore } from "@/stores/resource_archetype";
 import { useCategoryStore } from "@/stores/category";
 import { useBrandStore } from "@/stores/brand";
 import { useUsageStore } from "@/stores/usage";
@@ -606,14 +606,14 @@ import { useUserStore } from "@/stores/user";
 import debounce from "lodash/debounce";
 import ItemForm from "./ItemForm.vue";
 import AvailabilityForm from "./AvailabilityForm.vue";
-import TypeForm from "./TypeForm.vue";
+import ResourceArchetypeForm from "./ResourceArchetypeForm.vue";
 import CategoryForm from "./CategoryForm.vue";
 import UsageForm from "./UsageForm.vue";
 import BrandForm from "./BrandForm.vue";
 import useApi from "@/stores/api";
 
 const itemStore = useItemStore();
-const typeStore = useTypeStore();
+const resourceArchetypeStore = useResourceArchetypeStore();
 const categoryStore = useCategoryStore();
 const usageStore = useUsageStore();
 const brandStore = useBrandStore();
@@ -626,12 +626,12 @@ const { fullImageUrl } = useApi();
 const myItemsListHeaders = [
   { title: "Image", value: "image" },
   { title: "Code", value: "code" },
-  { title: "Type", value: "type.name" },
+  { title: "Resource Archetype", value: "resource_archetype.name" },
   { title: "Brand", value: "brand.name" },
   { title: "Resource", value: "resource" },
   { title: "Actions", value: "actions", sortable: false },
 ];
-const typeHeaders = [
+const resourcearchetypeHeaders = [
   { title: "Name", value: "name" },
   {
     title: "Categories",
@@ -662,29 +662,32 @@ const myBrandsListHeaders = [
 ];
 
 const isDeleteItemDialogVisible = ref(false);
-const isDeleteTypeDialogVisible = ref(false);
+const isDeleteResourceArchetypeDialogVisible = ref(false);
 const isDeleteCategoryDialogVisible = ref(false);
 const isDeleteUsageDialogVisible = ref(false);
 const isDeleteBrandDialogVisible = ref(false);
 const selectedItem = ref(null);
-const selectedType = ref(null);
+const selectedResourceArchetype = ref(null);
 const selectedCategory = ref(null);
 const selectedUsage = ref(null);
 const selectedBrand = ref(null);
-const autocompleteTypes = ref([]);
+const autocompleteResourceArchetypes = ref([]);
 const autocompleteBrands = ref([]);
 
-onMounted(() => {
+onMounted(async() => {
   itemStore.fetchResources();
-  typeStore.fetchMyTypes();
+  resourceArchetypeStore.fetchMyResourceArchetypes();
   categoryStore.fetchUserCategories();
   usageStore.fetchUserUsages();
   brandStore.fetchMyBrands();
+  autocompleteResourceArchetypes.value = await resourceArchetypeStore.fetchAutocompleteSelectResourceArchetypes();
+  autocompleteBrands.value = await brandStore.fetchAutocompleteSelectBrands();
+
 });
 
-// Autocomplete Type Search handler
-const onAutocompleteTypeSearch = async (query) => {
-  autocompleteTypes.value = await typeStore.fetchAutocompleteSelectTypes(query);
+// Autocomplete ResourceArchetype Search handler
+const onAutocompleteResourceArchetypeSearch = async (query) => {
+  autocompleteResourceArchetypes.value = await resourceArchetypeStore.fetchAutocompleteSelectResourceArchetypes(query);
 };
 
 // Autocomplete brand Search handler
@@ -694,21 +697,21 @@ const onAutocompleteBrandSearch = async (query) => {
 };
 
 // Debounced search function
-const debouncedAutocompleteTypeSearch = debounce(onAutocompleteTypeSearch, 300);
+const debouncedAutocompleteResourceArchetypeSearch = debounce(onAutocompleteResourceArchetypeSearch, 300);
 const debouncedAutocompleteBrandSearch = debounce(
   onAutocompleteBrandSearch,
   300
 );
 
-const debounceSearch = debounce((type) => {
-  switch (type) {
+const debounceSearch = debounce((resourcearchetype) => {
+  switch (resourcearchetype) {
     case "items":
       itemStore.page = 1;
       itemStore.fetchMyItems();
       break;
-    case "types":
-      typeStore.page = 1;
-      typeStore.fetchMyTypes();
+    case "resource_archetypes":
+      resourceArchetypeStore.page = 1;
+      resourceArchetypeStore.fetchMyResourceArchetypes();
       break;
     case "categories":
       categoryStore.page = 1;
@@ -726,7 +729,7 @@ const debounceSearch = debounce((type) => {
 }, 300);
 
 const showItemModal = ref(false);
-const showTypeModal = ref(false);
+const showResourceArchetypeModal = ref(false);
 const showCategoryModal = ref(false);
 const showUsageModal = ref(false);
 const showBrandModal = ref(false);
@@ -737,10 +740,10 @@ const confirmDeleteItem = (item) => {
   isDeleteItemDialogVisible.value = true;
 };
 
-const confirmDeleteType = (type) => {
-  console.log(type)
-  selectedType.value = type;
-  isDeleteTypeDialogVisible.value = true;
+const confirmDeleteResourceArchetype = (resourcearchetype) => {
+  console.log(resourcearchetype)
+  selectedResourceArchetype.value = resourcearchetype;
+  isDeleteResourceArchetypeDialogVisible.value = true;
 };
 
 const confirmDeleteCategory = (category) => {
@@ -767,10 +770,10 @@ const deleteItem = async (item) => {
     console.error("Failed to delete item:", error.message);
   }
 };
-const deleteUserType = async () => {
+const deleteUserResourceArchetype = async () => {
 
-    await typeStore.deleteUserType(selectedType.value.id);
-    isDeleteTypeDialogVisible.value = false;
+    await resourceArchetypeStore.deleteUserResourceArchetype(selectedResourceArchetype.value.id);
+    isDeleteResourceArchetypeDialogVisible.value = false;
 
   
 };

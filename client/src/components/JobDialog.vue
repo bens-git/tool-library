@@ -1,6 +1,6 @@
 <template>
   <div class="pl-4 text-center">
-    <v-dialog v-model="dialog"  @open="onOpen">
+    <v-dialog v-model="dialog" @open="onOpen">
       <template v-slot:activator="{ props: activatorProps }">
         <v-btn
           class="text-none font-weight-regular"
@@ -18,8 +18,8 @@
           <v-row dense>
             <v-col cols="12" md="4" sm="6">
               <v-text-field
-              density="compact"
-              v-model="localJob.name"
+                density="compact"
+                v-model="localJob.name"
                 label="Name"
                 :error-messages="responseStore.response?.errors?.name"
               ></v-text-field>
@@ -33,7 +33,6 @@
                 :error-messages="responseStore.response?.errors?.description"
               ></v-textarea>
             </v-col>
-
             <v-col cols="12" md="4" sm="6">
               <v-autocomplete
                 density="compact"
@@ -47,7 +46,7 @@
               ></v-autocomplete>
 
               <!-- create material dialog -->
-              <TypeDialog :isEdit="false" resource="MATERIAL"/>
+              <ResourceArchetypeDialog :isEdit="false" resource="MATERIAL" />
             </v-col>
 
             <v-col cols="12" md="4" sm="6">
@@ -66,13 +65,13 @@
             <v-col cols="12" md="4" sm="6">
               <v-autocomplete
                 density="compact"
-                v-model="localJob.type_id"
-                :items="toolTypes"
-                label="Tool Type"
+                v-model="localJob.resource_archetype_id"
+                :items="toolResourceArchetypes"
+                label="Tool ResourceArchetype"
                 clearable
                 item-title="name"
                 item-value="id"
-                :error-messages="responseStore.response?.errors?.type_id"
+                :error-messages="responseStore.response?.errors?.resource_archetype_id"
               ></v-autocomplete
             ></v-col>
 
@@ -130,9 +129,9 @@
 <script setup>
 import { shallowRef, ref, watch, onMounted } from "vue";
 import { useJobStore } from "@/stores/job";
-import { useTypeStore } from "@/stores/type";
+import { useResourceArchetypeStore } from "@/stores/resource_archetype";
 import { useResponseStore } from "@/stores/response";
-import TypeDialog from "./TypeDialog.vue";
+import ResourceArchetypeDialog from "./ResourceArchetypeDialog.vue";
 
 // Create a local state variable to sync with modelValue
 //const localModelValue = ref(props.modelValue);
@@ -147,23 +146,15 @@ import TypeDialog from "./TypeDialog.vue";
 const dialog = shallowRef(false);
 
 const jobStore = useJobStore();
-const typeStore = useTypeStore();
+const resourcearchetypeStore = useResourceArchetypeStore();
 const responseStore = useResponseStore();
 
 // const apiBaseUrl = process.env.VUE_APP_API_HOST;
 
 const localJob = ref(null);
-const toolTypes = ref([]);
+const toolResourceArchetypes = ref([]);
 const materials = ref([]);
 const newImages = ref(null);
-
-// onMounted(async () => {
-//   tools.resource = "TOOL";
-//   tools.value = (await typeStore.fetchTypes()).data;
-//   tools.resource = "MATERIAL";
-//   materials.value = (await typeStore.fetchTypes()).data;
-//   initializeLocalJob();
-// });
 
 const props = defineProps({
   isEdit: Boolean,
@@ -200,12 +191,17 @@ const initializeLocalJob = () => {
 
 // const emit = defineEmits(["update:modelValue", "close"]);
 
-const onOpen = () => {
+const onOpen = async () => {
+  initializeLocalJob();
+  responseStore.$reset();
+  //   tools.resource = "TOOL";
+  // tools.value = (await resourcearchetypeStore.fetchResourceArchetypes()).data;
+  // tools.resource = "MATERIAL";
+  materials.value = (await resourcearchetypeStore.fetchMaterialResources()).data;
   initializeLocalJob();
 };
 
-const onClose = () => {
-};
+const onClose = () => {};
 
 const save = () => {
   dialog.value = false;

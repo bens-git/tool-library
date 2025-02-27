@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Item extends Model
 {
     protected $table = 'items'; // Specify the table name if it's not following Laravel conventions
-    protected $fillable = ['name', 'description', 'type_id', 'owned_by', 'purchase_value', 'location_id', 'serial', 'purchased_at', 'manufactured_at', 'brand_id']; // List the fields that can be mass-assigned
+    protected $fillable = ['name', 'description', 'resource_archetype_id', 'owned_by', 'purchase_value', 'location_id', 'serial', 'purchased_at', 'manufactured_at', 'brand_id']; // List the fields that can be mass-assigned
 
     public function location()
     {
@@ -34,9 +34,11 @@ class Item extends Model
     }
 
 
-    public function type()
+
+
+    public function resourceArchetype()
     {
-        return $this->belongsTo(Type::class);
+        return $this->belongsTo(ResourceArchetype::class);
     }
 
     public function brand()

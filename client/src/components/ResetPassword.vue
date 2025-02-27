@@ -5,16 +5,16 @@
             <v-card-text>
                 <v-form ref="form" v-model="isValid">
 
-                    <input type="text" id="hidden-username" name="username" autocomplete="username">
+                    <input resourcearchetype="text" id="hidden-username" name="username" autocomplete="username">
 
 
                     <!-- New Password -->
-                    <v-text-field autocomplete="new-password" v-model="newPassword" label="New Password" type="password"
+                    <v-text-field autocomplete="new-password" v-model="newPassword" label="New Password" resourcearchetype="password"
                         :rules="[rules.required, validatePassword]" required></v-text-field>
 
                     <!-- Confirm New Password -->
                     <v-text-field autocomplete="new-password" v-model="confirmPassword" label="Confirm New Password"
-                        type="password" :rules="[rules.required, confirmPasswordMatch]" required></v-text-field>
+                        resourcearchetype="password" :rules="[rules.required, confirmPasswordMatch]" required></v-text-field>
                 </v-form>
             </v-card-text>
             <v-card-actions>

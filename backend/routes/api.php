@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ItemController;
-use App\Http\Controllers\TypeController;
+use App\Http\Controllers\ResourceArchetypeController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\UsageController;
@@ -39,11 +39,11 @@ Route::put('/user/password-with-token', [AuthController::class, 'resetPasswordWi
 
 
 Route::get('/items/{id}', [ItemController::class, 'show']);
-Route::get('/types-with-items', [TypeController::class, 'getTypesWithItems']);
-Route::get('/types', [TypeController::class, 'index']);
-Route::get('/types/{id}', [TypeController::class, 'show']);
+Route::get('/resource-archetypes-with-items', [ResourceArchetypeController::class, 'getResourceArchetypesWithItems']);
+Route::get('/resource-archetypes', [ResourceArchetypeController::class, 'index']);
+Route::get('/resource-archetypes/{id}', [ResourceArchetypeController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
-Route::get('/usages', [TypeController::class, 'getUsages']);
+Route::get('/usages', [ResourceArchetypeController::class, 'getUsages']);
 Route::get('/brands', [BrandController::class, 'getUsages']);
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -51,12 +51,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
     Route::delete('/items/{id}', [ItemController::class, 'destroy']);
     Route::delete('/jobs/{id}', [JobController::class, 'destroy']);
-    Route::delete('/types/{id}', [TypeController::class, 'destroy']);
+    Route::delete('/resource-archetypes/{id}', [ResourceArchetypeController::class, 'destroy']);
     Route::delete('/usages/{id}', [UsageController::class, 'destroy']);
     Route::delete('/user', [AuthController::class, 'deleteUser']);
     Route::delete('/user/rentals/{id}', [RentalController::class, 'destroy']);
 
-    Route::get('/item/rented-dates', [RentalController::class, 'getItemRentedDates']);
+    Route::get('/items/{id}/rented-dates', [RentalController::class, 'getItemRentedDates']);
     Route::get('/items/{id}/unavailable-dates', [ItemController::class, 'getItemUnavailableDates']);
     Route::get('/items', [ItemController::class, 'index']);
     Route::get('/jobs', [JobController::class, 'index']);
@@ -67,9 +67,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/loans', [RentalController::class, 'getUserLoans']);
     Route::get('/me/location', [AuthController::class, 'getLocation']);
     Route::get('/user/rentals', [RentalController::class, 'getUserRentals']);
-    Route::get('/me/types', [TypeController::class, 'index'])->name('user.types');
+    Route::get('/me/resource-archetypes', [ResourceArchetypeController::class, 'index'])->name('user.resource_archetypes');
     Route::get('/user/usages', [UsageController::class, 'getUserUsages'])->name('user.usages');
-    Route::get('/resources', [TypeController::class, 'getResources']);
+    Route::get('/resources', [ResourceArchetypeController::class, 'getResources']);
 
     Route::patch('/items/{id}/availability', [ItemController::class, 'updateItemAvailability']);
     Route::patch('/rentals/{id}', [RentalController::class, 'update']);
@@ -81,7 +81,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/jobs', [JobController::class, 'store']);
     Route::post('/link-with-discord', [AuthController::class, 'linkWithDiscord']);
     Route::post('/rentals', [RentalController::class, 'bookRental']);
-    Route::post('/types', [TypeController::class, 'store']);
+    Route::post('/resource-archetypes', [ResourceArchetypeController::class, 'store']);
     Route::post('/update-category/{id}', [CategoryController::class, 'update']);
     Route::post('/update-usage/{id}', [UsageController::class, 'update']);
     Route::post('/usages', [UsageController::class, 'store']);
@@ -90,7 +90,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/jobs/{id}', [JobController::class, 'update']);
     Route::put('/user/location/{locationId}', [AuthController::class, 'updateLocation']);
     Route::put('/user/password', [AuthController::class, 'updatePassword']);
-    Route::put('/types/{id}', [TypeController::class, 'update']);
+    Route::put('/resource-archetypes/{id}', [ResourceArchetypeController::class, 'update']);
     Route::put('/items/{id}', [ItemController::class, 'update']);
     Route::put('/brands/{id}', [BrandController::class, 'update']);
 });

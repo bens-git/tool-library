@@ -18,9 +18,9 @@ class ConfirmLoanEmail extends Mailable
     public $item;
     public $rental;
 
-    public function __construct(User $owner, User $renter, Item $item, Rental $rental)
+    public function __construct(User $renter, Item $item, Rental $rental)
     {
-        $this->owner = $owner;
+
         $this->renter = $renter;
         $this->item = $item;
         $this->rental = $rental;

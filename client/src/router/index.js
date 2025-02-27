@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import EmailVerified from "@/components/EmailVerified.vue";
 import EditUser from "@/components/EditUser.vue";
 import LoginForm from "@/components/LoginForm.vue";
-import TypeList from "@/components/TypeList.vue";
+import ResourceArchetypeList from "@/components/ResourceArchetypeList.vue";
 import ProjectList from "@/components/ProjectList.vue";
 import JobList from "@/components/JobList.vue";
 import MyManagement from "@/components/MyManagement.vue";
@@ -14,9 +14,9 @@ import { useUserStore } from "@/stores/user"; // Adjust the import path as neces
 
 const routes = [
   {
-    path: "/type-list",
-    name: "type-list",
-    component: TypeList,
+    path: "/resource-archetype-list",
+    name: "resource-archetype-list",
+    component: ResourceArchetypeList,
   },
 
   {
@@ -33,7 +33,7 @@ const routes = [
 
   {
     path: "/tool/:id",
-    component: () => import("@/components/TypeDetail.vue"),
+    component: () => import("@/components/ResourceArchetypeDetail.vue"),
     name: "tool_detail",
     props: true,
   },
@@ -96,7 +96,7 @@ const routes = [
   },
   {
     path: "/:catchAll(.*)",
-    redirect: "/type-list",
+    redirect: "/resource-archetype-list",
   },
   {
     path: "/email-verified",
@@ -123,7 +123,7 @@ router.beforeEach((to, from, next) => {
     userStore.user
   ) {
     // Redirect to home page if user is already logged in
-    return next({ name: "type-list" });
+    return next({ name: "resource-archetype-list" });
   }
 
   if (requiresAuth && !isAuthenticated) {

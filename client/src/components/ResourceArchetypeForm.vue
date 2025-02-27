@@ -1,34 +1,34 @@
 <template>
   <v-card>
-    <v-card-title>{{ isEdit ? "Edit Type" : "Create New Type" }}</v-card-title>
+    <v-card-title>{{ isEdit ? "Edit ResourceArchetype" : "Create New ResourceArchetype" }}</v-card-title>
     <v-card-text>
-      <!-- Form Inputs for Creating/Updating a Type -->
+      <!-- Form Inputs for Creating/Updating a ResourceArchetype -->
       <v-text-field
         density="compact"
-        v-model="localType.name"
+        v-model="localResourceArchetype.name"
         :error-messages="responseStore?.response?.errors?.name"
         label="Name"
       />
       <v-textarea
         density="compact"
-        v-model="localType.description"
+        v-model="localResourceArchetype.description"
         label="Description"
       ></v-textarea>
       <v-textarea
         density="compact"
-        v-model="localType.notes"
+        v-model="localResourceArchetype.notes"
         label="Notes"
       ></v-textarea>
       <v-text-field
         density="compact"
-        v-model="localType.code"
+        v-model="localResourceArchetype.code"
         label="Code"
       ></v-text-field>
 
       <v-autocomplete
         density="compact"
         :multiple="true"
-        v-model="localType.category_ids"
+        v-model="localResourceArchetype.category_ids"
         :items="categoryStore.categories"
         label="Category"
         item-title="name"
@@ -39,7 +39,7 @@
       <v-autocomplete
         density="compact"
         :multiple="true"
-        v-model="localType.usage_ids"
+        v-model="localResourceArchetype.usage_ids"
         :items="usageStore.usages"
         label="Usage"
         item-title="name"
@@ -51,7 +51,7 @@
 
     </v-card-text>
     <v-card-actions>
-      <v-btn color="primary" @click="saveType">{{
+      <v-btn color="primary" @click="saveResourceArchetype">{{
         isEdit ? "Update" : "Create"
       }}</v-btn>
       <v-btn text @click="closeModal">Cancel</v-btn>
@@ -62,11 +62,11 @@
 <script setup>
 import { ref, watch, onMounted } from "vue";
 import { useResponseStore } from "@/stores/response";
-import { useTypeStore } from "@/stores/type";
+import { useResourceArchetypeStore } from "@/stores/resource_archetype";
 import { useCategoryStore } from "@/stores/category";
 import { useUsageStore } from "@/stores/usage";
 
-const typeStore = useTypeStore();
+const resourcearchetypeStore = useResourceArchetypeStore();
 const categoryStore = useCategoryStore();
 const usageStore = useUsageStore();
 const responseStore = useResponseStore();
@@ -75,70 +75,70 @@ const responseStore = useResponseStore();
 
 // Define props
 const props = defineProps({
-  showTypeModal: Boolean,
+  showResourceArchetypeModal: Boolean,
   isEdit: Boolean,
-  type: Object,
+  resourcearchetype: Object,
 });
 
 const emit = defineEmits([
-  "update-type",
-  "create-type",
-  "update:showTypeModal",
+  "update-resourcearchetype",
+  "create-resourcearchetype",
+  "update:showResourceArchetypeModal",
   "close-modal",
 ]);
 
-const localType = ref({});
+const localResourceArchetype = ref({});
 
-// Function to initialize localType
-const initializeLocalType = () => {
-  if (props.isEdit && props.type) {
-    localType.value = {
-      ...props.type,
-      category_ids: props.type.category_ids || [], // Default to empty array if undefined
-      usage_ids: props.type.usage_ids || [], // Default to empty array if undefined
+// Function to initialize localResourceArchetype
+const initializeLocalResourceArchetype = () => {
+  if (props.isEdit && props.resourcearchetype) {
+    localResourceArchetype.value = {
+      ...props.resourcearchetype,
+      category_ids: props.resourcearchetype.category_ids || [], // Default to empty array if undefined
+      usage_ids: props.resourcearchetype.usage_ids || [], // Default to empty array if undefined
     };
   } else {
-    localType.value = {
+    localResourceArchetype.value = {
       name: "",
       description: "",
       notes: "",
       code: "",
-      category_ids: [], // Default to empty array for new type
-      usage_ids: [], // Default to empty array for new type
+      category_ids: [], // Default to empty array for new resourcearchetype
+      usage_ids: [], // Default to empty array for new resourcearchetype
     };
   }
 };
 
-// Initialize localType on component mount or when the type changes
+// Initialize localResourceArchetype on component mount or when the resourcearchetype changes
 onMounted(() => {
-  initializeLocalType();
+  initializeLocalResourceArchetype();
   categoryStore.fetchCategories();
   usageStore.fetchUsages();
 });
 
 watch(
-  () => props.type,
+  () => props.resourcearchetype,
   () => {
-    initializeLocalType();
+    initializeLocalResourceArchetype();
   },
   { deep: true }
 );
 
-const saveType = async () => {
+const saveResourceArchetype = async () => {
  
   if (props.isEdit) {
-    await typeStore.saveMyType(localType.value);
+    await resourcearchetypeStore.saveMyResourceArchetype(localResourceArchetype.value);
   } else {
-    const newType = await typeStore.postType(localType.value);
-    if(newType && newType.id){
-      localType.value=newType
+    const newResourceArchetype = await resourcearchetypeStore.postResourceArchetype(localResourceArchetype.value);
+    if(newResourceArchetype && newResourceArchetype.id){
+      localResourceArchetype.value=newResourceArchetype
     }
   }
 
 
   if (responseStore.response.success) {
     closeModal();
-    typeStore.fetchMyTypes();
+    resourcearchetypeStore.fetchMyResourceArchetypes();
   }
 };
 

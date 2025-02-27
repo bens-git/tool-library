@@ -6,7 +6,7 @@
         <!-- Radius input field -->
         <div class="radius-input">
             <br>
-            <v-slider label="Radius (km)" show-ticks="always" tick-size="10" v-model="typeStore.radius" step="10"
+            <v-slider label="Radius (km)" show-ticks="always" tick-size="10" v-model="resourcearchetypeStore.radius" step="10"
                 thumb-label="always" :max="100" :min="1"></v-slider>
         </div>
 
@@ -22,9 +22,9 @@ import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 import 'leaflet-geosearch/dist/geosearch.css';
 import axios from 'axios'; // For reverse geocoding requests
 
-import { useTypeStore } from '@/stores/type.js'; // Your Pinia store
+import { useResourceArchetypeStore } from '@/stores/resource_archetype.js'; // Your Pinia store
 
-const typeStore = useTypeStore(); // Access the Pinia store
+const resourcearchetypeStore = useResourceArchetypeStore(); // Access the Pinia store
 const address = ref(''); // To store the resolved address
 let circleMarker = null; // Store the circle marker for later updates
 
@@ -58,8 +58,8 @@ onMounted(() => {
     // Define a default location in case the store location is not set
     const defaultLatLng = [51.505, -0.09];
 
-    // Check if typeStore.location is available
-    const initialLocation = typeStore.location || { lat: defaultLatLng[0], lng: defaultLatLng[1] };
+    // Check if resourcearchetypeStore.location is available
+    const initialLocation = resourcearchetypeStore.location || { lat: defaultLatLng[0], lng: defaultLatLng[1] };
 
     const addRadius = () => {
         console.log('addradius')
@@ -68,8 +68,8 @@ onMounted(() => {
             map.removeLayer(circleMarker);
         }
 
-        circleMarker = L.circle([typeStore.location.lat, typeStore.location.lng], {
-            radius: typeStore.radius * 1000,
+        circleMarker = L.circle([resourcearchetypeStore.location.lat, resourcearchetypeStore.location.lng], {
+            radius: resourcearchetypeStore.radius * 1000,
             color: 'blue',
             fillOpacity: 0.2
         }).addTo(map);
@@ -106,7 +106,7 @@ onMounted(() => {
         const { lat, lng } = e.latlng;
 
         // Store the clicked location in the Pinia store
-        typeStore.setLocation({ lat, lng });
+        resourcearchetypeStore.setLocation({ lat, lng });
 
         // Fetch address using reverse geocoding
         try {
@@ -115,10 +115,10 @@ onMounted(() => {
             const address = data.address ? `${data.address.road || ''}, ${data.address.city || ''}, ${data.address.state || ''}, ${data.address.country || ''}` : 'Address not found';
 
             // Store the address in the Pinia store
-            typeStore.setAddress(address);
+            resourcearchetypeStore.setAddress(address);
         } catch (error) {
             console.error('Error fetching address:', error);
-            typeStore.setAddress('Error fetching address');
+            resourcearchetypeStore.setAddress('Error fetching address');
         }
 
         // Reverse geocode the coordinates to get an address
@@ -133,18 +133,18 @@ onMounted(() => {
         const { x: lng, y: lat } = location;
 
         // Update the Pinia store with the new location
-        typeStore.setLocation({ lat, lng });
+        resourcearchetypeStore.setLocation({ lat, lng });
 
         // Reverse geocode the new location
         address.value = await reverseGeocode(lat, lng);
-        typeStore.setAddress(address.value);
+        resourcearchetypeStore.setAddress(address.value);
 
         // Update the map and circle marker
         //     updateMap(lat, lng);
     });
 
     // Watch the store location for updates from the GeoSearchControl
-    watch(() => typeStore.location, async (newLocation) => {
+    watch(() => resourcearchetypeStore.location, async (newLocation) => {
         if (newLocation) {
             const { lat, lng } = newLocation;
 
@@ -160,7 +160,7 @@ onMounted(() => {
 
     // Watch the radius for updates and adjust the circle marker accordingly
     watch(
-        () => typeStore.radius,
+        () => resourcearchetypeStore.radius,
         (newRadius) => {
             addRadius()
         }

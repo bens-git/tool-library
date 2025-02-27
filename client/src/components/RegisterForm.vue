@@ -6,7 +6,7 @@
         <v-card-text>
             <!-- Show success message or registration form based on registration status -->
             <template v-if="registrationSuccessful">
-                <v-alert type="success" dismissible>
+                <v-alert resourcearchetype="success" dismissible>
                     {{ successMessage }}
                 </v-alert>
             </template>
@@ -16,10 +16,10 @@
                     <v-text-field density="compact" v-model="name" label="Name"
                         :error-messages="responseStore?.response?.errors[0]?.name" required></v-text-field>
 
-                    <v-text-field density="compact" v-model="email" label="Email" type="email"
+                    <v-text-field density="compact" v-model="email" label="Email" resourcearchetype="email"
                         :error-messages="responseStore?.response?.errors[0]?.email" required></v-text-field>
 
-                    <v-text-field density="compact" v-model="password" label="Password" type="password"
+                    <v-text-field density="compact" v-model="password" label="Password" resourcearchetype="password"
                         :error-messages="responseStore?.response?.errors[0]?.password" required
                         autocomplete="password"></v-text-field>
 
@@ -48,7 +48,7 @@
                     <v-text-field density="compact" v-model="unit_number" label="Unit Number"
                         :error-messages="responseStore?.response?.errors[0]?.unit_number"></v-text-field>
 
-                    <v-btn type="submit" :loading="userStore.isLoading" color="primary" class="mt-4">
+                    <v-btn resourcearchetype="submit" :loading="userStore.isLoading" color="primary" class="mt-4">
                         Register
                     </v-btn>
 

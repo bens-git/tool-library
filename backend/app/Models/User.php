@@ -23,7 +23,8 @@ class User extends Authenticatable
         'password',
         'location_id',
         'email_verification_token',
-        'password_reset_token'
+        'password_reset_token',
+        'discord_username'
     ];
 
     /**

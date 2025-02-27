@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import apiClient from "@/axios";
 import { useResponseStore } from "./response";
 import { useLoadingStore } from "./loading";
-import { useTypeStore } from "./type";
+import { useResourceArchetypeStore } from "./resource_archetype";
 import useApi from "@/stores/api";
 
 export const useItemStore = defineStore("item", {
@@ -10,21 +10,21 @@ export const useItemStore = defineStore("item", {
     myItemsListPage: 1,
     myItemsListItemsPerPage: 10,
     myItemsListSortBy: [{ key: "name", order: "asc" }],
-    myItemsListFilters: { typeId: null, brandId: null, search: null },
+    myItemsListFilters: { resourcearchetypeId: null, brandId: null, search: null },
     myItemsListItems: [],
     myItemsListTotalItems: 0,
 
-    typeDialogItemListPage: 1,
-    typeDialogItemListItemsPerPage: 10,
-    typeDialogItemListSortBy: [{ key: "name", order: "asc" }],
-    typeDialogItemListFilters: {
-      typeId: null,
+    resourcearchetypeDialogItemListPage: 1,
+    resourcearchetypeDialogItemListItemsPerPage: 10,
+    resourcearchetypeDialogItemListSortBy: [{ key: "name", order: "asc" }],
+    resourcearchetypeDialogItemListFilters: {
+      resourcearchetypeId: null,
       brandId: null,
       search: null,
       dateRange: null,
     },
-    typeDialogItemListItems: [],
-    totalTypeDialogItemListItems: 0,
+    resourceArchetypeDialogItemListItems: [],
+    totalResourceArchetypeDialogItemListItems: 0,
 
     resources: [],
     totalResources: 0,
@@ -41,24 +41,24 @@ export const useItemStore = defineStore("item", {
       this.fetchMyItems();
     },
 
-    async fetchTypeDialogItemListItems(typeId, location, radius) {
+    async fetchResourceArchetypeDialogItemListItems(resourcearchetypeId, location, radius) {
       const { fetchRequest } = useApi();
-      const typeStore = useTypeStore();
+      const resourcearchetypeStore = useResourceArchetypeStore();
 
       const data = await fetchRequest("items", {
-        search: this.typeDialogItemListFilters.search,
-        dateRange: this.typeDialogItemListFilters.dateRange,
-        page: this.typeDialogItemsListPage,
-        itemsPerPage: this.typeDialogItemsListItemsPerPage,
-        sortBy: this.typeDialogItemsListSortBy,
-        typeId: typeId,
+        search: this.resourcearchetypeDialogItemListFilters.search,
+        dateRange: this.resourcearchetypeDialogItemListFilters.dateRange,
+        page: this.resourcearchetypeDialogItemsListPage,
+        itemsPerPage: this.resourcearchetypeDialogItemsListItemsPerPage,
+        sortBy: this.resourcearchetypeDialogItemsListSortBy,
+        resourcearchetypeId: resourcearchetypeId,
         location: location,
         radius: radius,
-        startDate: typeStore.dateRange[0],
-        endDate: typeStore.dateRange[typeStore.dateRange.length - 1],
+        startDate: resourcearchetypeStore.dateRange[0],
+        endDate: resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1],
       });
-      this.typeDialogItemListItems = data.data;
-      this.totalTypeDialogItemListItems = data.total;
+      this.resourceArchetypeDialogItemListItems = data.data;
+      this.totalResourceArchetypeDialogItemListItems = data.total;
     },
 
     async fetchMyItems() {
@@ -70,7 +70,7 @@ export const useItemStore = defineStore("item", {
           page: this.myItemsListPage,
           itemsPerPage: this.myItemsListItemsPerPage,
           sortBy: this.myItemsListSortBy,
-          typeId: this.myItemsListFilters.typeId,
+          resourcearchetypeId: this.myItemsListFilters.resourcearchetypeId,
           brandId: this.myItemsListFilters.brandId,
           resource: this.myItemsListFilters.resource,
           search: this.myItemsListFilters.search,
@@ -147,7 +147,7 @@ export const useItemStore = defineStore("item", {
     },
 
     async bookRental(itemId, startDate, endDate) {
-      const { fetchRequest } = useApi();
+      const { sendRequest } = useApi();
 
       const setToNineAm = (date) => {
         const adjustedDate = new Date(date);
@@ -178,7 +178,7 @@ export const useItemStore = defineStore("item", {
       const formattedStartDate = formatToMySQLDateTime(adjustedStartDate);
       const formattedEndDate = formatToMySQLDateTime(adjustedEndDate);
 
-      const response = await sendRequest("post", "rentals", {
+      const data = await sendRequest( "rentals", "post", {
         itemId,
         startDate: formattedStartDate,
         endDate: formattedEndDate,
@@ -186,13 +186,13 @@ export const useItemStore = defineStore("item", {
     },
 
     resetFilters() {
-      const typeStore = useTypeStore();
+      const resourcearchetypeStore = useResourceArchetypeStore();
       this.search = "";
-      typeStore.dateRange = [
+      resourcearchetypeStore.dateRange = [
         new Date(new Date().setHours(9, 0, 0, 0)),
         new Date(new Date().setHours(17, 0, 0, 0)),
       ];
-      this.fetchTypeDialogItemListItems();
+      this.fetchResourceArchetypeDialogItemListItems();
     },
 
     // Action to fetch an item by its ID from the items array
@@ -245,18 +245,18 @@ export const useItemStore = defineStore("item", {
       const ownerName = isRawItem ? item.raw.owner_name : item.owner_name;
       const ownerAbbreviation = getAbbreviation(ownerName);
 
-      // Get the tool type abbreviation
-      const typeName = isRawItem ? item.raw.type_name : item.type_name;
-      const typeAbbreviation = getAbbreviation(typeName);
+      // Get the tool resourcearchetype abbreviation
+      const resourcearchetypeName = isRawItem ? item.raw.resourcearchetype_name : item.resourcearchetype_name;
+      const resourcearchetypeAbbreviation = getAbbreviation(resourcearchetypeName);
 
       // Generate the item code
       const itemId = isRawItem ? item.raw.id : item.id;
-      const itemCode = `${ownerAbbreviation}-${typeAbbreviation}-${itemId}`;
+      const itemCode = `${ownerAbbreviation}-${resourcearchetypeAbbreviation}-${itemId}`;
 
       return itemCode;
     },
     outputReadableDateRange() {
-      const typeStore = useTypeStore();
+      const resourcearchetypeStore = useResourceArchetypeStore();
 
       // Format the dates to "Day of Week, Month Day, Year"
       const formatDate = (date) => {
@@ -268,8 +268,8 @@ export const useItemStore = defineStore("item", {
         });
       };
 
-      return `From: ${formatDate(typeStore.dateRange[0])} at 9:00 AM
-       To: ${formatDate(typeStore.dateRange[typeStore.dateRange.length - 1])} at 5:00 PM`;
+      return `From: ${formatDate(resourcearchetypeStore.dateRange[0])} at 9:00 AM
+       To: ${formatDate(resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1])} at 5:00 PM`;
     },
     async createItem(itemData) {
       const { sendRequest } = useApi();

@@ -19,18 +19,18 @@ use Illuminate\Support\Facades\Log;
 class RentalController extends Controller
 {
     /**
-     * Get rented dates for a specific item type.
+     * Get rented dates for a specific item resource archetype.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function getRentedDates(Request $request)
     {
-        $typeId = $request->query('typeId');
+        $resourcearchetypeId = $request->query('resourcearchetypeId');
 
-        // Fetch rentals for the specified typeId
-        $rentals = Rental::whereHas('item', function ($query) use ($typeId) {
-            $query->where('type_id', $typeId); // Assuming 'type_id' exists in items table
+        // Fetch rentals for the specified resourcearchetypeId
+        $rentals = Rental::whereHas('item', function ($query) use ($resourcearchetypeId) {
+            $query->where('resource_archetype_id', $resourcearchetypeId); // Assuming 'resource_archetype_id' exists in items table
         })->get(['starts_at', 'ends_at']); // Adjust the columns as needed
 
         // Format dates if needed
@@ -48,7 +48,7 @@ class RentalController extends Controller
     {
         $itemId = $request->query('itemId');
 
-        // Fetch rentals for the specified typeId
+        // Fetch rentals for the specified resourcearchetypeId
         $rentals = Rental::where('item_id', '=', $itemId)->get(['starts_at', 'ends_at']); // Adjust the columns as needed
 
         // Format dates if needed
@@ -112,21 +112,23 @@ class RentalController extends Controller
             'status' => 'booked', // or any other initial status
         ]);
 
+        $rental->load('renter:id,discord_username');
+
+
         // Find the item by ID
         $item = Item::with(['owner', 'location'])
             ->leftJoin('users', 'users.id', '=', 'items.owned_by')
-            ->leftJoin('types', 'types.id', '=', 'items.type_id')
+            ->leftJoin('resource_archetypes', 'resource_archetypes.id', '=', 'items.resource_archetype_id')
             ->select('items.*') // Select all columns from the items table
             ->selectRaw("
             CONCAT(
                 LOWER(REGEXP_REPLACE(LEFT(users.name, 3), '[^a-zA-Z0-9]', '')), '_', 
-                LOWER(REGEXP_REPLACE(LEFT(types.name, 3), '[^a-zA-Z0-9]', '')), '_', 
+                LOWER(REGEXP_REPLACE(LEFT(resource_archetypes.name, 3), '[^a-zA-Z0-9]', '')), '_', 
                 items.id
             ) AS item_name
         ")
             ->where('items.id', $item_id)
             ->first();
-
 
 
         Log::info($item);
@@ -139,11 +141,10 @@ class RentalController extends Controller
         Mail::to($user->email)->send(new ConfirmRentalEmail($user, $item, $rental));
 
         //send load confirmation email
-        Mail::to($item->owner->email)->send(new ConfirmLoanEmail($item->owner, $user, $item, $rental));
+        Mail::to($item->owner->email)->send(new ConfirmLoanEmail($user, $item, $rental));
 
         return response()->json([
             'message' => 'Rental successfully created.',
-            'rental' => $rental,
         ], 201);
     }
 
@@ -302,12 +303,12 @@ class RentalController extends Controller
         // Find the item by ID
         $item = Item::with(['owner', 'location'])
             ->leftJoin('users', 'users.id', '=', 'items.owned_by')
-            ->leftJoin('types', 'types.id', '=', 'items.type_id')
+            ->leftJoin('resource_archetypes', 'resource_archetypes.id', '=', 'items.resource_archetype_id')
             ->select('items.*') // Select all columns from the items table
             ->selectRaw("
           CONCAT(
               LOWER(REGEXP_REPLACE(LEFT(users.name, 3), '[^a-zA-Z0-9]', '')), '_', 
-              LOWER(REGEXP_REPLACE(LEFT(types.name, 3), '[^a-zA-Z0-9]', '')), '_', 
+              LOWER(REGEXP_REPLACE(LEFT(resource_archetypes.name, 3), '[^a-zA-Z0-9]', '')), '_', 
               items.id
           ) AS item_name
       ")

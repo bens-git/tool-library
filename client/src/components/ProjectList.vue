@@ -26,7 +26,7 @@
             
             <!-- Reset Button -->
             <v-col cols="12" md="1" class="d-flex align-center">
-              <v-btn icon color="primary" @click="typeStore.resetFilters" class="mt-2">
+              <v-btn icon color="primary" @click="resourcearchetypeStore.resetFilters" class="mt-2">
                 <v-icon>mdi-refresh</v-icon>
               </v-btn>
             </v-col>
@@ -34,14 +34,14 @@
           </v-row>
          
         </template>
-        <v-data-table-server v-model:items-per-page="typeStore.itemsPerPage" :headers="headers"
-          :items="typeStore.paginatedTypes" :items-length="typeStore.totalTypes" loading-text="Loading... Please wait"
-          :search="typeStore.search" item-value="id" @update:options="typeStore.updateOptions" mobile-breakpoint="sm">
+        <v-data-table-server v-model:items-per-page="resourcearchetypeStore.itemsPerPage" :headers="headers"
+          :items="resourcearchetypeStore.paginatedResourceArchetypes" :items-length="resourcearchetypeStore.totalResourceArchetypes" loading-text="Loading... Please wait"
+          :search="resourcearchetypeStore.search" item-value="id" @update:options="resourcearchetypeStore.updateOptions" mobile-breakpoint="sm">
   
           <!-- Image column -->
           <template v-slot:[`item.image`]="{ item }">
             <v-img v-if="item.images.length > 0" :src="fullImageUrl(item.images[0].path)" max-height="200" max-width="200"
-              min-height="200" min-width="200" alt="Type Image"></v-img>
+              min-height="200" min-width="200" alt="ResourceArchetype Image"></v-img>
             <v-icon v-else>mdi-image-off</v-icon> <!-- Fallback icon if no image is available -->
           </template>
   
@@ -58,7 +58,7 @@
           </template>
   
           <template v-slot:[`item.actions`]="{ item }">
-            <v-btn icon @click="editType(item)" v-if="userStore.user">
+            <v-btn icon @click="editResourceArchetype(item)" v-if="userStore.user">
               <v-icon>mdi-information</v-icon>
             </v-btn>
   
@@ -72,7 +72,7 @@
   
     <!-- Dialog for item details -->
     <v-dialog v-model="dialog" :persistent="false" class="custom-dialog">
-      <TypeDetail :type="selectedType" :action="'details'" v-on:closeDialog="dialog = false" />
+      <ResourceArchetypeDetail :resourcearchetype="selectedResourceArchetype" :action="'details'" v-on:closeDialog="dialog = false" />
     </v-dialog>
   </template>
   
@@ -81,18 +81,18 @@
   import { useCategoryStore } from '@/stores/category';
   import { useUsageStore } from '@/stores/usage';
   import { useBrandStore } from '@/stores/brand';
-  import { useTypeStore } from '@/stores/type';
+  import { useResourceArchetypeStore } from '@/stores/resource_archetype';
   import { useUserStore } from '@/stores/user';
   import { useLocationStore } from '@/stores/location';
   import _ from 'lodash';
-  import TypeDetail from './TypeDetail.vue';
+  import ResourceArchetypeDetail from './ResourceArchetypeDetail.vue';
   import { useRouter } from 'vue-router';
   import LocationPicker from './LocationPicker.vue'; // Import your location picker component
   
   const categoryStore = useCategoryStore();
   const usageStore = useUsageStore();
   const brandStore = useBrandStore();
-  const typeStore = useTypeStore();
+  const resourcearchetypeStore = useResourceArchetypeStore();
   const userStore = useUserStore();
   const locationStore = useLocationStore();
   const router = useRouter();
@@ -127,7 +127,7 @@
   };
   
   const dialog = ref(false);
-  const selectedType = ref(null);
+  const selectedResourceArchetype = ref(null);
   
   const headers = [
     {
@@ -143,7 +143,7 @@
       key: 'actions',
     },
     {
-      title: 'Type',
+      title: 'ResourceArchetype',
       align: 'start',
       sortable: true,
       key: 'name',
@@ -189,11 +189,11 @@
   
   
   const debounceSearch = _.debounce(() => {
-    typeStore.fetchPaginatedTypes();
+    resourcearchetypeStore.fetchPaginatedResourceArchetypes();
   }, 300);
   
-  const editType = (type) => {
-    selectedType.value = type;
+  const editResourceArchetype = (resourcearchetype) => {
+    selectedResourceArchetype.value = resourcearchetype;
     dialog.value = true;
   };
   
@@ -210,30 +210,30 @@
   const minStartDate = computed(() => today);
   
   // Watchers to ensure dates are correctly updated
-  watch(() => typeStore.dateRange[0], (newStartDate) => {
-    if (newStartDate > typeStore.dateRange[typeStore.dateRange.length - 1]) {
-      typeStore.dateRange[typeStore.dateRange.length - 1] = new Date(newStartDate.getTime() + startOfDayInMillis);
+  watch(() => resourcearchetypeStore.dateRange[0], (newStartDate) => {
+    if (newStartDate > resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1]) {
+      resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1] = new Date(newStartDate.getTime() + startOfDayInMillis);
     }
   });
   
-  watch(() => typeStore.dateRange[typeStore.dateRange.length - 1], (newEndDate) => {
-    if (newEndDate < typeStore.dateRange[0]) {
-      typeStore.dateRange[0] = new Date(newEndDate.getTime() - startOfDayInMillis);
+  watch(() => resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1], (newEndDate) => {
+    if (newEndDate < resourcearchetypeStore.dateRange[0]) {
+      resourcearchetypeStore.dateRange[0] = new Date(newEndDate.getTime() - startOfDayInMillis);
     }
   });
   
   // Watch the store location for updates from the GeoSearchControl
-  watch(() => typeStore.location, async (newLocation) => {
+  watch(() => resourcearchetypeStore.location, async (newLocation) => {
     if (newLocation) {
-      // Call fetchPaginatedTypes whenever location changes
-      typeStore.fetchPaginatedTypes();
+      // Call fetchPaginatedResourceArchetypes whenever location changes
+      resourcearchetypeStore.fetchPaginatedResourceArchetypes();
     }
   });
   
-  watch(() => typeStore.radius, async (newRadius) => {
+  watch(() => resourcearchetypeStore.radius, async (newRadius) => {
     if (newRadius) {
-      // Call fetchPaginatedTypes whenever location changes
-      typeStore.fetchPaginatedTypes();
+      // Call fetchPaginatedResourceArchetypes whenever location changes
+      resourcearchetypeStore.fetchPaginatedResourceArchetypes();
     }
   })
   
@@ -270,8 +270,8 @@
   
       }
     }
-    typeStore.setLocation({ lat: location.latitude, lng: location.longitude })
-    typeStore.setAddress(location.city + ' ' + location.state + ' ' + location.country)
+    resourcearchetypeStore.setLocation({ lat: location.latitude, lng: location.longitude })
+    resourcearchetypeStore.setAddress(location.city + ' ' + location.state + ' ' + location.country)
   
   }
   

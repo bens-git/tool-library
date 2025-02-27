@@ -1,7 +1,7 @@
 <template>
 
   <v-card>
-    <v-card-title>{{ isEdit ? 'Edit Type' : 'Create New Category' }}</v-card-title>
+    <v-card-title>{{ isEdit ? 'Edit ResourceArchetype' : 'Create New Category' }}</v-card-title>
     <v-card-text>
       <v-text-field v-model="localCategory.name" :error-messages="responseStore?.response?.errors[0]?.name" label="Name" 
        ></v-text-field>
@@ -45,7 +45,7 @@ const saveCategory = async () => {
     const responseStore = useResponseStore();
     const formData = new FormData();
 
-    // Append all properties of local type except images handling
+    // Append all properties of local resource archetype except images handling
     for (const [key, value] of Object.entries(localCategory.value)) {
       // Skip keys with null values or replace them with actual null
       if (value === null || value === undefined) {

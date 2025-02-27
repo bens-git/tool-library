@@ -78,9 +78,9 @@ class CategoryController extends Controller
 
         if ($request->paginate && $request->paginate != 'false') {
 
-            $types = $query->paginate($itemsPerPage, ['*'], 'page', $page);
-            $categoriesArray = $types->items();
-            $totalCount = $types->total();
+            $resourceArchetypes = $query->paginate($itemsPerPage, ['*'], 'page', $page);
+            $categoriesArray = $resourceArchetypes->items();
+            $totalCount = $resourceArchetypes->total();
         }
 
         // Return response

@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ItemImage;
-use App\Models\Type;
+use App\Models\ResourceArchetype;
 use App\Models\Brand;
 use App\Models\ItemUnavailableDate;
 use Carbon\Carbon;
@@ -39,18 +39,18 @@ class ItemController extends Controller
         $search = $request->input('search', '');
         $sortBy = $request->input('sortBy');
         $startDate = $request->input('startDate');
-        $typeId = $request->input('typeId');
+        $resourcearchetypeId = $request->input('resourcearchetypeId');
 
         // Build the query
-        $query = Item::with('type', 'brand')
+        $query = Item::with('resourceArchetype', 'brand')
             ->join('users', 'items.owned_by', '=', 'users.id')
             ->join('locations', 'users.location_id', '=', 'locations.id')
-            ->join('types', 'items.type_id', '=', 'types.id')
+            ->join('resource_archetypes', 'items.resource_archetype_id', '=', 'resource_archetypes.id')
             ->leftJoin('brands', 'items.brand_id', '=', 'brands.id');
 
-        // Apply type filter
-        if (!empty($typeId)) {
-            $query->where('type_id', '=', $typeId);
+        // Apply resource_archetype filter
+        if (!empty($resourcearchetypeId)) {
+            $query->where('resource_archetype_id', '=', $resourcearchetypeId);
         }
         // Apply brand filter
         if (!empty($brandId)) {
@@ -59,7 +59,7 @@ class ItemController extends Controller
 
         // Apply resource filter
         if (!empty($resource)) {
-            $query->where('types.resource', '=', $resource);
+            $query->where('resource_archetypes.resource', '=', $resource);
         }
 
         if (!empty($search)) {
@@ -132,7 +132,7 @@ class ItemController extends Controller
         $query->select(
             'items.code',
             'items.owned_by',
-            'type_id',
+            'resource_archetype_id',
             'items.created_at',
             'items.description',
             'items.id',
@@ -143,10 +143,10 @@ class ItemController extends Controller
             'serial',
             'brands.name AS brand_name',
             'items.brand_id',
-            'types.resource',
+            'resource_archetypes.resource',
             DB::raw('  CONCAT_WS(" ", COALESCE(locations.city, ""), COALESCE(locations.state, ""), COALESCE(locations.country, "")) as location')
-        )->with(['type', 'brand'])
-            ->groupBy('items.id', 'users.name', 'types.name', 'brands.name');
+        )->with(['resourceArchetype', 'brand'])
+            ->groupBy('items.id', 'users.name', 'resource_archetypes.name', 'brands.name');
 
         // Apply sorting
         if ($sortBy) {
@@ -223,30 +223,31 @@ class ItemController extends Controller
             'purchase_value' => 'nullable|numeric',
             'purchased_at' => 'required|date',
             'manufactured_at' => 'nullable|date',
+            'resource_archetype.id'=>'required|numeric|exists:resource_archetypes,id', // Adjust according to your needs
         ]);
 
 
         $user = auth()->user();
 
         // Decode the validated JSON
-        $type = Type::findOrFail($request->type['id']);
+        $resourceArchetype = ResourceArchetype::findOrFail($request->resource_archetype['id']);
         if ($request->brand) {
             $brand = Brand::findOrFail($request->brand['id']);
         }
 
         $discordUserName = $user->discord_username;
-        $typeName = $type['name'];
+        $resourcearchetypeName = $resourceArchetype['name'];
         $dateString = Carbon::parse($request->purchased_at)->format('d-m-y');
 
         $code = $discordUserName . '_' .
-            strtolower(str_replace(' ', '', $typeName)) . '_' .
+            strtolower(str_replace(' ', '', $resourcearchetypeName)) . '_' .
             $dateString;
 
         $uniqueCode = getUniqueString('items', 'code', $code);
 
 
         $item = new Item();
-        $item->type_id = $type->id;              // Store the ID from the validated JSON
+        $item->resource_archetype_id = $resourceArchetype->id;              // Store the ID from the validated JSON
         $item->brand_id = $brand->id ?? null;       // Optional: Store other fields from the JSON
         $item->description = $request->description;
         $item->serial = $request->serial;
@@ -325,9 +326,9 @@ class ItemController extends Controller
         // Find the item by its ID
         $item = Item::query()
             ->join('users', 'items.owned_by', '=', 'users.id')
-            ->join('types', 'items.type_id', '=', 'types.id')
+            ->join('resource_archetypes', 'items.resource_archetype_id', '=', 'resource_archetypes.id')
             ->where('items.id', $id)
-            ->select('items.*', 'users.name as owner_name', 'types.name AS type_name') // Select relevant columns
+            ->select('items.*', 'users.name as owner_name', 'resource_archetypes.name AS resourcearchetype_name') // Select relevant columns
             ->first();
 
 
@@ -369,14 +370,14 @@ class ItemController extends Controller
         $item = DB::transaction(function () use ($request, $id) {
 
             // Decode the validated JSON
-            $type = Type::findOrFail($request->type['id']);
+            $resourceArchetype = ResourceArchetype::findOrFail($request->resourceArchetype['id']);
             if ($request->brand) {
                 $brand = Brand::findOrFail($request->brand['id']);
             }
 
 
             $item = Item::findOrFail($id);
-            $item->type_id = $type->id;
+            $item->resource_archetype_id = $resourceArchetype->id;
             $item->brand_id = $brand->id ?? null;       // Optional: Store other fields from the JSON
             $item->description = $request->description;
             $item->serial = $request->serial;
