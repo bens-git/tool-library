@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ResourceArchetype extends Model
+class Archetype extends Model
 {
     use HasFactory;
 
@@ -24,6 +24,6 @@ class ResourceArchetype extends Model
     
     public function images()
     {
-        return $this->hasMany(ResourceArchetypeImage::class, 'resource_archetype_id');
+        return $this->hasMany(ArchetypeImage::class, 'archetype_id');
     }
 }

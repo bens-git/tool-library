@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import EmailVerified from "@/components/EmailVerified.vue";
 import EditUser from "@/components/EditUser.vue";
 import LoginForm from "@/components/LoginForm.vue";
-import ResourceArchetypeList from "@/components/ResourceArchetypeList.vue";
+import ArchetypeList from "@/components/ArchetypeList.vue";
 import ProjectList from "@/components/ProjectList.vue";
 import JobList from "@/components/JobList.vue";
 import MyManagement from "@/components/MyManagement.vue";
@@ -14,9 +14,9 @@ import { useUserStore } from "@/stores/user"; // Adjust the import path as neces
 
 const routes = [
   {
-    path: "/resource-archetype-list",
-    name: "resource-archetype-list",
-    component: ResourceArchetypeList,
+    path: "/archetype-list",
+    name: "archetype-list",
+    component: ArchetypeList,
   },
 
   {
@@ -33,7 +33,7 @@ const routes = [
 
   {
     path: "/tool/:id",
-    component: () => import("@/components/ResourceArchetypeDetail.vue"),
+    component: () => import("@/components/ArchetypeDetail.vue"),
     name: "tool_detail",
     props: true,
   },
@@ -96,7 +96,7 @@ const routes = [
   },
   {
     path: "/:catchAll(.*)",
-    redirect: "/resource-archetype-list",
+    redirect: "/archetype-list",
   },
   {
     path: "/email-verified",
@@ -123,7 +123,7 @@ router.beforeEach((to, from, next) => {
     userStore.user
   ) {
     // Redirect to home page if user is already logged in
-    return next({ name: "resource-archetype-list" });
+    return next({ name: "archetype-list" });
   }
 
   if (requiresAuth && !isAuthenticated) {

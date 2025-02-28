@@ -107,7 +107,7 @@ const userStore = useUserStore();
 const logoutDialog = ref(false);
 
 const links = [
-  { text: "TOOLS", route: "resource-archetype-list" },
+  { text: "TOOLS", route: "archetype-list" },
   // { text: "JOBS", route: "job-list" },
   // { text: "PROJECTS", route: "project-list" },
 ];

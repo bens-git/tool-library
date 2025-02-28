@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import apiClient from "@/axios";
 import { useResponseStore } from "./response";
 import { useLoadingStore } from "./loading";
-import { useResourceArchetypeStore } from "./resource_archetype";
+import { useArchetypeStore } from "./archetype";
 import useApi from "@/stores/api";
 
 export const useItemStore = defineStore("item", {
@@ -10,21 +10,21 @@ export const useItemStore = defineStore("item", {
     myItemsListPage: 1,
     myItemsListItemsPerPage: 10,
     myItemsListSortBy: [{ key: "name", order: "asc" }],
-    myItemsListFilters: { resourcearchetypeId: null, brandId: null, search: null },
+    myItemsListFilters: { archetypeId: null, brandId: null, search: null },
     myItemsListItems: [],
     myItemsListTotalItems: 0,
 
-    resourcearchetypeDialogItemListPage: 1,
-    resourcearchetypeDialogItemListItemsPerPage: 10,
-    resourcearchetypeDialogItemListSortBy: [{ key: "name", order: "asc" }],
-    resourcearchetypeDialogItemListFilters: {
-      resourcearchetypeId: null,
+    archetypeDialogItemListPage: 1,
+    archetypeDialogItemListItemsPerPage: 10,
+    archetypeDialogItemListSortBy: [{ key: "name", order: "asc" }],
+    archetypeDialogItemListFilters: {
+      archetypeId: null,
       brandId: null,
       search: null,
       dateRange: null,
     },
-    resourceArchetypeDialogItemListItems: [],
-    totalResourceArchetypeDialogItemListItems: 0,
+    archetypeDialogItemListItems: [],
+    totalArchetypeDialogItemListItems: 0,
 
     resources: [],
     totalResources: 0,
@@ -41,24 +41,24 @@ export const useItemStore = defineStore("item", {
       this.fetchMyItems();
     },
 
-    async fetchResourceArchetypeDialogItemListItems(resourcearchetypeId, location, radius) {
+    async fetchArchetypeDialogItemListItems(archetypeId, location, radius) {
       const { fetchRequest } = useApi();
-      const resourcearchetypeStore = useResourceArchetypeStore();
+      const archetypeStore = useArchetypeStore();
 
       const data = await fetchRequest("items", {
-        search: this.resourcearchetypeDialogItemListFilters.search,
-        dateRange: this.resourcearchetypeDialogItemListFilters.dateRange,
-        page: this.resourcearchetypeDialogItemsListPage,
-        itemsPerPage: this.resourcearchetypeDialogItemsListItemsPerPage,
-        sortBy: this.resourcearchetypeDialogItemsListSortBy,
-        resourcearchetypeId: resourcearchetypeId,
+        search: this.archetypeDialogItemListFilters.search,
+        dateRange: this.archetypeDialogItemListFilters.dateRange,
+        page: this.archetypeDialogItemsListPage,
+        itemsPerPage: this.archetypeDialogItemsListItemsPerPage,
+        sortBy: this.archetypeDialogItemsListSortBy,
+        archetypeId: archetypeId,
         location: location,
         radius: radius,
-        startDate: resourcearchetypeStore.dateRange[0],
-        endDate: resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1],
+        startDate: archetypeStore.dateRange[0],
+        endDate: archetypeStore.dateRange[archetypeStore.dateRange.length - 1],
       });
-      this.resourceArchetypeDialogItemListItems = data.data;
-      this.totalResourceArchetypeDialogItemListItems = data.total;
+      this.archetypeDialogItemListItems = data.data;
+      this.totalArchetypeDialogItemListItems = data.total;
     },
 
     async fetchMyItems() {
@@ -70,7 +70,7 @@ export const useItemStore = defineStore("item", {
           page: this.myItemsListPage,
           itemsPerPage: this.myItemsListItemsPerPage,
           sortBy: this.myItemsListSortBy,
-          resourcearchetypeId: this.myItemsListFilters.resourcearchetypeId,
+          archetypeId: this.myItemsListFilters.archetypeId,
           brandId: this.myItemsListFilters.brandId,
           resource: this.myItemsListFilters.resource,
           search: this.myItemsListFilters.search,
@@ -186,13 +186,13 @@ export const useItemStore = defineStore("item", {
     },
 
     resetFilters() {
-      const resourcearchetypeStore = useResourceArchetypeStore();
+      const archetypeStore = useArchetypeStore();
       this.search = "";
-      resourcearchetypeStore.dateRange = [
+      archetypeStore.dateRange = [
         new Date(new Date().setHours(9, 0, 0, 0)),
         new Date(new Date().setHours(17, 0, 0, 0)),
       ];
-      this.fetchResourceArchetypeDialogItemListItems();
+      this.fetchArchetypeDialogItemListItems();
     },
 
     // Action to fetch an item by its ID from the items array
@@ -245,18 +245,18 @@ export const useItemStore = defineStore("item", {
       const ownerName = isRawItem ? item.raw.owner_name : item.owner_name;
       const ownerAbbreviation = getAbbreviation(ownerName);
 
-      // Get the tool resourcearchetype abbreviation
-      const resourcearchetypeName = isRawItem ? item.raw.resourcearchetype_name : item.resourcearchetype_name;
-      const resourcearchetypeAbbreviation = getAbbreviation(resourcearchetypeName);
+      // Get the archetype abbreviation
+      const archetypeName = isRawItem ? item.raw.archetype_name : item.archetype_name;
+      const archetypeAbbreviation = getAbbreviation(archetypeName);
 
       // Generate the item code
       const itemId = isRawItem ? item.raw.id : item.id;
-      const itemCode = `${ownerAbbreviation}-${resourcearchetypeAbbreviation}-${itemId}`;
+      const itemCode = `${ownerAbbreviation}-${archetypeAbbreviation}-${itemId}`;
 
       return itemCode;
     },
     outputReadableDateRange() {
-      const resourcearchetypeStore = useResourceArchetypeStore();
+      const archetypeStore = useArchetypeStore();
 
       // Format the dates to "Day of Week, Month Day, Year"
       const formatDate = (date) => {
@@ -268,8 +268,8 @@ export const useItemStore = defineStore("item", {
         });
       };
 
-      return `From: ${formatDate(resourcearchetypeStore.dateRange[0])} at 9:00 AM
-       To: ${formatDate(resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1])} at 5:00 PM`;
+      return `From: ${formatDate(archetypeStore.dateRange[0])} at 9:00 AM
+       To: ${formatDate(archetypeStore.dateRange[archetypeStore.dateRange.length - 1])} at 5:00 PM`;
     },
     async createItem(itemData) {
       const { sendRequest } = useApi();

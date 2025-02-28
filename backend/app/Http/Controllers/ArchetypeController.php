@@ -2,28 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ResourceArchetype;
+use App\Models\Archetype;
 use App\Models\Item;
 use App\Models\Usage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use App\Models\ResourceArchetypeImage;
+use App\Models\ArchetypeImage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
-class ResourceArchetypeController extends Controller
+class ArchetypeController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function getResourceArchetypesWithItems(Request $request)
+    public function getArchetypesWithItems(Request $request)
     {
         // Get request parameters
         $page = $request->input('page', 1);
         $itemsPerPage = $request->input('itemsPerPage', 10);
-        $sortBy = $request->input('sortBy.0.key', 'resource_archetypes.id'); // Default sort by id
+        $sortBy = $request->input('sortBy.0.key', 'archetypes.id'); // Default sort by id
         $order = $request->input('sortBy.0.order', 'asc'); // Default order ascending
         $search = $request->input('search', '');
         $radius = $request->input('radius');
@@ -35,12 +35,12 @@ class ResourceArchetypeController extends Controller
 
 
         // Base query for data
-        $query = ResourceArchetype::query()
-            ->leftJoin('category_resource_archetype', 'resource_archetypes.id', '=', 'category_resource_archetype.resource_archetype_id')
-            ->leftJoin('categories', 'category_resource_archetype.category_id', '=', 'categories.id')
-            ->leftJoin('resource_archetype_usage', 'resource_archetypes.id', '=', 'resource_archetype_usage.resource_archetype_id')
-            ->leftJoin('usages', 'resource_archetype_usage.usage_id', '=', 'usages.id')
-            ->leftJoin('items', 'items.resource_archetype_id', '=', 'resource_archetypes.id')
+        $query = Archetype::query()
+            ->leftJoin('category_archetype', 'archetypes.id', '=', 'category_archetype.archetype_id')
+            ->leftJoin('categories', 'category_archetype.category_id', '=', 'categories.id')
+            ->leftJoin('archetype_usage', 'archetypes.id', '=', 'archetype_usage.archetype_id')
+            ->leftJoin('usages', 'archetype_usage.usage_id', '=', 'usages.id')
+            ->leftJoin('items', 'items.archetype_id', '=', 'archetypes.id')
             ->leftJoin('brands', 'items.brand_id', '=', 'brands.id')
             ->leftJoin('users as owner', 'items.owned_by', '=', 'owner.id')
             ->leftJoin('locations as owner_location', 'owner.location_id', '=', 'owner_location.id');
@@ -55,9 +55,9 @@ class ResourceArchetypeController extends Controller
         $query->leftJoin('locations as renter_location', 'renter.location_id', '=', 'renter_location.id');
 
         $query->select(
-            'resource_archetypes.id',
-            'resource_archetypes.name',
-            'resource_archetypes.created_by',
+            'archetypes.id',
+            'archetypes.name',
+            'archetypes.created_by',
             DB::raw('GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC SEPARATOR ", ") as categories'),
             DB::raw('GROUP_CONCAT(DISTINCT categories.id ORDER BY categories.id ASC SEPARATOR ", ") as category_ids'),
             DB::raw('GROUP_CONCAT(DISTINCT usages.name ORDER BY usages.name ASC SEPARATOR ", ") as usages'),
@@ -98,7 +98,7 @@ class ResourceArchetypeController extends Controller
                         SEPARATOR "; ") as locations')
         );
 
-        $query->groupBy('resource_archetypes.id');
+        $query->groupBy('archetypes.id');
 
 
         $distance = $radius * 1000;
@@ -125,25 +125,25 @@ class ResourceArchetypeController extends Controller
         // Apply search filter if needed
         if (!empty($search)) {
             $query->where(function ($query) use ($search) {
-                $query->where('resource_archetypes.name', 'like', '%' . $search . '%')
+                $query->where('archetypes.name', 'like', '%' . $search . '%')
                     ->orWhere('items.description', 'like', '%' . $search . '%');
             });
         }
 
         // Apply user filter for specific paths
-        if ($request->path() == 'api/user/resource-archetypes') {
+        if ($request->path() == 'api/user/archetypes') {
             $user = $request->user();
-            $query->where('resource_archetypes.created_by', $user->id);
+            $query->where('archetypes.created_by', $user->id);
         }
 
         // Apply category filter if provided
         if ($request->filled('categoryId')) {
-            $query->where('category_resource_archetype.category_id', '=', $request->input('categoryId'));
+            $query->where('category_archetype.category_id', '=', $request->input('categoryId'));
         }
 
         // Apply usage filter if provided
         if ($request->filled('usageId')) {
-            $query->where('resource_archetype_usage.usage_id', '=', $request->input('usageId'));
+            $query->where('archetype_usage.usage_id', '=', $request->input('usageId'));
         }
 
         // Apply brand filter if provided
@@ -151,16 +151,16 @@ class ResourceArchetypeController extends Controller
             $query->where('items.brand_id', '=', $request->input('brandId'));
         }
 
-        // Apply resource archetype filter if provided
-        if ($request->filled('resourcearchetypeId')) {
-            $query->where('resource_archetypes.id', '=', $request->input('resourcearchetypeId'));
+        // Apply archetype filter if provided
+        if ($request->filled('archetypeId')) {
+            $query->where('archetypes.id', '=', $request->input('archetypeId'));
         }
 
         // Apply resource filter if provided
         $query->whereIn('resource', $resource);
 
 
-        // Apply the HAVING clause to filter resource archetypes with no items
+        // Apply the HAVING clause to filter archetypes with no items
         $query->havingRaw('available_item_count > 0 OR rented_item_count > 0');
 
         //Require discord user
@@ -177,29 +177,29 @@ class ResourceArchetypeController extends Controller
 
 
 
-        $resourceArchetypes = $query->paginate($itemsPerPage, ['*'], 'page', $page);
-        $resourcearchetypesArray = $resourceArchetypes->items();
-        $totalCount = $resourceArchetypes->total();
+        $archetypes = $query->paginate($itemsPerPage, ['*'], 'page', $page);
+        $archetypesArray = $archetypes->items();
+        $totalCount = $archetypes->total();
 
-        $resourcearchetypeIds = array_column($resourcearchetypesArray, 'id');
+        $archetypeIds = array_column($archetypesArray, 'id');
 
 
-        // Fetch random item images for resource archetypes missing resource archetype images
+        // Fetch random item images for archetypes missing archetype images
         $itemImages = DB::table('item_images')
-            ->select('items.resource_archetype_id', DB::raw('MIN(item_images.id) as id'), DB::raw('MIN(item_images.path) as path'))
+            ->select('items.archetype_id', DB::raw('MIN(item_images.id) as id'), DB::raw('MIN(item_images.path) as path'))
             ->join('items', 'items.id', '=', 'item_images.item_id')
-            ->whereIn('items.resource_archetype_id', $resourcearchetypeIds)
-            ->groupBy('items.resource_archetype_id')
+            ->whereIn('items.archetype_id', $archetypeIds)
+            ->groupBy('items.archetype_id')
             ->inRandomOrder()
             ->get()
-            ->keyBy('resource_archetype_id');
+            ->keyBy('archetype_id');
 
 
         $images = [];
-        // Merge in the item images where resource archetype images are missing
-        foreach ($itemImages as $resourcearchetypeId => $image) {
-            if (!isset($images[$resourcearchetypeId])) {
-                $images[$resourcearchetypeId] = [
+        // Merge in the item images where archetype images are missing
+        foreach ($itemImages as $archetypeId => $image) {
+            if (!isset($images[$archetypeId])) {
+                $images[$archetypeId] = [
                     [
                         'id' => $image->id,
                         'path' => '/storage/' . $image->path
@@ -208,13 +208,13 @@ class ResourceArchetypeController extends Controller
             }
         }
 
-        // Combine resource archetypes with their images
-        foreach ($resourcearchetypesArray as &$resourceArchetype) {
-            $resourceArchetype['images'] = $images[$resourceArchetype['id']] ?? null;
+        // Combine archetypes with their images
+        foreach ($archetypesArray as &$archetype) {
+            $archetype['images'] = $images[$archetype['id']] ?? null;
         }
 
 
-        $response['data'] = $resourcearchetypesArray;
+        $response['data'] = $archetypesArray;
         $response['total'] = $totalCount;
 
         // Return response
@@ -224,7 +224,7 @@ class ResourceArchetypeController extends Controller
 
     public function getResources()
     {
-        $resources = getEnumValues('resource_archetypes', 'resource');
+        $resources = getEnumValues('archetypes', 'resource');
         // Convert to a plain array if needed
         $response['data'] = $resources;
         $response['total'] = count($resources);
@@ -239,25 +239,26 @@ class ResourceArchetypeController extends Controller
         $page = $request->input('page', 1);
         $itemsPerPage = $request->input('itemsPerPage', 10);
         $sortBy = $request->input('sortBy');
+        $search = $request->input('search');
 
 
 
         // Base query for data
-        $query = ResourceArchetype::query()
-            ->leftJoin('category_resource_archetype', 'resource_archetypes.id', '=', 'category_resource_archetype.resource_archetype_id')
-            ->leftJoin('categories', 'category_resource_archetype.category_id', '=', 'categories.id')
-            ->leftJoin('resource_archetype_usage', 'resource_archetypes.id', '=', 'resource_archetype_usage.resource_archetype_id')
-            ->leftJoin('usages', 'resource_archetype_usage.usage_id', '=', 'usages.id')
-            ->leftJoin('items', 'items.resource_archetype_id', '=', 'resource_archetypes.id')
+        $query = Archetype::query()
+            ->leftJoin('category_archetype', 'archetypes.id', '=', 'category_archetype.archetype_id')
+            ->leftJoin('categories', 'category_archetype.category_id', '=', 'categories.id')
+            ->leftJoin('archetype_usage', 'archetypes.id', '=', 'archetype_usage.archetype_id')
+            ->leftJoin('usages', 'archetype_usage.usage_id', '=', 'usages.id')
+            ->leftJoin('items', 'items.archetype_id', '=', 'archetypes.id')
             ->leftJoin('users as owner', 'items.owned_by', '=', 'owner.id')
             ->leftJoin('locations as owner_location', 'owner.location_id', '=', 'owner_location.id')
             ->select(
-                'resource_archetypes.id',
-                'resource_archetypes.name',
-                'resource_archetypes.created_by',
-                'resource_archetypes.description',
-                'resource_archetypes.notes',
-                'resource_archetypes.code',
+                'archetypes.id',
+                'archetypes.name',
+                'archetypes.created_by',
+                'archetypes.description',
+                'archetypes.notes',
+                'archetypes.code',
                 DB::raw('GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC SEPARATOR ", ") as categories'),
                 DB::raw('GROUP_CONCAT(DISTINCT categories.id ORDER BY categories.id ASC SEPARATOR ", ") as category_ids'),
                 DB::raw('GROUP_CONCAT(DISTINCT usages.name ORDER BY usages.name ASC SEPARATOR ", ") as usages'),
@@ -266,20 +267,20 @@ class ResourceArchetypeController extends Controller
 
             );
 
-        $query->groupBy('resource_archetypes.id');
+        $query->groupBy('archetypes.id');
 
 
         // Apply search filter if needed
         if (!empty($search)) {
             $query->where(function ($query) use ($search) {
-                $query->where('name', 'like', '%' . $search . '%');
+                $query->where('archetypes.name', 'like', '%' . $search . '%');
             });
         }
 
         // Check if the path is 'me/items' and filter by user if so
-        if ($request->path() == 'api/me/resource-archetypes') {
+        if ($request->path() == 'api/me/archetypes') {
             $user = $request->user();
-            $query->where('resource_archetypes.created_by', $user->id);
+            $query->where('archetypes.created_by', $user->id);
         }
 
 
@@ -297,42 +298,42 @@ class ResourceArchetypeController extends Controller
         // Apply pagination
         //paginate or not depending on items per page
         if ($request->itemsPerPage == -1) {
-            $resourcearchetypesArray = $query->get()->toArray();
-            $totalCount = count($resourcearchetypesArray);
+            $archetypesArray = $query->get()->toArray();
+            $totalCount = count($archetypesArray);
         } else {
-            $resourceArchetypes = $query->paginate($itemsPerPage, ['*'], 'page', $page);
-            $resourcearchetypesArray = $resourceArchetypes->items();
-            $totalCount = $resourceArchetypes->total();
+            $archetypes = $query->paginate($itemsPerPage, ['*'], 'page', $page);
+            $archetypesArray = $archetypes->items();
+            $totalCount = $archetypes->total();
         }
 
 
-        $resourcearchetypeIds = array_column($resourcearchetypesArray, 'id');
+        $archetypeIds = array_column($archetypesArray, 'id');
 
 
-        // Fetch the resource archetype images as before
-        $resourcearchetypeImages = DB::table('resource_archetype_images')
-            ->select('resource_archetype_id', 'id', 'path')
-            ->whereIn('resource_archetype_id', $resourcearchetypeIds)
+        // Fetch the archetype images as before
+        $archetypeImages = DB::table('archetype_images')
+            ->select('archetype_id', 'id', 'path')
+            ->whereIn('archetype_id', $archetypeIds)
             ->get()
-            ->groupBy('resource_archetype_id');
+            ->groupBy('archetype_id');
 
-        // Determine which resource archetypes are missing images
-        $resourcearchetypesMissingImages = array_diff($resourcearchetypeIds, array_keys($resourcearchetypeImages->toArray()));
+        // Determine which archetypes are missing images
+        $archetypesMissingImages = array_diff($archetypeIds, array_keys($archetypeImages->toArray()));
 
-        // Fetch random item images for resource archetypes missing resource archetype images
+        // Fetch random item images for archetypes missing archetype images
         $itemImages = DB::table('item_images')
-            ->select('items.resource_archetype_id', DB::raw('MIN(item_images.id) as id'), DB::raw('MIN(item_images.path) as path'))
+            ->select('items.archetype_id', DB::raw('MIN(item_images.id) as id'), DB::raw('MIN(item_images.path) as path'))
             ->join('items', 'items.id', '=', 'item_images.item_id')
-            ->whereIn('items.resource_archetype_id', $resourcearchetypesMissingImages)
-            ->groupBy('items.resource_archetype_id')
+            ->whereIn('items.archetype_id', $archetypesMissingImages)
+            ->groupBy('items.archetype_id')
             ->inRandomOrder()
             ->get()
-            ->keyBy('resource_archetype_id');
+            ->keyBy('archetype_id');
 
-        // Combine both resource archetype images and item images
-        $combinedImages = $resourcearchetypeImages->mapWithKeys(function ($imageGroup, $resourcearchetypeId) {
+        // Combine both archetype images and item images
+        $combinedImages = $archetypeImages->mapWithKeys(function ($imageGroup, $archetypeId) {
             return [
-                $resourcearchetypeId => $imageGroup->map(function ($image) {
+                $archetypeId => $imageGroup->map(function ($image) {
                     return [
                         'id' => $image->id,
                         'path' => '/storage/' . $image->path
@@ -341,10 +342,10 @@ class ResourceArchetypeController extends Controller
             ];
         });
 
-        // Merge in the item images where resource archetype images are missing
-        foreach ($itemImages as $resourcearchetypeId => $image) {
-            if (!isset($combinedImages[$resourcearchetypeId])) {
-                $combinedImages[$resourcearchetypeId] = [
+        // Merge in the item images where archetype images are missing
+        foreach ($itemImages as $archetypeId => $image) {
+            if (!isset($combinedImages[$archetypeId])) {
+                $combinedImages[$archetypeId] = [
                     [
                         'id' => $image->id,
                         'path' => '/storage/' . $image->path
@@ -353,9 +354,9 @@ class ResourceArchetypeController extends Controller
             }
         }
 
-        // Combine resource archetypes with their images
-        foreach ($resourcearchetypesArray as &$resourceArchetype) {
-            $resourceArchetype['images'] = $combinedImages->get($resourceArchetype['id'], []);
+        // Combine archetypes with their images
+        foreach ($archetypesArray as &$archetype) {
+            $archetype['images'] = $combinedImages->get($archetype['id'], []);
         }
 
 
@@ -364,7 +365,7 @@ class ResourceArchetypeController extends Controller
         // Return response
         return response()->json([
             'total' => $totalCount,
-            'data' => $resourcearchetypesArray
+            'data' => $archetypesArray
         ]);
     }
 
@@ -393,7 +394,7 @@ class ResourceArchetypeController extends Controller
             ]);
         }
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:resource_archetypes',
+            'name' => 'required|string|max:255|unique:archetypes',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Image validation rules
             'description' => 'nullable|string|max:1000',
             'notes' => 'nullable|string|max:1000',
@@ -407,18 +408,18 @@ class ResourceArchetypeController extends Controller
 
         $validated['created_by'] = $user->id;
 
-        $resourceArchetype = ResourceArchetype::create($validated);
+        $archetype = Archetype::create($validated);
 
         // Attach categories and usages
         if (isset($validated['category_ids'])) {
-            $resourceArchetype->categories()->attach($validated['category_ids']);
+            $archetype->categories()->attach($validated['category_ids']);
         }
 
         if (isset($validated['usage_ids'])) {
-            $resourceArchetype->usages()->attach($validated['usage_ids']);
+            $archetype->usages()->attach($validated['usage_ids']);
         }
 
-        return response()->json(['success' => true, 'data' => $resourceArchetype, 'message' => 'ResourceArchetype created']);
+        return response()->json(['success' => true, 'data' => $archetype, 'message' => 'Archetype created']);
     }
 
 
@@ -451,8 +452,8 @@ class ResourceArchetypeController extends Controller
             ]);
         }
 
-        $resourceArchetype = $request->validate([
-            'name' => "required|string|max:255|unique:resource_archetypes,name,{$id}", //allow the name field to remain unchanged or be unique, 
+        $archetype = $request->validate([
+            'name' => "required|string|max:255|unique:archetypes,name,{$id}", //allow the name field to remain unchanged or be unique, 
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Image validation rules
             'description' => 'nullable|string|max:1000',
             'notes' => 'nullable|string|max:1000',
@@ -464,19 +465,19 @@ class ResourceArchetypeController extends Controller
 
         ]);
 
-        $resourceArchetype = DB::transaction(function () use ($request, $id) {
+        $archetype = DB::transaction(function () use ($request, $id) {
 
-            $resourceArchetype = ResourceArchetype::findOrFail($id);
-            $resourceArchetype->fill($request->except('newImages', 'removedImages'));
-            $resourceArchetype->save();
+            $archetype = Archetype::findOrFail($id);
+            $archetype->fill($request->except('newImages', 'removedImages'));
+            $archetype->save();
 
             // Sync categories and usages
             if ($request->has('category_ids')) {
-                $resourceArchetype->categories()->sync($request->input('category_ids'));
+                $archetype->categories()->sync($request->input('category_ids'));
             }
 
             if ($request->has('usage_ids')) {
-                $resourceArchetype->usages()->sync($request->input('usage_ids'));
+                $archetype->usages()->sync($request->input('usage_ids'));
             }
 
             // Handle new images
@@ -492,8 +493,8 @@ class ResourceArchetypeController extends Controller
                     $imagePath = $image->storeAs('images', $filename, 'public'); // Store in `storage/app/public/images`
 
                     // Save image path to the database
-                    ResourceArchetypeImage::create([
-                        'resource_archetype_id' => $resourceArchetype->id,
+                    ArchetypeImage::create([
+                        'archetype_id' => $archetype->id,
                         'path' => $imagePath,
                         'created_by' => $userId,
                     ]);
@@ -504,7 +505,7 @@ class ResourceArchetypeController extends Controller
             if ($request->removedImages) {
                 foreach ($request->removedImages as $imageId) {
                     // Find the image by ID
-                    $image = ResourceArchetypeImage::find($imageId);
+                    $image = ArchetypeImage::find($imageId);
 
 
                     // Check if the image exists
@@ -517,10 +518,10 @@ class ResourceArchetypeController extends Controller
                     }
                 }
             }
-            return $resourceArchetype;
+            return $archetype;
         });
 
-        return response()->json(['success' => true, 'message' => 'ResourceArchetype saved', 'data' => $resourceArchetype]);
+        return response()->json(['success' => true, 'message' => 'Archetype saved', 'data' => $archetype]);
     }
 
     /**
@@ -532,31 +533,31 @@ class ResourceArchetypeController extends Controller
     public function destroy($id)
     {
         $user = Auth::user();
-        $resourceArchetype = ResourceArchetype::where('id', $id)->where('created_by', $user->id)->first();
-        if (!$resourceArchetype) {
-            return response()->json(['message' => 'ResourceArchetype not found or you do not have permission to delete it'], 404);
+        $archetype = Archetype::where('id', $id)->where('created_by', $user->id)->first();
+        if (!$archetype) {
+            return response()->json(['message' => 'Archetype not found or you do not have permission to delete it'], 404);
         }
 
         //check if there are related items
-        $items = Item::where('resource_archetype_id', '=', $resourceArchetype->id);
+        $items = Item::where('archetype_id', '=', $archetype->id);
         if ($items->count() > 0) {
-            return response()->json(['message' => 'There are ' . $items->count() . ' items associated with this resource archetype. You must delete them first.'], 404);
+            return response()->json(['message' => 'There are ' . $items->count() . ' items associated with this archetype. You must delete them first.'], 404);
         }
 
-        $resourcearchetypeImages = $resourceArchetype->images;
+        $archetypeImages = $archetype->images;
 
         // Delete the image files from storage
-        foreach ($resourcearchetypeImages as $image) {
+        foreach ($archetypeImages as $image) {
             Storage::disk('public')->delete($image->path);
         }
 
         // Delete the records from the item_images table
-        $resourceArchetype->images()->delete();
+        $archetype->images()->delete();
 
         // Delete the item itself
-        $resourceArchetype->delete();
+        $archetype->delete();
 
-        return response()->json(['success' => true, 'message' => 'ResourceArchetype deleted']);
+        return response()->json(['success' => true, 'message' => 'Archetype deleted']);
     }
 
 

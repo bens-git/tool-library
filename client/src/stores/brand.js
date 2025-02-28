@@ -23,7 +23,7 @@ export const useBrandStore = defineStore("brand", {
           page: this.myBrandsListPage,
           itemsPerPage: this.myBrandsListItemsPerPage,
           sortBy: this.myBrandsListSortBy,
-          resourcearchetypeId: this.myBrandsListFilters.resourcearchetypeId,
+          archetypeId: this.myBrandsListFilters.archetypeId,
           brandId: this.myBrandsListFilters.brandId,
           resource: this.myBrandsListFilters.resource,
           search: this.myBrandsListFilters.search,

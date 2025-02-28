@@ -81,14 +81,14 @@
             max-width="200"
             min-height="200"
             min-width="200"
-            alt="ResourceArchetype Image"
+            alt="Archetype Image"
           ></v-img>
           <v-icon v-else>mdi-image-off</v-icon>
           <!-- Fallback icon if no image is available -->
         </template>
 
         <template v-slot:[`item.actions`]="{ item }">
-          <v-btn icon @click="editResourceArchetype(item)" v-if="userStore.user">
+          <v-btn icon @click="editArchetype(item)" v-if="userStore.user">
             <v-icon>mdi-information</v-icon>
           </v-btn>
 

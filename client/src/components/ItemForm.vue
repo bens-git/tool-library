@@ -4,15 +4,15 @@
     <v-card-text>
       <v-autocomplete
         density="compact"
-        v-model="localItem.resource_archetype"
-        :items="autocompleteResourceArchetypes"
-        label="Select a Resource Archetype"
+        v-model="localItem.archetype"
+        :items="autocompleteArchetypes"
+        label="Select an archetype"
         item-title="name"
         item-value="id"
         hide-no-data
         :return-object="true"
-        @update:search="debouncedAutocompleteResourceArchetypeSearch"
-        :error-messages="responseStore.response?.errors?.['resource_archetype.id']"
+        @update:search="debouncedAutocompleteArchetypeSearch"
+        :error-messages="responseStore.response?.errors?.['archetype.id']"
       ></v-autocomplete>
       <br />
 
@@ -106,7 +106,7 @@
 </template>
 <script setup>
 import { ref, watch, onMounted } from "vue";
-import { useResourceArchetypeStore } from "@/stores/resource_archetype";
+import { useArchetypeStore } from "@/stores/archetype";
 import { useItemStore } from "@/stores/item";
 import { useBrandStore } from "@/stores/brand";
 import { useResponseStore } from "@/stores/response";
@@ -114,7 +114,7 @@ import useApi from "@/stores/api";
 import debounce from "lodash/debounce";
 
 const itemStore = useItemStore();
-const resourceArchetypeStore = useResourceArchetypeStore();
+const archetypeStore = useArchetypeStore();
 const brandStore = useBrandStore();
 const responseStore = useResponseStore();
 
@@ -122,20 +122,20 @@ const apiBaseUrl = process.env.VUE_APP_API_HOST;
 
 const newImages = ref([]);
 const removedImages = ref([]);
-const resourceArchetypes = ref([]);
-const autocompleteResourceArchetypes = ref([]);
+const archetypes = ref([]);
+const autocompleteArchetypes = ref([]);
 const autocompleteBrands = ref([]);
 const { fullImageUrl } = useApi();
 
-// Fetch initial resource archetypes
-const fetchInitialResourceArchetypes = async () => {
-  const initialResourceArchetypes = await resourceArchetypeStore.fetchAutocompleteSelectResourceArchetypes();
-  resource_archetypes.value = initialResourceArchetypes;
+// Fetch initial archetypes
+const fetchInitialArchetypes = async () => {
+  const initialArchetypes = await archetypeStore.fetchAutocompleteSelectArchetypes();
+  archetypes.value = initialArchetypes;
 };
 
-// Autocomplete ResourceArchetype Search handler
-const onAutocompleteResourceArchetypeSearch = async (query) => {
-  autocompleteResourceArchetypes.value = await resourceArchetypeStore.fetchAutocompleteSelectResourceArchetypes(query);
+// Autocomplete Archetype Search handler
+const onAutocompleteArchetypeSearch = async (query) => {
+  autocompleteArchetypes.value = await archetypeStore.fetchAutocompleteSelectArchetypes(query);
 };
 
 // Autocomplete Brand Search handler
@@ -145,7 +145,7 @@ const onAutocompleteBrandSearch = async (query) => {
 };
 
 // Debounced search function
-const debouncedAutocompleteResourceArchetypeSearch = debounce(onAutocompleteResourceArchetypeSearch, 300);
+const debouncedAutocompleteArchetypeSearch = debounce(onAutocompleteArchetypeSearch, 300);
 const debouncedAutocompleteBrandSearch = debounce(
   onAutocompleteBrandSearch,
   300
@@ -175,7 +175,7 @@ const initializeLocalItem = () => {
     };
   } else {
     localItem.value = {
-      resource_archetype_id: null,
+      archetype_id: null,
       brand_id: null,
       description: null,
       serial: null,
@@ -187,10 +187,10 @@ const initializeLocalItem = () => {
   }
 };
 
-// Initialize localResourceArchetype on component mount or when the resource archetype changes
+// Initialize localArchetype on component mount or when the archetype changes
 onMounted(async() => {
   initializeLocalItem();
-  autocompleteResourceArchetypes.value = await resourceArchetypeStore.fetchAutocompleteSelectResourceArchetypes();
+  autocompleteArchetypes.value = await archetypeStore.fetchAutocompleteSelectArchetypes();
   autocompleteBrands.value = await brandStore.fetchAutocompleteSelectBrands();
 
 });

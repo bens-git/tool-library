@@ -7,7 +7,7 @@
 
             <!-- Show success message or registration form based on registration status -->
             <template v-if="requestSuccessful">
-                <v-alert resourcearchetype="success" dismissible>
+                <v-alert archetype="success" dismissible>
                     {{ successMessage }}
                 </v-alert>
             </template>
@@ -15,11 +15,11 @@
             <template v-else>
                 <v-form @submit.prevent="requestPasswordReset(email)" ref="form" v-model="formValid">
 
-                    <v-text-field density="compact" v-model="email" label="Email" resourcearchetype="email"
+                    <v-text-field density="compact" v-model="email" label="Email" archetype="email"
                         :error-messages="errors.email" required
                         :rules="[rules.required, rules.validEmail]"></v-text-field>
 
-                    <v-btn resourcearchetype="submit" :loading="userStore.isLoading" color="primary" class="mt-4"
+                    <v-btn archetype="submit" :loading="userStore.isLoading" color="primary" class="mt-4"
                         :disabled="!formValid">
                         Request Password Reset
                     </v-btn>

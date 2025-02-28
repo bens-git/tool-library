@@ -54,9 +54,9 @@ class UsageController extends Controller
 
         if ($request->paginate && $request->paginate != 'false') {
 
-            $resourceArchetypes = $query->paginate($itemsPerPage, ['*'], 'page', $page);
-            $usagesArray = $resourceArchetypes->items();
-            $totalCount = $resourceArchetypes->total();
+            $archetypes = $query->paginate($itemsPerPage, ['*'], 'page', $page);
+            $usagesArray = $archetypes->items();
+            $totalCount = $archetypes->total();
         }
 
         // Return response

@@ -4,12 +4,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ResourceArchetypeImage extends Model
+class ArchetypeImage extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'resource_archetype_id',
+        'archetype_id',
         'path',
         'created_by',
     ];

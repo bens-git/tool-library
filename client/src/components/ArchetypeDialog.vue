@@ -14,12 +14,12 @@
         :prepend-icon="isEdit ? 'mdi-edit' : 'mdi-plus'"
         :title="isEdit ? `EDIT ${resource}` : `CREATE ${resource}`"
       >
-        <v-card-text v-if="localResourceArchetype">
+        <v-card-text v-if="localArchetype">
           <v-row dense>
             <v-col cols="12" md="4" sm="6">
               <v-text-field
                 density="compact"
-                v-model="localResourceArchetype.name"
+                v-model="localArchetype.name"
                 :error-messages="responseStore?.response?.errors?.name"
                 label="Name"
               />
@@ -27,7 +27,7 @@
             <v-col cols="12" md="4" sm="6">
               <v-textarea
                 density="compact"
-                v-model="localResourceArchetype.description"
+                v-model="localArchetype.description"
                 label="Description"
               ></v-textarea>
             </v-col>
@@ -35,7 +35,7 @@
             <v-col cols="12" md="4" sm="6">
               <v-textarea
                 density="compact"
-                v-model="localResourceArchetype.notes"
+                v-model="localArchetype.notes"
                 label="Notes"
               ></v-textarea>
             </v-col>
@@ -43,7 +43,7 @@
             <v-col cols="12" md="4" sm="6">
               <v-text-field
                 density="compact"
-                v-model="localResourceArchetype.code"
+                v-model="localArchetype.code"
                 label="Code"
               ></v-text-field>
               </v-col
@@ -53,7 +53,7 @@
               <v-autocomplete
                 density="compact"
                 :multiple="true"
-                v-model="localResourceArchetype.category_ids"
+                v-model="localArchetype.category_ids"
                 :items="categoryStore.categories"
                 label="Category"
                 item-title="name"
@@ -67,7 +67,7 @@
               <v-autocomplete
                 density="compact"
                 :multiple="true"
-                v-model="localResourceArchetype.usage_ids"
+                v-model="localArchetype.usage_ids"
                 :items="usageStore.usages"
                 label="Usage"
                 item-title="name"
@@ -81,7 +81,7 @@
             <v-col cols="12" md="4" sm="6">
               <v-autocomplete
                 density="compact"
-                v-model="localResourceArchetype.resource"
+                v-model="localArchetype.resource"
                 :items="['TOOL', 'MATERIAL']"
                 label="Resource"
                 :disabled="true"
@@ -121,11 +121,11 @@
 </template>
 <script setup>
 import { shallowRef, ref, watch, onMounted } from "vue";
-import { useResourceArchetypeStore } from "@/stores/resource_archetype";
+import { useArchetypeStore } from "@/stores/archetype";
 import { useCategoryStore } from "@/stores/category";
 import { useUsageStore } from "@/stores/usage";
 import { useResponseStore } from "@/stores/response";
-import ItemDialog from "./ResourceArchetypeDialog.vue";
+import ItemDialog from "./ArchetypeDialog.vue";
 
 // Create a local state variable to sync with modelValue
 //const localModelValue = ref(props.modelValue);
@@ -139,27 +139,27 @@ import ItemDialog from "./ResourceArchetypeDialog.vue";
 // );
 const dialog = shallowRef(false);
 
-const resourcearchetypeStore = useResourceArchetypeStore();
+const archetypeStore = useArchetypeStore();
 const categoryStore = useCategoryStore();
 const usageStore = useUsageStore();
 const responseStore = useResponseStore();
 
 // const apiBaseUrl = process.env.VUE_APP_API_HOST;
 
-const localResourceArchetype = ref(null);
+const localArchetype = ref(null);
 
 // onMounted(async () => {
 //   console.log("mount");
 //   tools.resource = "TOOL";
-//   tools.value = (await resourcearchetypeStore.fetchResourceArchetypes()).data;
+//   tools.value = (await archetypeStore.fetchArchetypes()).data;
 //   tools.resource = "MATERIAL";
-//   materials.value = (await resourcearchetypeStore.fetchResourceArchetypes()).data;
-//   initializeLocalResourceArchetype();
+//   materials.value = (await archetypeStore.fetchArchetypes()).data;
+//   initializeLocalArchetype();
 // });
 
 const props = defineProps({
   isEdit: Boolean,
-  resourcearchetype: Object,
+  archetype: Object,
   resource: String,
 });
 
@@ -173,14 +173,14 @@ watch(dialog, (newVal) => {
 });
 
 // Function to initialize
-const initializeLocalResourceArchetype = () => {
+const initializeLocalArchetype = () => {
   console.log("init");
-  if (props.isEdit && props.resourcearchetype) {
-    localResourceArchetype.value = {
-      ...props.resourcearchetype,
+  if (props.isEdit && props.archetype) {
+    localArchetype.value = {
+      ...props.archetype,
     };
   } else {
-    localResourceArchetype.value = {
+    localArchetype.value = {
       name: "",
       description: "",
       material_id: null,
@@ -198,7 +198,7 @@ const initializeLocalResourceArchetype = () => {
 const onOpen =async () => {
   await categoryStore.fetchCategories()
   await usageStore.fetchUsages()
-  initializeLocalResourceArchetype();
+  initializeLocalArchetype();
   responseStore.$reset();
 
 };
@@ -213,9 +213,9 @@ const save = () => {
 };
 
 const create = async () => {
-  const newResourceArchetype = await resourcearchetypeStore.postResourceArchetype(localResourceArchetype.value);
-  if (newResourceArchetype && newResourceArchetype.id) {
-    localResourceArchetype.value = newResourceArchetype;
+  const newArchetype = await archetypeStore.postArchetype(localArchetype.value);
+  if (newArchetype && newArchetype.id) {
+    localArchetype.value = newArchetype;
   }
 
 };

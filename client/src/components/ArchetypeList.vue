@@ -11,7 +11,7 @@
           <v-col cols="12" md="3">
             <v-text-field
               density="compact"
-              v-model="resourceArchetypeStore.search"
+              v-model="archetypeStore.search"
               label="Search"
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
@@ -21,13 +21,13 @@
             />
           </v-col>
 
-          <!-- ResourceArchetype -->
+          <!-- Archetype -->
           <v-col cols="12" md="3">
             <v-autocomplete
               density="compact"
-              v-model="resourceArchetypeStore.selectedResourceArchetypeId"
-              :items="autocompleteResourceArchetypes"
-              label="Tool Archetype"
+              v-model="archetypeStore.selectedArchetypeId"
+              :items="autocompleteArchetypes"
+              label="Archetype"
               item-title="name"
               item-value="id"
               hide-no-data
@@ -35,7 +35,7 @@
               return-object
               clearable
               @update:model-value="debounceSearch"
-              @update:search="debouncedAutocompleteResourceArchetypeSearch"
+              @update:search="debouncedAutocompleteArchetypeSearch"
             ></v-autocomplete>
           </v-col>
 
@@ -43,7 +43,7 @@
           <v-col cols="12" md="2">
             <v-autocomplete
               density="compact"
-              v-model="resourceArchetypeStore.selectedCategoryId"
+              v-model="archetypeStore.selectedCategoryId"
               :items="categoryStore.categories"
               label="Category"
               item-title="name"
@@ -57,7 +57,7 @@
           <v-col cols="12" md="2">
             <v-autocomplete
               density="compact"
-              v-model="resourceArchetypeStore.selectedUsageId"
+              v-model="archetypeStore.selectedUsageId"
               :items="usageStore.usages"
               label="Usage"
               item-title="name"
@@ -71,7 +71,7 @@
           <v-col cols="12" md="2">
             <v-autocomplete
               density="compact"
-              v-model="resourceArchetypeStore.selectedBrandId"
+              v-model="archetypeStore.selectedBrandId"
               :items="autocompleteBrands"
               label="Brand"
               item-title="name"
@@ -91,7 +91,7 @@
           <v-col cols="12" md="3">
             <v-date-input
               density="compact"
-              v-model="resourceArchetypeStore.dateRange"
+              v-model="archetypeStore.dateRange"
               label="Dates"
               prepend-icon=""
               persistent-placeholder
@@ -106,7 +106,7 @@
             <v-text-field
               density="compact"
               label="Select location"
-              v-model="resourceArchetypeStore.address"
+              v-model="archetypeStore.address"
               readonly
               @click="openLocationPicker"
             ></v-text-field>
@@ -117,7 +117,7 @@
               label="Radius (km)"
               show-ticks="always"
               tick-size="10"
-              v-model="resourceArchetypeStore.radius"
+              v-model="archetypeStore.radius"
               step="10"
               thumb-label="always"
               :max="100"
@@ -145,7 +145,7 @@
             <v-btn
               icon
               color="primary"
-              @click="resourceArchetypeStore.resetFilters"
+              @click="archetypeStore.resetFilters"
               class="mt-2"
             >
               <v-icon>mdi-refresh</v-icon>
@@ -154,14 +154,14 @@
         </v-row>
       </template>
       <v-data-table-server
-        v-model:items-per-page="resourceArchetypeStore.itemsPerPage"
+        v-model:items-per-page="archetypeStore.itemsPerPage"
         :headers="headers"
-        :items="resourceArchetypeStore.resourcearchetypesWithItems"
-        :items-length="resourceArchetypeStore.totalResourceArchetypesWithItems"
+        :items="archetypeStore.archetypesWithItems"
+        :items-length="archetypeStore.totalArchetypesWithItems"
         loading-text="Loading... Please wait"
-        :search="resourceArchetypeStore.search"
+        :search="archetypeStore.search"
         item-value="id"
-        @update:options="resourceArchetypeStore.updateResourceArchetypesWithItemsOptions"
+        @update:options="archetypeStore.updateArchetypesWithItemsOptions"
         mobile-breakpoint="sm"
       >
         <!-- Image column -->
@@ -173,7 +173,7 @@
             max-width="200"
             min-height="200"
             min-width="200"
-            alt="Tool Archetype Image"
+            alt="Archetype Image"
           ></v-img>
           <v-icon v-else>mdi-image-off</v-icon>
           <!-- Fallback icon if no image is available -->
@@ -198,7 +198,7 @@
         </template>
 
         <template v-slot:[`item.actions`]="{ item }">
-          <v-btn icon @click="editResourceArchetype(item)" v-if="userStore.user">
+          <v-btn icon @click="editArchetype(item)" v-if="userStore.user">
             <v-icon>mdi-information</v-icon>
           </v-btn>
 
@@ -212,8 +212,8 @@
 
   <!-- Dialog for item details -->
   <v-dialog v-model="dialog" :persistent="false" class="custom-dialog">
-    <ResourceArchetypeDetail
-      :resourcearchetype="selectedResourceArchetype"
+    <ArchetypeDetail
+      :archetype="selectedArchetype"
       :action="'details'"
       v-on:closeDialog="dialog = false"
     />
@@ -225,11 +225,11 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useCategoryStore } from "@/stores/category";
 import { useUsageStore } from "@/stores/usage";
 import { useBrandStore } from "@/stores/brand";
-import { useResourceArchetypeStore } from "@/stores/resource_archetype";
+import { useArchetypeStore } from "@/stores/archetype";
 import { useUserStore } from "@/stores/user";
 import { useLocationStore } from "@/stores/location";
 import _ from "lodash";
-import ResourceArchetypeDetail from "./ResourceArchetypeDetail.vue";
+import ArchetypeDetail from "./ArchetypeDetail.vue";
 import { useRouter } from "vue-router";
 import LocationPicker from "./LocationPicker.vue"; // Import your location picker component
 import debounce from "lodash/debounce";
@@ -238,7 +238,7 @@ import useApi from "@/stores/api";
 const categoryStore = useCategoryStore();
 const usageStore = useUsageStore();
 const brandStore = useBrandStore();
-const resourceArchetypeStore = useResourceArchetypeStore();
+const archetypeStore = useArchetypeStore();
 const userStore = useUserStore();
 const locationStore = useLocationStore();
 const router = useRouter();
@@ -246,7 +246,7 @@ const router = useRouter();
 const latitude = ref(null);
 const longitude = ref(null);
 const locationPickerDialog = ref(false);
-const autocompleteResourceArchetypes = ref([]);
+const autocompleteArchetypes = ref([]);
 const autocompleteBrands = ref([]);
 
 const openLocationPicker = () => {
@@ -264,7 +264,7 @@ const { fullImageUrl } = useApi();
 
 
 const dialog = ref(false);
-const selectedResourceArchetype = ref(null);
+const selectedArchetype = ref(null);
 
 const headers = [
   {
@@ -280,7 +280,7 @@ const headers = [
     key: "actions",
   },
   {
-    title: "Tool Archetype",
+    title: "Archetype",
     align: "start",
     sortable: true,
     key: "name",
@@ -324,24 +324,24 @@ const headers = [
 ];
 
 
-// Autocomplete ResourceArchetype Search handler
-const onAutocompleteResourceArchetypeSearch = async (query) => {
-  autocompleteResourceArchetypes.value = await resourceArchetypeStore.fetchAutocompleteSelectResourceArchetypes(query);
+// Autocomplete Archetype Search handler
+const onAutocompleteArchetypeSearch = async (query) => {
+  autocompleteArchetypes.value = await archetypeStore.fetchAutocompleteSelectArchetypes(query);
 };
 const onAutocompleteBrandSearch = async (query) => {
   autocompleteBrands.value = await brandStore.fetchAutocompleteSelectBrands(query);
 };
 
-const debouncedAutocompleteResourceArchetypeSearch = debounce(onAutocompleteResourceArchetypeSearch, 300);
+const debouncedAutocompleteArchetypeSearch = debounce(onAutocompleteArchetypeSearch, 300);
 const debouncedAutocompleteBrandSearch = debounce(onAutocompleteBrandSearch, 300);
 
 
 const debounceSearch = _.debounce(() => {
-  resourceArchetypeStore.fetchResourceArchetypesWithItems();
+  archetypeStore.fetchArchetypesWithItems();
 }, 300);
 
-const editResourceArchetype = (resourcearchetype) => {
-  selectedResourceArchetype.value = resourcearchetype;
+const editArchetype = (archetype) => {
+  selectedArchetype.value = archetype;
   dialog.value = true;
 };
 
@@ -359,10 +359,10 @@ const minStartDate = computed(() => today);
 
 // Watchers to ensure dates are correctly updated
 watch(
-  () => resourceArchetypeStore.dateRange[0],
+  () => archetypeStore.dateRange[0],
   (newStartDate) => {
-    if (newStartDate > resourceArchetypeStore.dateRange[resourceArchetypeStore.dateRange.length - 1]) {
-      resourceArchetypeStore.dateRange[resourceArchetypeStore.dateRange.length - 1] = new Date(
+    if (newStartDate > archetypeStore.dateRange[archetypeStore.dateRange.length - 1]) {
+      archetypeStore.dateRange[archetypeStore.dateRange.length - 1] = new Date(
         newStartDate.getTime() + startOfDayInMillis
       );
     }
@@ -370,10 +370,10 @@ watch(
 );
 
 watch(
-  () => resourceArchetypeStore.dateRange[resourceArchetypeStore.dateRange.length - 1],
+  () => archetypeStore.dateRange[archetypeStore.dateRange.length - 1],
   (newEndDate) => {
-    if (newEndDate < resourceArchetypeStore.dateRange[0]) {
-      resourceArchetypeStore.dateRange[0] = new Date(
+    if (newEndDate < archetypeStore.dateRange[0]) {
+      archetypeStore.dateRange[0] = new Date(
         newEndDate.getTime() - startOfDayInMillis
       );
     }
@@ -382,21 +382,21 @@ watch(
 
 // Watch the store location for updates from the GeoSearchControl
 watch(
-  () => resourceArchetypeStore.location,
+  () => archetypeStore.location,
   async (newLocation) => {
     if (newLocation) {
-      // Call fetchResourceArchetypes whenever location changes
-      resourceArchetypeStore.fetchResourceArchetypesWithItems();
+      // Call fetchArchetypes whenever location changes
+      archetypeStore.fetchArchetypesWithItems();
     }
   }
 );
 
 watch(
-  () => resourceArchetypeStore.radius,
+  () => archetypeStore.radius,
   async (newRadius) => {
     if (newRadius) {
-      // Call fetchResourceArchetypes whenever location changes
-      resourceArchetypeStore.fetchResourceArchetypesWithItems();
+      // Call fetchArchetypes whenever location changes
+      archetypeStore.fetchArchetypesWithItems();
     }
   }
 );
@@ -438,8 +438,8 @@ const initializeLocation = async () => {
       state: "ON",
     };
   }
-  resourceArchetypeStore.setLocation({ lat: location.latitude, lng: location.longitude });
-  resourceArchetypeStore.setAddress(
+  archetypeStore.setLocation({ lat: location.latitude, lng: location.longitude });
+  archetypeStore.setAddress(
     location.city + " " + location.state + " " + location.country
   );
 };
@@ -448,7 +448,7 @@ onMounted(async () => {
   initializeLocation();
   categoryStore.fetchCategories();
   usageStore.fetchUsages();
-  autocompleteResourceArchetypes.value = await resourceArchetypeStore.fetchAutocompleteSelectResourceArchetypes();
+  autocompleteArchetypes.value = await archetypeStore.fetchAutocompleteSelectArchetypes();
   autocompleteBrands.value = await brandStore.fetchAutocompleteSelectBrands();
 });
 </script>

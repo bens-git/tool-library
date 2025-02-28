@@ -19,18 +19,18 @@ use Illuminate\Support\Facades\Log;
 class RentalController extends Controller
 {
     /**
-     * Get rented dates for a specific item resource archetype.
+     * Get rented dates for a specific item archetype.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function getRentedDates(Request $request)
     {
-        $resourcearchetypeId = $request->query('resourcearchetypeId');
+        $archetypeId = $request->query('archetypeId');
 
-        // Fetch rentals for the specified resourcearchetypeId
-        $rentals = Rental::whereHas('item', function ($query) use ($resourcearchetypeId) {
-            $query->where('resource_archetype_id', $resourcearchetypeId); // Assuming 'resource_archetype_id' exists in items table
+        // Fetch rentals for the specified archetypeId
+        $rentals = Rental::whereHas('item', function ($query) use ($archetypeId) {
+            $query->where('archetype_id', $archetypeId); // Assuming 'archetype_id' exists in items table
         })->get(['starts_at', 'ends_at']); // Adjust the columns as needed
 
         // Format dates if needed
@@ -48,7 +48,7 @@ class RentalController extends Controller
     {
         $itemId = $request->query('itemId');
 
-        // Fetch rentals for the specified resourcearchetypeId
+        // Fetch rentals for the specified archetypeId
         $rentals = Rental::where('item_id', '=', $itemId)->get(['starts_at', 'ends_at']); // Adjust the columns as needed
 
         // Format dates if needed
@@ -118,12 +118,12 @@ class RentalController extends Controller
         // Find the item by ID
         $item = Item::with(['owner', 'location'])
             ->leftJoin('users', 'users.id', '=', 'items.owned_by')
-            ->leftJoin('resource_archetypes', 'resource_archetypes.id', '=', 'items.resource_archetype_id')
+            ->leftJoin('archetypes', 'archetypes.id', '=', 'items.archetype_id')
             ->select('items.*') // Select all columns from the items table
             ->selectRaw("
             CONCAT(
                 LOWER(REGEXP_REPLACE(LEFT(users.name, 3), '[^a-zA-Z0-9]', '')), '_', 
-                LOWER(REGEXP_REPLACE(LEFT(resource_archetypes.name, 3), '[^a-zA-Z0-9]', '')), '_', 
+                LOWER(REGEXP_REPLACE(LEFT(archetypes.name, 3), '[^a-zA-Z0-9]', '')), '_', 
                 items.id
             ) AS item_name
         ")
@@ -303,12 +303,12 @@ class RentalController extends Controller
         // Find the item by ID
         $item = Item::with(['owner', 'location'])
             ->leftJoin('users', 'users.id', '=', 'items.owned_by')
-            ->leftJoin('resource_archetypes', 'resource_archetypes.id', '=', 'items.resource_archetype_id')
+            ->leftJoin('archetypes', 'archetypes.id', '=', 'items.archetype_id')
             ->select('items.*') // Select all columns from the items table
             ->selectRaw("
           CONCAT(
               LOWER(REGEXP_REPLACE(LEFT(users.name, 3), '[^a-zA-Z0-9]', '')), '_', 
-              LOWER(REGEXP_REPLACE(LEFT(resource_archetypes.name, 3), '[^a-zA-Z0-9]', '')), '_', 
+              LOWER(REGEXP_REPLACE(LEFT(archetypes.name, 3), '[^a-zA-Z0-9]', '')), '_', 
               items.id
           ) AS item_name
       ")

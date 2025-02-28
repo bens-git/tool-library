@@ -46,7 +46,7 @@
               ></v-autocomplete>
 
               <!-- create material dialog -->
-              <ResourceArchetypeDialog :isEdit="false" resource="MATERIAL" />
+              <ArchetypeDialog :isEdit="false" resource="MATERIAL" />
             </v-col>
 
             <v-col cols="12" md="4" sm="6">
@@ -65,13 +65,13 @@
             <v-col cols="12" md="4" sm="6">
               <v-autocomplete
                 density="compact"
-                v-model="localJob.resource_archetype_id"
-                :items="toolResourceArchetypes"
-                label="Tool ResourceArchetype"
+                v-model="localJob.archetype_id"
+                :items="toolArchetypes"
+                label="Archetype"
                 clearable
                 item-title="name"
                 item-value="id"
-                :error-messages="responseStore.response?.errors?.resource_archetype_id"
+                :error-messages="responseStore.response?.errors?.archetype_id"
               ></v-autocomplete
             ></v-col>
 
@@ -129,9 +129,9 @@
 <script setup>
 import { shallowRef, ref, watch, onMounted } from "vue";
 import { useJobStore } from "@/stores/job";
-import { useResourceArchetypeStore } from "@/stores/resource_archetype";
+import { useArchetypeStore } from "@/stores/archetype";
 import { useResponseStore } from "@/stores/response";
-import ResourceArchetypeDialog from "./ResourceArchetypeDialog.vue";
+import ArchetypeDialog from "./ArchetypeDialog.vue";
 
 // Create a local state variable to sync with modelValue
 //const localModelValue = ref(props.modelValue);
@@ -146,13 +146,13 @@ import ResourceArchetypeDialog from "./ResourceArchetypeDialog.vue";
 const dialog = shallowRef(false);
 
 const jobStore = useJobStore();
-const resourcearchetypeStore = useResourceArchetypeStore();
+const archetypeStore = useArchetypeStore();
 const responseStore = useResponseStore();
 
 // const apiBaseUrl = process.env.VUE_APP_API_HOST;
 
 const localJob = ref(null);
-const toolResourceArchetypes = ref([]);
+const toolArchetypes = ref([]);
 const materials = ref([]);
 const newImages = ref(null);
 
@@ -195,9 +195,9 @@ const onOpen = async () => {
   initializeLocalJob();
   responseStore.$reset();
   //   tools.resource = "TOOL";
-  // tools.value = (await resourcearchetypeStore.fetchResourceArchetypes()).data;
+  // tools.value = (await archetypeStore.fetchArchetypes()).data;
   // tools.resource = "MATERIAL";
-  materials.value = (await resourcearchetypeStore.fetchMaterialResources()).data;
+  materials.value = (await archetypeStore.fetchMaterialResources()).data;
   initializeLocalJob();
 };
 

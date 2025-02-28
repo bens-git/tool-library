@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-card-title>{{ isEdit ? "Edit ResourceArchetype" : "Create New Usage" }}</v-card-title>
+    <v-card-title>{{ isEdit ? "Edit Archetype" : "Create New Usage" }}</v-card-title>
     <v-card-text>
       <v-text-field v-model="localUsage.name" :error-messages="responseStore?.response?.errors[0]?.name"
         label="Name"></v-text-field>
@@ -50,7 +50,7 @@ const saveUsage = async () => {
   const responseStore = useResponseStore();
   const formData = new FormData();
 
-  // Append all properties of local resourcearchetype except images handling
+  // Append all properties of local archetype except images handling
   for (const [key, value] of Object.entries(localUsage.value)) {
     // Skip keys with null values or replace them with actual null
     if (value === null || value === undefined) {

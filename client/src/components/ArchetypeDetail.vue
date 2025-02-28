@@ -1,17 +1,17 @@
 <template>
   <v-container>
-    <v-card v-if="localResourceArchetype" style="height: 90vh; overflow-y: scroll" :title="localResourceArchetype.name" subtitle="Available Items">
+    <v-card v-if="localArchetype" style="height: 90vh; overflow-y: scroll" :title="localArchetype.name" subtitle="Available Items">
     
 
       <v-card-subtitle>
-        {{ localResourceArchetype.description }}
+        {{ localArchetype.description }}
       </v-card-subtitle>
 
       <v-card-text>
-        {{ localResourceArchetype.notes }}
+        {{ localArchetype.notes }}
 
         <v-data-iterator
-          :items="itemStore.resourceArchetypeDialogItemListItems"
+          :items="itemStore.archetypeDialogItemListItems"
           :items-per-page="itemsPerPage"
         >
           <template v-slot:header="{ page, pageCount, prevPage, nextPage }">
@@ -19,7 +19,7 @@
               <v-row>
                 <v-col cols="12" md="3">
                   <v-text-field
-                    v-model="itemStore.resourcearchetypeDialogItemListFilters.search"
+                    v-model="itemStore.archetypeDialogItemListFilters.search"
                     placeholder="Search"
                     prepend-inner-icon="mdi-magnify"
                     style="max-width: 300px; min-width: 150px"
@@ -35,7 +35,7 @@
                 <v-col cols="12" md="4">
                   <v-date-input
                     dense
-                    v-model="itemStore.resourcearchetypeDialogItemListFilters.dateRange"
+                    v-model="itemStore.archetypeDialogItemListFilters.dateRange"
                     label="Dates"
                     prepend-icon=""
                     persistent-placeholder
@@ -210,8 +210,8 @@
         <v-alert
           color="warning"
           v-if="
-            !itemStore.resourceArchetypeDialogItemListItems ||
-            !itemStore.resourceArchetypeDialogItemListItems.length
+            !itemStore.archetypeDialogItemListItems ||
+            !itemStore.archetypeDialogItemListItems.length
           "
           >No items found</v-alert
         >
@@ -233,7 +233,7 @@
             <v-col cols="12" md="12">
               <v-date-input
                 dense
-                v-model="resourcearchetypeStore.dateRange"
+                v-model="archetypeStore.dateRange"
                 label="Dates"
                 prepend-icon=""
                 persistent-placeholder
@@ -274,20 +274,20 @@
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
 import { useItemStore } from "@/stores/item";
-import { useResourceArchetypeStore } from "@/stores/resource_archetype";
+import { useArchetypeStore } from "@/stores/archetype";
 import { useUserStore } from "@/stores/user";
 import { useRouter } from "vue-router";
 import useApi from "@/stores/api";
 
 const router = useRouter();
 
-const props = defineProps({ resourcearchetype: Object });
+const props = defineProps({ archetype: Object });
 const emit = defineEmits(["closeDialog"]);
 const itemStore = useItemStore();
-const resourcearchetypeStore = useResourceArchetypeStore();
+const archetypeStore = useArchetypeStore();
 const userStore = useUserStore();
 
-const localResourceArchetype = ref(null);
+const localArchetype = ref(null);
 const localItem = ref(null);
 const itemsPerPage = ref(2);
 
@@ -298,23 +298,23 @@ const rentedDates = ref([]);
 const { fullImageUrl } = useApi();
 
 const setupForm = async () => {
-  if (props.resourcearchetype) {
-    localResourceArchetype.value = props.resourcearchetype;
-    await itemStore.fetchResourceArchetypeDialogItemListItems(
-      localResourceArchetype.value.id,
-      resourcearchetypeStore.location,
-      resourcearchetypeStore.radius
+  if (props.archetype) {
+    localArchetype.value = props.archetype;
+    await itemStore.fetchArchetypeDialogItemListItems(
+      localArchetype.value.id,
+      archetypeStore.location,
+      archetypeStore.radius
     );
   } else {
-    localResourceArchetype.value = { name: null };
+    localArchetype.value = { name: null };
   }
 };
 
 const debounceSearch = _.debounce(() => {
-  itemStore.fetchResourceArchetypeDialogItemListItems(
-    localResourceArchetype.value.id,
-    resourcearchetypeStore.location,
-    resourcearchetypeStore.radius
+  itemStore.fetchArchetypeDialogItemListItems(
+    localArchetype.value.id,
+    archetypeStore.location,
+    archetypeStore.radius
   );
 }, 300);
 
@@ -339,8 +339,8 @@ const openConfirmationDialog = () => {
 const bookRental = async () => {
   await itemStore.bookRental(
     localItem.value.value,
-    resourcearchetypeStore.dateRange[0],
-    resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1]
+    archetypeStore.dateRange[0],
+    archetypeStore.dateRange[archetypeStore.dateRange.length - 1]
   );
   showConfirmationDialog.value = false;
   router.push("/my-rentals");
@@ -355,16 +355,16 @@ const startOfDayInMillis = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 const minStartDate = computed(() => today);
 
 const minEndDate = computed(() => {
-  if (resourcearchetypeStore.dateRange[0]) {
-    return resourcearchetypeStore.dateRange[0];
+  if (archetypeStore.dateRange[0]) {
+    return archetypeStore.dateRange[0];
   }
   return today;
 });
 
 const maxStartDate = computed(() => {
-  if (resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1]) {
+  if (archetypeStore.dateRange[archetypeStore.dateRange.length - 1]) {
     const endDate = new Date(
-      resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1]
+      archetypeStore.dateRange[archetypeStore.dateRange.length - 1]
     );
     endDate.setHours(0, 0, 0, 0); // Set time to 00:00:00
     return endDate;
@@ -374,10 +374,10 @@ const maxStartDate = computed(() => {
 
 // Watchers to ensure dates are correctly updated
 watch(
-  () => resourcearchetypeStore.dateRange[0],
+  () => archetypeStore.dateRange[0],
   (newStartDate) => {
-    if (newStartDate > resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1]) {
-      resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1] = new Date(
+    if (newStartDate > archetypeStore.dateRange[archetypeStore.dateRange.length - 1]) {
+      archetypeStore.dateRange[archetypeStore.dateRange.length - 1] = new Date(
         newStartDate.getTime() + startOfDayInMillis
       );
     }
@@ -385,10 +385,10 @@ watch(
 );
 
 watch(
-  () => resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1],
+  () => archetypeStore.dateRange[archetypeStore.dateRange.length - 1],
   (newEndDate) => {
-    if (newEndDate < resourcearchetypeStore.dateRange[0]) {
-      resourcearchetypeStore.dateRange[0] = new Date(
+    if (newEndDate < archetypeStore.dateRange[0]) {
+      archetypeStore.dateRange[0] = new Date(
         newEndDate.getTime() - startOfDayInMillis
       );
     }
@@ -397,7 +397,7 @@ watch(
 
 const onClickSeeAll = () => {
   if (itemsPerPage.value == 2) {
-    itemsPerPage.value = itemStore.totalResourceArchetypeDialogItemListItems;
+    itemsPerPage.value = itemStore.totalArchetypeDialogItemListItems;
   } else {
     itemsPerPage.value = 2;
   }

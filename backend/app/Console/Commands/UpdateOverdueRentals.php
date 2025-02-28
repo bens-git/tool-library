@@ -30,14 +30,14 @@ class UpdateOverdueRentals extends Command
                 DB::raw("
                 CONCAT(
                     LOWER(REGEXP_REPLACE(LEFT(renters.name, 3), '[^a-zA-Z0-9]', '')), '_', 
-                    LOWER(REGEXP_REPLACE(LEFT(resource_archetypes.name, 3), '[^a-zA-Z0-9]', '')), '_', 
+                    LOWER(REGEXP_REPLACE(LEFT(archetypes.name, 3), '[^a-zA-Z0-9]', '')), '_', 
                     items.id
                 ) AS item_name
             ")
             ])
             ->join('users as renters', 'rentals.rented_by', '=', 'renters.id') // Join with users table for renters
             ->join('items', 'rentals.item_id', '=', 'items.id') // Join with items table
-            ->join('resource_archetypes', 'items.resource_archetype_id', '=', 'resource_archetypes.id') // Join with resource_archetypes table
+            ->join('archetypes', 'items.archetype_id', '=', 'archetypes.id') // Join with archetypes table
             ->get();
 
         foreach ($overdueRentals as $rental) {

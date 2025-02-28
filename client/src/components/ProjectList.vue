@@ -26,7 +26,7 @@
             
             <!-- Reset Button -->
             <v-col cols="12" md="1" class="d-flex align-center">
-              <v-btn icon color="primary" @click="resourcearchetypeStore.resetFilters" class="mt-2">
+              <v-btn icon color="primary" @click="archetypeStore.resetFilters" class="mt-2">
                 <v-icon>mdi-refresh</v-icon>
               </v-btn>
             </v-col>
@@ -34,14 +34,14 @@
           </v-row>
          
         </template>
-        <v-data-table-server v-model:items-per-page="resourcearchetypeStore.itemsPerPage" :headers="headers"
-          :items="resourcearchetypeStore.paginatedResourceArchetypes" :items-length="resourcearchetypeStore.totalResourceArchetypes" loading-text="Loading... Please wait"
-          :search="resourcearchetypeStore.search" item-value="id" @update:options="resourcearchetypeStore.updateOptions" mobile-breakpoint="sm">
+        <v-data-table-server v-model:items-per-page="archetypeStore.itemsPerPage" :headers="headers"
+          :items="archetypeStore.paginatedArchetypes" :items-length="archetypeStore.totalArchetypes" loading-text="Loading... Please wait"
+          :search="archetypeStore.search" item-value="id" @update:options="archetypeStore.updateOptions" mobile-breakpoint="sm">
   
           <!-- Image column -->
           <template v-slot:[`item.image`]="{ item }">
             <v-img v-if="item.images.length > 0" :src="fullImageUrl(item.images[0].path)" max-height="200" max-width="200"
-              min-height="200" min-width="200" alt="ResourceArchetype Image"></v-img>
+              min-height="200" min-width="200" alt="Archetype Image"></v-img>
             <v-icon v-else>mdi-image-off</v-icon> <!-- Fallback icon if no image is available -->
           </template>
   
@@ -58,7 +58,7 @@
           </template>
   
           <template v-slot:[`item.actions`]="{ item }">
-            <v-btn icon @click="editResourceArchetype(item)" v-if="userStore.user">
+            <v-btn icon @click="editArchetype(item)" v-if="userStore.user">
               <v-icon>mdi-information</v-icon>
             </v-btn>
   
@@ -72,7 +72,7 @@
   
     <!-- Dialog for item details -->
     <v-dialog v-model="dialog" :persistent="false" class="custom-dialog">
-      <ResourceArchetypeDetail :resourcearchetype="selectedResourceArchetype" :action="'details'" v-on:closeDialog="dialog = false" />
+      <ArchetypeDetail :archetype="selectedArchetype" :action="'details'" v-on:closeDialog="dialog = false" />
     </v-dialog>
   </template>
   
@@ -81,18 +81,18 @@
   import { useCategoryStore } from '@/stores/category';
   import { useUsageStore } from '@/stores/usage';
   import { useBrandStore } from '@/stores/brand';
-  import { useResourceArchetypeStore } from '@/stores/resource_archetype';
+  import { useArchetypeStore } from '@/stores/archetype';
   import { useUserStore } from '@/stores/user';
   import { useLocationStore } from '@/stores/location';
   import _ from 'lodash';
-  import ResourceArchetypeDetail from './ResourceArchetypeDetail.vue';
+  import ArchetypeDetail from './ArchetypeDetail.vue';
   import { useRouter } from 'vue-router';
   import LocationPicker from './LocationPicker.vue'; // Import your location picker component
   
   const categoryStore = useCategoryStore();
   const usageStore = useUsageStore();
   const brandStore = useBrandStore();
-  const resourcearchetypeStore = useResourceArchetypeStore();
+  const archetypeStore = useArchetypeStore();
   const userStore = useUserStore();
   const locationStore = useLocationStore();
   const router = useRouter();
@@ -127,7 +127,7 @@
   };
   
   const dialog = ref(false);
-  const selectedResourceArchetype = ref(null);
+  const selectedArchetype = ref(null);
   
   const headers = [
     {
@@ -143,7 +143,7 @@
       key: 'actions',
     },
     {
-      title: 'ResourceArchetype',
+      title: 'Archetype',
       align: 'start',
       sortable: true,
       key: 'name',
@@ -189,11 +189,11 @@
   
   
   const debounceSearch = _.debounce(() => {
-    resourcearchetypeStore.fetchPaginatedResourceArchetypes();
+    archetypeStore.fetchPaginatedArchetypes();
   }, 300);
   
-  const editResourceArchetype = (resourcearchetype) => {
-    selectedResourceArchetype.value = resourcearchetype;
+  const editArchetype = (archetype) => {
+    selectedArchetype.value = archetype;
     dialog.value = true;
   };
   
@@ -210,30 +210,30 @@
   const minStartDate = computed(() => today);
   
   // Watchers to ensure dates are correctly updated
-  watch(() => resourcearchetypeStore.dateRange[0], (newStartDate) => {
-    if (newStartDate > resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1]) {
-      resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1] = new Date(newStartDate.getTime() + startOfDayInMillis);
+  watch(() => archetypeStore.dateRange[0], (newStartDate) => {
+    if (newStartDate > archetypeStore.dateRange[archetypeStore.dateRange.length - 1]) {
+      archetypeStore.dateRange[archetypeStore.dateRange.length - 1] = new Date(newStartDate.getTime() + startOfDayInMillis);
     }
   });
   
-  watch(() => resourcearchetypeStore.dateRange[resourcearchetypeStore.dateRange.length - 1], (newEndDate) => {
-    if (newEndDate < resourcearchetypeStore.dateRange[0]) {
-      resourcearchetypeStore.dateRange[0] = new Date(newEndDate.getTime() - startOfDayInMillis);
+  watch(() => archetypeStore.dateRange[archetypeStore.dateRange.length - 1], (newEndDate) => {
+    if (newEndDate < archetypeStore.dateRange[0]) {
+      archetypeStore.dateRange[0] = new Date(newEndDate.getTime() - startOfDayInMillis);
     }
   });
   
   // Watch the store location for updates from the GeoSearchControl
-  watch(() => resourcearchetypeStore.location, async (newLocation) => {
+  watch(() => archetypeStore.location, async (newLocation) => {
     if (newLocation) {
-      // Call fetchPaginatedResourceArchetypes whenever location changes
-      resourcearchetypeStore.fetchPaginatedResourceArchetypes();
+      // Call fetchPaginatedArchetypes whenever location changes
+      archetypeStore.fetchPaginatedArchetypes();
     }
   });
   
-  watch(() => resourcearchetypeStore.radius, async (newRadius) => {
+  watch(() => archetypeStore.radius, async (newRadius) => {
     if (newRadius) {
-      // Call fetchPaginatedResourceArchetypes whenever location changes
-      resourcearchetypeStore.fetchPaginatedResourceArchetypes();
+      // Call fetchPaginatedArchetypes whenever location changes
+      archetypeStore.fetchPaginatedArchetypes();
     }
   })
   
@@ -270,8 +270,8 @@
   
       }
     }
-    resourcearchetypeStore.setLocation({ lat: location.latitude, lng: location.longitude })
-    resourcearchetypeStore.setAddress(location.city + ' ' + location.state + ' ' + location.country)
+    archetypeStore.setLocation({ lat: location.latitude, lng: location.longitude })
+    archetypeStore.setAddress(location.city + ' ' + location.state + ' ' + location.country)
   
   }
   
