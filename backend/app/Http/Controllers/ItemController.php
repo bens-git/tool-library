@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -417,7 +417,7 @@ class ItemController extends Controller
             return $item;
         });
 
-        return response()->json(['data' => $item, 'message' => 'Item updated']);
+        return response()->json(['data' => $item, 'message' => 'Item updated', 'success' => true]);
     }
     /**
      * Remove the specified resource from storage.

@@ -277,12 +277,9 @@ export const useItemStore = defineStore("item", {
       const { sendRequest } = useApi();
 
       const data = await sendRequest(`items`, "POST", itemData);
-      if (data?.success) {
-        this.myItemsListSelectedItem = data.data;
-        this.myItemsListItems.push(data.data);
-        this.myItemsListTotalItems++;
-        return data.data;
-      }
+
+      await this.fetchMyItems()
+      return data;
     },
 
     async updateMyItem(item) {
@@ -294,15 +291,7 @@ export const useItemStore = defineStore("item", {
         item // Payload
       );
 
-      if (data?.success) {
-        // Find and update the item in the store
-        const updatedItemIndex = this.myItemsListItems.findIndex(
-          (item) => item.id === data.data.id
-        );
-        if (updatedItemIndex !== -1) {
-          this.myItemsListItems[updatedItemIndex] = data.data;
-        }
-      }
+      return data;
     },
 
     async addMyItemImage(itemId, image) {

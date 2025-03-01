@@ -91,20 +91,20 @@
                 :key="index"
                 cols="4"
               >
-               <v-img
+                <v-img
                   :src="fullImageUrl(image.path)"
                   class="mb-2"
                   aspect-ratio="1"
                 >
-                  <!-- <v-btn
+                  <v-btn
                     icon
                     color="red"
                     @click="removeImage(index)"
                     class="mt-2"
                   >
                     <v-icon>mdi-delete</v-icon>
-                  </v-btn> -->
-                </v-img> 
+                  </v-btn>
+                </v-img>
               </v-col>
             </v-row>
           </div>
@@ -116,7 +116,7 @@
             prepend-icon="mdi-camera"
             accept="image/*"
             multiple
-          ></v-file-input> 
+          ></v-file-input>
         </v-card-text>
         <v-divider></v-divider>
 
@@ -203,30 +203,32 @@ const onOpen = async () => {
 const onClose = () => {};
 
 const createItem = async () => {
-  const newItem = await itemStore.createItem(localItem.value);
-  if (newItem && newItem.id) {
-    localItem.value = newItem;
+  const data = await itemStore.createItem(localItem.value);
+  if (data?.success && data.data.id) {
+    localItem.value = data.data;
+
+    //add new images
+    for (const image of newImages.value) {
+      await itemStore.addMyItemImage(localItem.value.id, image);
+    }
+    await itemStore.fetchMyItems();
+
+    dialog.value = false;
   }
-
-  //add new images
-
-  for (const image of newImages.value) {
-    await itemStore.addMyItemImage(localItem.value.id, image);
-  }
-
-  dialog.value = false;
 };
 
 const saveItem = async () => {
-  await itemStore.updateMyItem(localItem.value);
+  const data = await itemStore.updateMyItem(localItem.value);
 
   //add new images
+  if (data?.success) {
+    for (const image of newImages.value) {
+      await itemStore.addMyItemImage(localItem.value.id, image);
+    }
+    await itemStore.fetchMyItems();
 
-  for (const image of newImages.value) {
-    await itemStore.addMyItemImage(localItem.value.id, image);
+    dialog.value = false;
   }
-
-  dialog.value = false;
 };
 
 // Autocomplete Archetype Search handler
@@ -255,6 +257,15 @@ const handleFileChange = (event) => {
   const files = event.target.files;
   if (files.length) {
     newImages.value.push(...Array.from(files));
+  }
+};
+
+const removeImage = (index) => {
+  if (index >= 0 && index < localItem.value.images.length) {
+    const removedImage = localItem.value.images.splice(index, 1)[0];
+    if (removedImage && removedImage.id) {
+      removedImages.value.push(removedImage.id);
+    }
   }
 };
 </script>
