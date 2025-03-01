@@ -70,10 +70,7 @@
       </v-card>
     </v-container>
   
-    <!-- Dialog for item details -->
-    <v-dialog v-model="dialog" :persistent="false" class="custom-dialog">
-      <ArchetypeDetail :archetype="selectedArchetype" :action="'details'" v-on:closeDialog="dialog = false" />
-    </v-dialog>
+   
   </template>
   
   <script setup>
@@ -85,7 +82,6 @@
   import { useUserStore } from '@/stores/user';
   import { useLocationStore } from '@/stores/location';
   import _ from 'lodash';
-  import ArchetypeDetail from './ArchetypeDetail.vue';
   import { useRouter } from 'vue-router';
   import LocationPicker from './LocationPicker.vue'; // Import your location picker component
   

@@ -23,9 +23,9 @@ class RenameTypesTable extends Migration
 
         DB::statement('ALTER TABLE archetype_usage CHANGE type_id archetype_id BIGINT UNSIGNED');
 
-        Schema::rename('category_type', 'category_archetype');
+        Schema::rename('category_type', 'archetype_category');
 
-        DB::statement('ALTER TABLE category_archetype CHANGE type_id archetype_id BIGINT UNSIGNED');
+        DB::statement('ALTER TABLE archetype_category CHANGE type_id archetype_id BIGINT UNSIGNED');
        
         DB::statement('ALTER TABLE items CHANGE type_id archetype_id BIGINT UNSIGNED');
     }
@@ -47,9 +47,9 @@ class RenameTypesTable extends Migration
 
         Schema::rename('archetype_usage', 'type_usage');
 
-        DB::statement('ALTER TABLE category_archetype CHANGE archetype_id type_id BIGINT UNSIGNED');
+        DB::statement('ALTER TABLE archetype_category CHANGE archetype_id type_id BIGINT UNSIGNED');
 
-        Schema::rename('category_archetype', 'category_type');
+        Schema::rename('archetype_category', 'category_type');
 
         DB::statement('ALTER TABLE items CHANGE archetype_id type_id BIGINT UNSIGNED');
     }

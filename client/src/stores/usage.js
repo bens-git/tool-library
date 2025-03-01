@@ -1,154 +1,81 @@
 import { defineStore } from "pinia";
-import apiClient from "@/axios";
-import { useLoadingStore } from "./loading";
-import { useResponseStore } from "./response";
+import useApi from "@/stores/api";
 
 export const useUsageStore = defineStore("usage", {
   state: () => ({
     usages: [],
     totalUsages: 0,
-    userUsages: [],
-    totalUserUsages: 0,
-    search: "",
     page: 1,
     itemsPerPage: 10,
     sortBy: "item_name",
     order: "asc",
-    paginateUsages: false,
+    search: "",
+
+    myUsagesListPage: 1,
+    myUsagesListItemsPerPage: 10,
+    myUsagesListSortBy: [{ key: "name", order: "asc" }],
+    myUsagesListFilters: {
+      search: null,
+    },
+    myUsagesListUsages: [],
+    myUsagesListTotalUsages: 0,
+    myUsagesListSelectedUsages: null,
   }),
   actions: {
-    updateUserUsagesOptions({ page, itemsPerPage, sortBy }) {
-      this.page = page;
-      this.itemsPerPage = itemsPerPage;
-      this.sortBy = sortBy;
-
-      this.fetchUserUsages();
-    },
     async fetchUsages() {
-      try {
-        const response = await apiClient.get("usages", {
-          params: {
-            page: this.page,
-            itemsPerPage: this.itemsPerPage,
-            sortBy: this.sortBy,
-            order: this.order,
-            search: this.search,
-          },
-        });
-        this.usages = response.data.data;
-        this.totalUsages = response.data.count;
-      } catch (error) {
-        console.error("There was an error fetching the usages:", error);
-      }
+      const { fetchRequest } = useApi();
+      const data = await fetchRequest(
+        "usages", // API endpoint
+        {
+          page: this.page,
+          itemsPerPage: this.itemsPerPage,
+          sortBy: this.sortBy,
+          search: this.search,
+        }
+      );
+      this.usages = data?.data;
+      this.totalUsages = data?.total;
     },
 
-    async fetchUserUsages() {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      loadingStore.startLoading("fetchUserUsages");
-      try {
-        const response = await apiClient.get("user/usages", {
-          params: {
-            paginate: true,
-            page: this.page,
-            itemsPerPage: this.itemsPerPage,
-            sortBy: this.sortBy,
-            search: this.search,
-          },
-        });
-        this.userUsages = response.data.usages;
-        this.totalUserUsages = response.data.count;
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("fetchUserUsages");
-      }
+    async fetchMyUsages() {
+      const { fetchRequest } = useApi();
+      const data = await fetchRequest("me/usages", {
+        page: this.myUsagesListPage,
+        itemsPerPage: this.myUsagesListItemsPerPage,
+        sortBy: this.myUsagesListSortBy,
+        search: this.myUsagesListFilters.search,
+      });
+      this.myUsagesListUsages = data?.data;
+      this.myUsagesListTotalUsages = data?.total;
     },
 
     async createUsage(usageData) {
-      const responseStore = useResponseStore();
-      const loadingStore = useLoadingStore();
-      loadingStore.startLoading("createUsage");
+      const { sendRequest } = useApi();
 
-      try {
-        const response = await apiClient.post("/usages", usageData, {
-          headers: { "Content-Usage": "multipart/form-data" },
-        });
-        this.userUsages.push(response.data);
-        this.totalUserUsages++;
-        responseStore.setResponse(true, "Usage created successfully");
-      } catch (error) {
-        console.log(error);
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("createUsage");
-      }
+      const data = await sendRequest("usages", "post", usageData);
+
+      await this.fetchMyUsages();
+
+      return data;
     },
 
-    async updateUsage(usageData) {
-      const responseStore = useResponseStore();
-      const loadingStore = useLoadingStore();
-      loadingStore.startLoading("updateUsage");
+    async saveUsage(usage) {
+      const { sendRequest } = useApi();
 
-      try {
-        // Create a new FormData object
-        const formData = new FormData();
+      const data = await sendRequest(`usages/${usage.id}`, "put", usage);
 
-        // Append all item data fields to formData
-        for (const [key, value] of usageData.entries()) {
-          formData.append(key, value);
-        }
+      await this.fetchMyUsages();
 
-        // Send POST request with FormData
-        const response = await apiClient.post(
-          `/update-usage/${usageData.get("id")}`,
-          formData,
-          {
-            headers: { "Content-Usage": "multipart/form-data" },
-          }
-        );
-
-        // Find and update the item in the store
-        const updatedUsageIndex = this.userUsages.findIndex(
-          (usage) => usage.id === response.data.id
-        );
-        if (updatedUsageIndex !== -1) {
-          this.userUsages[updatedUsageIndex] = response.data;
-        }
-
-        responseStore.setResponse(true, "Usage updated successfully");
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("updateUsage");
-      }
+      return data;
     },
 
     async deleteUsage(usageId) {
-      const responseStore = useResponseStore();
-      const loadingStore = useLoadingStore();
-      loadingStore.startLoading("deleteUsage");
-
-      try {
-        await apiClient.delete(`/usages/${usageId}`);
-        this.userUsages = this.userUsages.filter(
-          (usage) => usage.id !== usageId
-        );
-        this.totalUserUsages--;
-        responseStore.setResponse(true, "Usage deleted successfully");
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("deleteUsage");
-      }
+      const { sendRequest } = useApi();
+      await sendRequest(
+        `usages/${usageId}`, 
+        "delete" 
+      );
+      await this.fetchMyUsages();
     },
   },
 });

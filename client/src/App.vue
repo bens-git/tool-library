@@ -92,3 +92,20 @@ export default {
   },
 };
 </script>
+
+<style>
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  overflow: hidden !important; /* Disable vertical scrolling for the entire app */
+}
+
+.v-application {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+</style>
+

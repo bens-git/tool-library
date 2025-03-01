@@ -62,13 +62,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/jobs', [JobController::class, 'index']);
     Route::get('/rented-dates', [RentalController::class, 'getRentedDates']);
     Route::get('/me/brands', [BrandController::class, 'index'])->name('user.brands');
-    Route::get('/user/categories', [CategoryController::class, 'getUserCategories'])->name('user.categories');
+    Route::get('/me/categories', [CategoryController::class, 'getMyCategories'])->name('user.categories');
     Route::get('/me/items', [ItemController::class, 'index'])->name('user.items');
     Route::get('/user/loans', [RentalController::class, 'getUserLoans']);
     Route::get('/me/location', [AuthController::class, 'getLocation']);
     Route::get('/user/rentals', [RentalController::class, 'getUserRentals']);
     Route::get('/me/archetypes', [ArchetypeController::class, 'index'])->name('user.archetypes');
-    Route::get('/user/usages', [UsageController::class, 'getUserUsages'])->name('user.usages');
+    Route::get('/me/usages', [UsageController::class, 'getMyUsages'])->name('user.usages');
     Route::get('/resources', [ArchetypeController::class, 'getResources']);
 
     Route::patch('/items/{id}/availability', [ItemController::class, 'updateItemAvailability']);
@@ -90,6 +90,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/jobs/{id}', [JobController::class, 'update']);
     Route::put('/user/location/{locationId}', [AuthController::class, 'updateLocation']);
     Route::put('/user/password', [AuthController::class, 'updatePassword']);
+    Route::put('/categories/{id}', [CategoryController::class, 'update']);
+    Route::put('/usages/{id}', [UsageController::class, 'update']);
     Route::put('/archetypes/{id}', [ArchetypeController::class, 'update']);
     Route::put('/items/{id}', [ItemController::class, 'update']);
     Route::put('/brands/{id}', [BrandController::class, 'update']);

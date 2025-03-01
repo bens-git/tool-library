@@ -178,7 +178,7 @@ export const useItemStore = defineStore("item", {
       const formattedStartDate = formatToMySQLDateTime(adjustedStartDate);
       const formattedEndDate = formatToMySQLDateTime(adjustedEndDate);
 
-      const data = await sendRequest( "rentals", "post", {
+      const data = await sendRequest("rentals", "post", {
         itemId,
         startDate: formattedStartDate,
         endDate: formattedEndDate,
@@ -246,7 +246,9 @@ export const useItemStore = defineStore("item", {
       const ownerAbbreviation = getAbbreviation(ownerName);
 
       // Get the archetype abbreviation
-      const archetypeName = isRawItem ? item.raw.archetype_name : item.archetype_name;
+      const archetypeName = isRawItem
+        ? item.raw.archetype_name
+        : item.archetype_name;
       const archetypeAbbreviation = getAbbreviation(archetypeName);
 
       // Generate the item code
@@ -268,7 +270,7 @@ export const useItemStore = defineStore("item", {
         });
       };
 
-      return `From: ${formatDate(archetypeStore.dateRange[0])} at 9:00 AM
+      return `From: ${formatDate(archetypeStore.dateRange[0])} at 9:00 AM <br>
        To: ${formatDate(archetypeStore.dateRange[archetypeStore.dateRange.length - 1])} at 5:00 PM`;
     },
     async createItem(itemData) {
@@ -354,7 +356,8 @@ export const useItemStore = defineStore("item", {
     async deleteItem(itemId) {
       const { sendRequest } = useApi();
 
-      await sendRequest("delete", `items/${itemId}`, null);
+      await sendRequest(`items/${itemId}`, "DELETE");
+      await this.fetchMyItems();
     },
   },
 });

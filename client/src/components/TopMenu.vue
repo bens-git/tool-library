@@ -57,9 +57,27 @@
         <v-list-item @click="myLoans">
           <v-list-item-title>My Loans</v-list-item-title>
         </v-list-item>
-        <v-list-item @click="myMangement">
-          <v-list-item-title>My Tools & Materials</v-list-item-title>
+        <v-list-item @click="myItems">
+          <v-list-item-title>My Items</v-list-item-title>
         </v-list-item>
+        <v-list-item @click="myArchetypes">
+          <v-list-item-title>My Archetypes</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="myCategories">
+          <v-list-item-title>My Categories</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="myUsages">
+          <v-list-item-title>My Usages</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="myBrands">
+          <v-list-item-title>My Brands</v-list-item-title>
+        </v-list-item>
+        <!-- <v-list-item @click="myJobs">
+          <v-list-item-title>My Jobs</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="myProjects">
+          <v-list-item-title>My Projects</v-list-item-title>
+        </v-list-item> -->
         <v-list-item @click="editProfile">
           <v-list-item-title>Edit Profile</v-list-item-title>
         </v-list-item>
@@ -107,7 +125,7 @@ const userStore = useUserStore();
 const logoutDialog = ref(false);
 
 const links = [
-  { text: "TOOLS", route: "archetype-list" },
+  { text: "CATALOG", route: "archetype-list" },
   // { text: "JOBS", route: "job-list" },
   // { text: "PROJECTS", route: "project-list" },
 ];
@@ -139,8 +157,32 @@ const routeToDiscordLink = () => {
   router.push({ name: "route-to-discord-link" });
 };
 
-const myMangement = () => {
-  router.push({ name: "my-tools" });
+const myItems = () => {
+  router.push({ name: "my-items" });
+};
+
+const myArchetypes = () => {
+  router.push({ name: "my-archetypes" });
+};
+
+const myCategories = () => {
+  router.push({ name: "my-categories" });
+};
+
+const myUsages = () => {
+  router.push({ name: "my-usages" });
+};
+
+const myBrands = () => {
+  router.push({ name: "my-brands" });
+};
+
+const myJobs = () => {
+  router.push({ name: "my-jobs" });
+};
+
+const myProjects = () => {
+  router.push({ name: "my-projects" });
 };
 
 const myRentals = () => {

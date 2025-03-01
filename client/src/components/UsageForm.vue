@@ -62,13 +62,13 @@ const saveUsage = async () => {
 
   try {
     if (props.isEdit) {
-      await usageStore.updateUsage(formData);
+      await usageStore.saveUsage(formData);
     } else {
       await usageStore.createUsage(formData);
     }
     if (responseStore.response.success) {
       closeModal();
-      usageStore.fetchUserUsages();
+      usageStore.fetchMyUsages ();
     } else {
       console.log("Error:", responseStore.response.message);
     }

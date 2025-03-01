@@ -223,7 +223,7 @@ class ItemController extends Controller
             'purchase_value' => 'nullable|numeric',
             'purchased_at' => 'required|date',
             'manufactured_at' => 'nullable|date',
-            'archetype.id'=>'required|numeric|exists:archetypes,id', // Adjust according to your needs
+            'archetype.id' => 'required|numeric|exists:archetypes,id', // Adjust according to your needs
         ]);
 
 
@@ -427,26 +427,37 @@ class ItemController extends Controller
      */
     public function destroy($id)
     {
-        $user = Auth::user();
-        $item = Item::where('id', $id)->where('owned_by', $user->id)->first();
+        DB::transaction(function () use ($id) {
 
-        if (!$item) {
-            return response()->json(['message' => 'Item not found or you do not have permission to delete it'], 404);
-        }
+            $user = Auth::user();
+            $item = Item::with('rentals')->where('id', $id)->where('owned_by', $user->id)->first();
 
-        $itemImages = $item->images;
+            if (!$item) {
+                return response()->json(['message' => 'Item not found or you do not have permission to delete it'], 404);
+            }
 
-        // Delete the image files from storage
-        foreach ($itemImages as $image) {
-            Storage::disk('public')->delete($image->path);
-        }
+            //check if there are any active rentals
+            $hasActiveRental = $item && $item->rentals->contains('status', 'active');
+            if ($hasActiveRental) {
+                abort(404, "Item can not be deleted because it is currently rented");
+            }
 
-        // Delete the records from the item_images table
-        $item->images()->delete();
+            $itemImages = $item->images;
 
-        // Delete the item itself
-        $item->delete();
+            // Delete the image files from storage
+            foreach ($itemImages as $image) {
+                Storage::disk('public')->delete($image->path);
+            }
 
+            // Delete the records from the item_images table
+            $item->images()->delete();
+
+            // Delete the rentals
+            $item->rentals()->delete();
+
+            // Delete the item itself
+            $item->delete();
+        });
         return response()->json(['message' => 'Item and associated images deleted successfully']);
     }
 

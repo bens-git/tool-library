@@ -1,14 +1,14 @@
 <template>
   <v-container class="d-flex justify-center">
     <v-card
-      title="Tool Library Catalog"
+      title="Catalog"
       flat
-      style="min-width: 90vw; min-height: 90vh"
+      style="min-width: 90vw; max-height: 88vh; min-height: 88vh"
     >
-      <template v-slot:text>
+      <v-card-text>
         <v-row>
           <!-- Search Field -->
-          <v-col cols="12" md="3">
+          <v-col>
             <v-text-field
               density="compact"
               v-model="archetypeStore.search"
@@ -22,7 +22,7 @@
           </v-col>
 
           <!-- Archetype -->
-          <v-col cols="12" md="3">
+          <v-col>
             <v-autocomplete
               density="compact"
               v-model="archetypeStore.selectedArchetypeId"
@@ -40,7 +40,7 @@
           </v-col>
 
           <!-- Category -->
-          <v-col cols="12" md="2">
+          <v-col>
             <v-autocomplete
               density="compact"
               v-model="archetypeStore.selectedCategoryId"
@@ -54,7 +54,7 @@
           </v-col>
 
           <!-- Usage -->
-          <v-col cols="12" md="2">
+          <v-col>
             <v-autocomplete
               density="compact"
               v-model="archetypeStore.selectedUsageId"
@@ -68,7 +68,7 @@
           </v-col>
 
           <!-- Brand -->
-          <v-col cols="12" md="2">
+          <v-col>
             <v-autocomplete
               density="compact"
               v-model="archetypeStore.selectedBrandId"
@@ -83,12 +83,9 @@
               @update:model-value="debounceSearch"
               @update:search="debouncedAutocompleteBrandSearch"
             ></v-autocomplete>
-
-         
           </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12" md="3">
+
+          <v-col>
             <v-date-input
               density="compact"
               v-model="archetypeStore.dateRange"
@@ -102,7 +99,7 @@
           </v-col>
 
           <!-- Location Picker -->
-          <v-col cols="12" md="4">
+          <v-col>
             <v-text-field
               density="compact"
               label="Select location"
@@ -110,19 +107,6 @@
               readonly
               @click="openLocationPicker"
             ></v-text-field>
-          </v-col>
-
-          <v-col cols="12" md="4">
-            <v-slider
-              label="Radius (km)"
-              show-ticks="always"
-              tick-size="10"
-              v-model="archetypeStore.radius"
-              step="10"
-              thumb-label="always"
-              :max="100"
-              :min="1"
-            ></v-slider>
           </v-col>
 
           <!-- Location Picker Dialog -->
@@ -141,83 +125,83 @@
             </v-card>
           </v-dialog>
           <!-- Reset Button -->
-          <v-col cols="12" md="1" class="d-flex align-center">
+          <v-col>
             <v-btn
-              icon
+              variant="tonal"
+              class="text-none font-weight-regular"
               color="primary"
               @click="archetypeStore.resetFilters"
-              class="mt-2"
             >
               <v-icon>mdi-refresh</v-icon>
             </v-btn>
           </v-col>
         </v-row>
-      </template>
-      <v-data-table-server
-        v-model:items-per-page="archetypeStore.itemsPerPage"
-        :headers="headers"
-        :items="archetypeStore.archetypesWithItems"
-        :items-length="archetypeStore.totalArchetypesWithItems"
-        loading-text="Loading... Please wait"
-        :search="archetypeStore.search"
-        item-value="id"
-        @update:options="archetypeStore.updateArchetypesWithItemsOptions"
-        mobile-breakpoint="sm"
-      >
-        <!-- Image column -->
-        <template v-slot:[`item.image`]="{ item }">
-          <v-img
-            v-if="item.images?.length > 0"
-            :src="fullImageUrl(item.images[0].path)"
-            max-height="200"
-            max-width="200"
-            min-height="200"
-            min-width="200"
-            alt="Archetype Image"
-          ></v-img>
-          <v-icon v-else>mdi-image-off</v-icon>
-          <!-- Fallback icon if no image is available -->
-        </template>
 
-        <!-- Locations column -->
-        <template v-slot:[`item.locations`]="{ item }">
-          <div v-html="formatLocation(item.locations)"></div>
-        </template>
+        <v-data-table-server
+          v-model:items-per-page="archetypeStore.itemsPerPage"
+          :headers="headers"
+          :items="archetypeStore.archetypesWithItems"
+          :items-length="archetypeStore.totalArchetypesWithItems"
+          loading-text="Loading... Please wait"
+          :search="archetypeStore.search"
+          item-value="id"
+          @update:options="archetypeStore.updateArchetypesWithItemsOptions"
+          mobile-breakpoint="sm"
+          fixed-header
+          :height="'60vh'"
+        >
+          <!-- Actions column -->
+          <template v-slot:[`item.actions`]="{ item }">
+            <ArchetypeItemsDialog :archetype="item" v-if="userStore.user" />
+            <v-btn
+              color="success"
+              class="text-none font-weight-regular"
+              block
+              text="Login"
+              @click="goToLogin"
+              variant="tonal"
+              v-else
+            >
+              <v-icon>mdi-login</v-icon>
+            </v-btn>
+          </template>
 
-        <!--units-->
-        <template v-slot:[`item.item_count`]="{ item }">
-          <div v-if="item.available_item_count">
-            {{
-              item.available_item_count -
-              (item.rented_item_count ? item.rented_item_count : 0)
-            }}
-          </div>
-          <div v-if="item.rented_item_count">
-            {{ item.rented_item_count }} (rented)
-          </div>
-        </template>
+          <!-- Image column -->
+          <template v-slot:[`item.image`]="{ item }">
+            <v-img
+              v-if="item.images?.length > 0"
+              :src="fullImageUrl(item.images[0].path)"
+              max-height="200"
+              max-width="200"
+              min-height="200"
+              min-width="200"
+              alt="Archetype Image"
+            ></v-img>
+            <v-icon v-else>mdi-image-off</v-icon>
+            <!-- Fallback icon if no image is available -->
+          </template>
 
-        <template v-slot:[`item.actions`]="{ item }">
-          <v-btn icon @click="editArchetype(item)" v-if="userStore.user">
-            <v-icon>mdi-information</v-icon>
-          </v-btn>
+          <!-- Locations column -->
+          <template v-slot:[`item.locations`]="{ item }">
+            <div v-html="formatLocation(item.locations)"></div>
+          </template>
 
-          <v-btn icon @click="goToLogin" v-else>
-            <v-icon>mdi-login</v-icon>
-          </v-btn>
-        </template>
-      </v-data-table-server>
+          <!--units-->
+          <template v-slot:[`item.item_count`]="{ item }">
+            <div v-if="item.available_item_count">
+              {{
+                item.available_item_count -
+                (item.rented_item_count ? item.rented_item_count : 0)
+              }}
+            </div>
+            <div v-if="item.rented_item_count">
+              {{ item.rented_item_count }} (rented)
+            </div>
+          </template>
+        </v-data-table-server>
+      </v-card-text>
     </v-card>
   </v-container>
-
-  <!-- Dialog for item details -->
-  <v-dialog v-model="dialog" :persistent="false" class="custom-dialog">
-    <ArchetypeDetail
-      :archetype="selectedArchetype"
-      :action="'details'"
-      v-on:closeDialog="dialog = false"
-    />
-  </v-dialog>
 </template>
 
 <script setup>
@@ -229,7 +213,7 @@ import { useArchetypeStore } from "@/stores/archetype";
 import { useUserStore } from "@/stores/user";
 import { useLocationStore } from "@/stores/location";
 import _ from "lodash";
-import ArchetypeDetail from "./ArchetypeDetail.vue";
+import ArchetypeItemsDialog from "./ArchetypeItemsDialog.vue";
 import { useRouter } from "vue-router";
 import LocationPicker from "./LocationPicker.vue"; // Import your location picker component
 import debounce from "lodash/debounce";
@@ -259,9 +243,7 @@ const handleLocationSelected = ({ lat, lng }) => {
   locationPickerDialog.value = false;
 };
 
-
 const { fullImageUrl } = useApi();
-
 
 const dialog = ref(false);
 const selectedArchetype = ref(null);
@@ -323,18 +305,24 @@ const headers = [
   },
 ];
 
-
 // Autocomplete Archetype Search handler
 const onAutocompleteArchetypeSearch = async (query) => {
-  autocompleteArchetypes.value = await archetypeStore.fetchAutocompleteSelectArchetypes(query);
+  autocompleteArchetypes.value =
+    await archetypeStore.fetchAutocompleteSelectArchetypes(query);
 };
 const onAutocompleteBrandSearch = async (query) => {
-  autocompleteBrands.value = await brandStore.fetchAutocompleteSelectBrands(query);
+  autocompleteBrands.value =
+    await brandStore.fetchAutocompleteSelectBrands(query);
 };
 
-const debouncedAutocompleteArchetypeSearch = debounce(onAutocompleteArchetypeSearch, 300);
-const debouncedAutocompleteBrandSearch = debounce(onAutocompleteBrandSearch, 300);
-
+const debouncedAutocompleteArchetypeSearch = debounce(
+  onAutocompleteArchetypeSearch,
+  300
+);
+const debouncedAutocompleteBrandSearch = debounce(
+  onAutocompleteBrandSearch,
+  300
+);
 
 const debounceSearch = _.debounce(() => {
   archetypeStore.fetchArchetypesWithItems();
@@ -361,7 +349,10 @@ const minStartDate = computed(() => today);
 watch(
   () => archetypeStore.dateRange[0],
   (newStartDate) => {
-    if (newStartDate > archetypeStore.dateRange[archetypeStore.dateRange.length - 1]) {
+    if (
+      newStartDate >
+      archetypeStore.dateRange[archetypeStore.dateRange.length - 1]
+    ) {
       archetypeStore.dateRange[archetypeStore.dateRange.length - 1] = new Date(
         newStartDate.getTime() + startOfDayInMillis
       );
@@ -427,9 +418,9 @@ const formatLocation = (locations) => {
 const initializeLocation = async () => {
   if (userStore.user) {
     var location = await locationStore.fetchUserLocation();
-  } 
-  
-  if(!location){
+  }
+
+  if (!location) {
     var location = {
       city: "Brantford",
       country: "Canada",
@@ -438,7 +429,10 @@ const initializeLocation = async () => {
       state: "ON",
     };
   }
-  archetypeStore.setLocation({ lat: location.latitude, lng: location.longitude });
+  archetypeStore.setLocation({
+    lat: location.latitude,
+    lng: location.longitude,
+  });
   archetypeStore.setAddress(
     location.city + " " + location.state + " " + location.country
   );
@@ -448,7 +442,8 @@ onMounted(async () => {
   initializeLocation();
   categoryStore.fetchCategories();
   usageStore.fetchUsages();
-  autocompleteArchetypes.value = await archetypeStore.fetchAutocompleteSelectArchetypes();
+  autocompleteArchetypes.value =
+    await archetypeStore.fetchAutocompleteSelectArchetypes();
   autocompleteBrands.value = await brandStore.fetchAutocompleteSelectBrands();
 });
 </script>

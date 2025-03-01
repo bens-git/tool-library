@@ -1,13 +1,8 @@
-// stores/categories.js
 import { defineStore } from "pinia";
-import apiClient from "@/axios";
-import { useLoadingStore } from "./loading";
-import { useResponseStore } from "./response";
+import useApi from "@/stores/api";
 
 export const useCategoryStore = defineStore("category", {
   state: () => ({
-    userCategories: [],
-    totalUserCategories: 0,
     categories: [],
     totalCategories: 0,
     page: 1,
@@ -15,134 +10,79 @@ export const useCategoryStore = defineStore("category", {
     sortBy: "item_name",
     order: "asc",
     search: "",
-    paginateCategories: false,
+
+    myCategoriesListPage: 1,
+    myCategoriesListItemsPerPage: 10,
+    myCategoriesListSortBy: [{ key: "name", order: "asc" }],
+    myCategoriesListFilters: {
+      search: null,
+    },
+    myCategoriesListCategories: [],
+    myCategoriesListTotalCategories: 0,
+    myCategoriesListSelectedCategories: null,
   }),
   actions: {
-    updateUserCategoriesOptions({ page, itemsPerPage, sortBy }) {
-      this.page = page;
-      this.itemsPerPage = itemsPerPage;
-      this.sortBy = sortBy;
-
-      this.fetchUserCategories();
-    },
     async fetchCategories() {
-      try {
-        const response = await apiClient.get("/categories", {
-          params: {
-            page: this.page,
-            itemsPerPage: this.itemsPerPage,
-            sortBy: this.sortBy,
-            order: this.order,
-            search: this.search,
-          },
-        });
-        this.categories = response.data.data;
-        this.totalCategories = response.data.count;
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
+      const { fetchRequest } = useApi();
+      const data = await fetchRequest(
+        "categories", // API endpoint
+        {
+          page: this.page,
+          itemsPerPage: this.itemsPerPage,
+          sortBy: this.sortBy,
+          search: this.search,
+        }
+      );
+      this.categories = data?.data;
+      this.totalCategories = data?.total;
     },
 
-    async fetchUserCategories() {
-      try {
-        const response = await apiClient.get("/user/categories", {
-          params: {
-            paginate: true,
-            page: this.page,
-            itemsPerPage: this.itemsPerPage,
-            sortBy: this.sortBy,
-            search: this.search,
-          },
-        });
-        this.userCategories = response.data.categories;
-        this.totalUserCategories = response.data.count;
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
+    async fetchMyCategories() {
+      const { fetchRequest } = useApi();
+      const data = await fetchRequest(
+        "me/categories", // API endpoint
+        {
+          page: this.myCategoriesListPage,
+          itemsPerPage: this.myCategoriesListItemsPerPage,
+          sortBy: this.myCategoriesListSortBy,
+          search: this.myCategoriesListFilters.search,
+        }
+      );
+      this.myCategoriesListCategories = data?.data;
+      this.myCategoriesListTotalCategories = data?.total;
     },
 
     async createCategory(categoryData) {
-      const responseStore = useResponseStore();
-      const loadingStore = useLoadingStore();
-      loadingStore.startLoading("createCategory");
+      const { sendRequest } = useApi();
 
-      try {
-        const response = await apiClient.post("/categories", categoryData, {
-          headers: { "Content-Category": "multipart/form-data" },
-        });
-        this.userCategories.push(response.data);
-        this.totalUserCategories++;
-        responseStore.setResponse(true, "Category created successfully");
-      } catch (error) {
-        console.log(error.response.data);
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("createCategory");
-      }
+      const data = await sendRequest("categories", "post", categoryData);
+
+      await this.fetchMyCategories();
+
+      return data;
     },
 
-    async updateCategory(categoryData) {
-      const responseStore = useResponseStore();
-      const loadingStore = useLoadingStore();
-      loadingStore.startLoading("updateCategory");
+    async updateCategory(category) {
+      const { sendRequest } = useApi();
 
-      try {
-        // Create a new FormData object
-        const formData = new FormData();
+      const data = await sendRequest(
+        `categories/${category.id}`, 
+        "put", 
+        category 
+      );
 
-        // Append all item data fields to formData
-        for (const [key, value] of categoryData.entries()) {
-          formData.append(key, value);
-        }
+      await this.fetchMyCategories();
 
-        // Send POST request with FormData
-        const response = await apiClient.post(
-          `/update-category/${categoryData.get("id")}`,
-          formData,
-          {
-            headers: { "Content-Category": "multipart/form-data" },
-          }
-        );
-
-        // Find and update the item in the store
-        const updatedCategoryIndex = this.userCategories.findIndex(
-          (category) => category.id === response.data.id
-        );
-        if (updatedCategoryIndex !== -1) {
-          this.userCategories[updatedCategoryIndex] = response.data;
-        }
-
-        responseStore.setResponse(true, "Category updated successfully");
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("updateCategory");
-      }
+      return data;
     },
 
     async deleteCategory(categoryId) {
-      const responseStore = useResponseStore();
-      const loadingStore = useLoadingStore();
-      loadingStore.startLoading("deleteCategory");
-
-      try {
-        await apiClient.delete(`/categories/${categoryId}`);
-        this.userCategories = this.userCategories.filter(
-          (category) => category.id !== categoryId
-        );
-        this.totalUserCategories--;
-        responseStore.setResponse(true, "Category deleted successfully");
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("deleteCategory");
-      }
+      const { sendRequest } = useApi();
+      await sendRequest(
+        `categories/${categoryId}`,
+        "delete" 
+      );
+      await this.fetchMyCategories();
     },
   },
 });

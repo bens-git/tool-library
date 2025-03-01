@@ -1,18 +1,20 @@
 <template>
   <div class="pl-4 text-center">
-    <v-dialog v-model="dialog"  @open="onOpen">
+    <v-dialog v-model="dialog" @open="onOpen">
       <template v-slot:activator="{ props: activatorProps }">
         <v-btn
+          :color="aim == 'edit' ? 'primary' : 'success'"
           class="text-none font-weight-regular"
-          :prepend-icon="isEdit ? 'mdi-edit' : 'mdi-plus'"
-          :text="isEdit ? `EDIT ${resource}` : `CREATE ${resource}`"
+          :prepend-icon="aim == 'edit' ? 'mdi-pencil' : 'mdi-plus'"
+          :text="aim == 'edit' ? `Edit Archetype` : `Create Archetype`"
           variant="tonal"
           v-bind="activatorProps"
+          block
         ></v-btn>
       </template>
       <v-card
-        :prepend-icon="isEdit ? 'mdi-edit' : 'mdi-plus'"
-        :title="isEdit ? `EDIT ${resource}` : `CREATE ${resource}`"
+        :prepend-icon="aim == 'edit' ? 'mdi-pencil' : 'mdi-plus'"
+        :title="aim == 'edit' ? `Edit Archetype` : `Create Archetype`"
       >
         <v-card-text v-if="localArchetype">
           <v-row dense>
@@ -46,8 +48,7 @@
                 v-model="localArchetype.code"
                 label="Code"
               ></v-text-field>
-              </v-col
-            >
+            </v-col>
 
             <v-col cols="12" md="4" sm="6">
               <v-autocomplete
@@ -60,8 +61,7 @@
                 item-value="id"
                 :error-messages="responseStore?.response?.errors?.category_ids"
               ></v-autocomplete>
-              </v-col
-            >
+            </v-col>
 
             <v-col cols="12" md="4" sm="6">
               <v-autocomplete
@@ -74,9 +74,7 @@
                 item-value="id"
                 :error-messages="responseStore?.response?.errors?.usage_ids"
               ></v-autocomplete>
-              </v-col
-            >
-
+            </v-col>
 
             <v-col cols="12" md="4" sm="6">
               <v-autocomplete
@@ -84,23 +82,20 @@
                 v-model="localArchetype.resource"
                 :items="['TOOL', 'MATERIAL']"
                 label="Resource"
-                :disabled="true"
                 :error-messages="responseStore?.response?.errors?.resource"
               ></v-autocomplete>
-              </v-col
-            >
+            </v-col>
           </v-row>
         </v-card-text>
         <v-divider></v-divider>
 
         <v-card-actions>
           <v-spacer></v-spacer>
-         
 
           <v-btn text="Close" variant="plain" @click="dialog = false"></v-btn>
 
           <v-btn
-            v-if="props.isEdit"
+            v-if="aim == 'edit'"
             color="primary"
             text="Save"
             variant="tonal"
@@ -125,18 +120,7 @@ import { useArchetypeStore } from "@/stores/archetype";
 import { useCategoryStore } from "@/stores/category";
 import { useUsageStore } from "@/stores/usage";
 import { useResponseStore } from "@/stores/response";
-import ItemDialog from "./ArchetypeDialog.vue";
 
-// Create a local state variable to sync with modelValue
-//const localModelValue = ref(props.modelValue);
-
-// // Watch for changes in modelValue from the parent
-// watch(
-//   () => props.modelValue,
-//   (newValue) => {
-//     localModelValue.value = newValue;
-//   }
-// );
 const dialog = shallowRef(false);
 
 const archetypeStore = useArchetypeStore();
@@ -144,21 +128,10 @@ const categoryStore = useCategoryStore();
 const usageStore = useUsageStore();
 const responseStore = useResponseStore();
 
-// const apiBaseUrl = process.env.VUE_APP_API_HOST;
-
 const localArchetype = ref(null);
 
-// onMounted(async () => {
-//   console.log("mount");
-//   tools.resource = "TOOL";
-//   tools.value = (await archetypeStore.fetchArchetypes()).data;
-//   tools.resource = "MATERIAL";
-//   materials.value = (await archetypeStore.fetchArchetypes()).data;
-//   initializeLocalArchetype();
-// });
-
 const props = defineProps({
-  isEdit: Boolean,
+  aim: String,
   archetype: Object,
   resource: String,
 });
@@ -175,7 +148,7 @@ watch(dialog, (newVal) => {
 // Function to initialize
 const initializeLocalArchetype = () => {
   console.log("init");
-  if (props.isEdit && props.archetype) {
+  if (props.aim == "edit" && props.archetype) {
     localArchetype.value = {
       ...props.archetype,
     };
@@ -183,42 +156,39 @@ const initializeLocalArchetype = () => {
     localArchetype.value = {
       name: "",
       description: "",
-      material_id: null,
-      product_id: null,
-      tool_id: null,
-      created_by: null,
-      image_path: null,
-      resource: props.resource
+      category: null,
+      usage: null,
+      notes: "",
+      resource: "TOOL",
     };
   }
 };
 
 // const emit = defineEmits(["update:modelValue", "close"]);
 
-const onOpen =async () => {
-  await categoryStore.fetchCategories()
-  await usageStore.fetchUsages()
+const onOpen = async () => {
+  await categoryStore.fetchCategories();
+  await usageStore.fetchUsages();
   initializeLocalArchetype();
   responseStore.$reset();
-
 };
 
 const onClose = () => {
   console.log("Dialog closed");
 };
 
-const save = () => {
-  console.log("save");
-  dialog.value = false;
+const save = async () => {
+  const data = await archetypeStore.saveMyArchetype(localArchetype.value);
+
+  if (data.success) {
+    dialog.value = false;
+  }
 };
 
 const create = async () => {
-  const newArchetype = await archetypeStore.postArchetype(localArchetype.value);
-  if (newArchetype && newArchetype.id) {
-    localArchetype.value = newArchetype;
+  const data = await archetypeStore.postArchetype(localArchetype.value);
+  if (data.success) {
+    dialog.value = false;
   }
-
 };
-
-
 </script>

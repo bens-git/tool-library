@@ -2,13 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Item;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use App\Models\Category;
 
 class CategoryController extends Controller
@@ -45,7 +40,7 @@ class CategoryController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function getUserCategories(Request $request)
+    public function getMyCategories(Request $request)
     {
 
         // Get request parameters
@@ -76,17 +71,21 @@ class CategoryController extends Controller
 
         // Apply pagination
 
-        if ($request->paginate && $request->paginate != 'false') {
-
-            $archetypes = $query->paginate($itemsPerPage, ['*'], 'page', $page);
-            $categoriesArray = $archetypes->items();
-            $totalCount = $archetypes->total();
+        if ($request->itemsPerPage == -1) {
+            $categoriesArray = $query->get()->toArray();
+            $totalCount = count($categoriesArray);
+        } else {
+            $categories = $query->paginate($itemsPerPage, ['*'], 'page', $page);
+            $categoriesArray = $categories->items();
+            $totalCount = $categories->total();
         }
+
 
         // Return response
         return response()->json([
-            'count' => $totalCount,
-            'categories' => $categoriesArray
+            'total' => $totalCount,
+            'data' => $categoriesArray,
+            'success' =>true
         ]);
     }
 
@@ -109,7 +108,7 @@ class CategoryController extends Controller
 
         $category = Category::create($validated);
 
-        return response()->json($category);
+        return response()->json(['success' => true, 'data' => $category, 'message' => 'Archetype created']);
     }
 
 
@@ -134,7 +133,7 @@ class CategoryController extends Controller
 
 
 
-        return response()->json($category);
+        return response()->json(['success' => true, 'data' => $category, 'message' => 'Archetype created']);
     }
 
     /**

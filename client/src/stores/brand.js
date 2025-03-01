@@ -1,8 +1,5 @@
 // stores/categories.js
 import { defineStore } from "pinia";
-import apiClient from "@/axios";
-import { useLoadingStore } from "./loading";
-import { useResponseStore } from "./response";
 import useApi from "@/stores/api";
 
 export const useBrandStore = defineStore("brand", {
@@ -23,9 +20,7 @@ export const useBrandStore = defineStore("brand", {
           page: this.myBrandsListPage,
           itemsPerPage: this.myBrandsListItemsPerPage,
           sortBy: this.myBrandsListSortBy,
-          archetypeId: this.myBrandsListFilters.archetypeId,
           brandId: this.myBrandsListFilters.brandId,
-          resource: this.myBrandsListFilters.resource,
           search: this.myBrandsListFilters.search,
         }
       );
@@ -68,51 +63,24 @@ export const useBrandStore = defineStore("brand", {
     async createBrand(brandData) {
       const { sendRequest } = useApi();
       const data = await sendRequest(`brands`, "POST", brandData);
-      if (data) {
-        this.myBrandsListBrands.push(data.data);
-        this.myBrandsListTotalBrands++;
-      }
+      await this.fetchMyBrands();
+
+      return data;
     },
 
-    async updateMyBrand(brand) {
+    async updateBrand(brand) {
       const { sendRequest } = useApi();
 
-      const data = await sendRequest(
-        `brands/${brand.id}`, // API endpoint
-        "put", // HTTP method
-        brand // Payload
-      );
+      const data = await sendRequest(`brands/${brand.id}`, "put", brand);
+      await this.fetchMyBrands();
 
-      if (data?.success) {
-        // Find and update the brand in the store
-        const updatedIndex = this.myBrandListItems.findIndex(
-          (brand) => brand.id === data.data.id
-        );
-        if (updatedIndex !== -1) {
-          this.myBrandsListItems[updatedIndex] = data.data;
-        }
-      }
+      return data;
     },
 
     async deleteBrand(brandId) {
-      const responseStore = useResponseStore();
-      const loadingStore = useLoadingStore();
-      loadingStore.startLoading("deleteBrand");
-
-      try {
-        await apiClient.delete(`/brands/${brandId}`);
-        this.userBrands = this.userBrands.filter(
-          (brand) => brand.id !== brandId
-        );
-        this.totalUserBrands--;
-        responseStore.setResponse(true, "Brand deleted successfully");
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("deleteBrand");
-      }
+      const { sendRequest } = useApi();
+      await sendRequest(`brands/${brandId}`, "delete");
+      await this.fetchMyBrands();
     },
   },
 });

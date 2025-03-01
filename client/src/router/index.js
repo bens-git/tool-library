@@ -5,7 +5,13 @@ import LoginForm from "@/components/LoginForm.vue";
 import ArchetypeList from "@/components/ArchetypeList.vue";
 import ProjectList from "@/components/ProjectList.vue";
 import JobList from "@/components/JobList.vue";
-import MyManagement from "@/components/MyManagement.vue";
+import MyItems from "@/components/MyItems.vue";
+import MyArchetypes from "@/components/MyArchetypes.vue";
+import MyCategories from "@/components/MyCategories.vue";
+import MyUsages from "@/components/MyUsages.vue";
+import MyBrands from "@/components/MyBrands.vue";
+import MyJobs from "@/components/MyJobs.vue";
+import MyProjects from "@/components/MyProjects.vue";
 import MyRentals from "@/components/MyRentals.vue";
 import MyLoans from "@/components/MyLoans.vue";
 import DiscordResponse from "@/components/DiscordResponse.vue";
@@ -31,13 +37,6 @@ const routes = [
     component: JobList,
   },
 
-  {
-    path: "/tool/:id",
-    component: () => import("@/components/ArchetypeDetail.vue"),
-    name: "tool_detail",
-    props: true,
-  },
-  { path: "/add-tool", component: () => import("@/components/AddTool.vue") },
   {
     path: "/login-form",
     name: "login-form",
@@ -77,11 +76,54 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: "/my-tools",
-    name: "my-tools",
-    component: MyManagement,
+    path: "/my-items",
+    name: "my-items",
+    component: MyItems,
     meta: { requiresAuth: true, requiresDiscord: true },
   },
+
+  {
+    path: "/my-archetypes",
+    name: "my-archetypes",
+    component: MyArchetypes,
+    meta: { requiresAuth: true, requiresDiscord: true },
+  },
+
+  {
+    path: "/my-categories",
+    name: "my-categories",
+    component: MyCategories,
+    meta: { requiresAuth: true, requiresDiscord: true },
+  },
+
+  {
+    path: "/my-usages",
+    name: "my-usages",
+    component: MyUsages,
+    meta: { requiresAuth: true, requiresDiscord: true },
+  },
+
+  {
+    path: "/my-brands",
+    name: "my-brands",
+    component: MyBrands,
+    meta: { requiresAuth: true, requiresDiscord: true },
+  },
+
+  {
+    path: "/my-jobs",
+    name: "my-jobs",
+    component: MyJobs,
+    meta: { requiresAuth: true, requiresDiscord: true },
+  },
+
+  {
+    path: "/my-projects",
+    name: "my-projects",
+    component: MyProjects,
+    meta: { requiresAuth: true, requiresDiscord: true },
+  },
+
   {
     path: "/my-rentals",
     name: "my-rentals",

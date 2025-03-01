@@ -3,21 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use App\Models\Brand;
-use App\Models\Category;
 use Illuminate\Validation\Rule;
 
 
 class BrandController extends Controller
 {
-
-
 
     // Fetch all brands
     public function getUsages(Request $request)
@@ -117,10 +110,8 @@ class BrandController extends Controller
 
         $brand = Brand::create($validated);
 
-        $response['data']=$brand;
-        $response['message']='Brand created';
+        return response()->json(['success' => true, 'data' => $brand, 'message' => 'Archetype created']);
 
-        return response()->json($response);
     }
 
 
@@ -150,9 +141,7 @@ class BrandController extends Controller
         $brand->name = $request->name;
         $brand->save();
 
-
-
-        return response()->json(['data' => $brand, 'message' => 'Brand updated']);
+        return response()->json(['success' => true, 'data' => $brand, 'message' => 'Archetype created']);
     }
 
     /**

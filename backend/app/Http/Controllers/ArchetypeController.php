@@ -7,7 +7,6 @@ use App\Models\Item;
 use App\Models\Usage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use App\Models\ArchetypeImage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -36,8 +35,8 @@ class ArchetypeController extends Controller
 
         // Base query for data
         $query = Archetype::query()
-            ->leftJoin('category_archetype', 'archetypes.id', '=', 'category_archetype.archetype_id')
-            ->leftJoin('categories', 'category_archetype.category_id', '=', 'categories.id')
+            ->leftJoin('archetype_category', 'archetypes.id', '=', 'archetype_category.archetype_id')
+            ->leftJoin('categories', 'archetype_category.category_id', '=', 'categories.id')
             ->leftJoin('archetype_usage', 'archetypes.id', '=', 'archetype_usage.archetype_id')
             ->leftJoin('usages', 'archetype_usage.usage_id', '=', 'usages.id')
             ->leftJoin('items', 'items.archetype_id', '=', 'archetypes.id')
@@ -138,7 +137,7 @@ class ArchetypeController extends Controller
 
         // Apply category filter if provided
         if ($request->filled('categoryId')) {
-            $query->where('category_archetype.category_id', '=', $request->input('categoryId'));
+            $query->where('archetype_category.category_id', '=', $request->input('categoryId'));
         }
 
         // Apply usage filter if provided
@@ -240,13 +239,16 @@ class ArchetypeController extends Controller
         $itemsPerPage = $request->input('itemsPerPage', 10);
         $sortBy = $request->input('sortBy');
         $search = $request->input('search');
+        $resource = $request->input('resource');
+        $categoryId = $request->input('categoryId');
+        $usageId = $request->input('usageId');
 
 
 
         // Base query for data
         $query = Archetype::query()
-            ->leftJoin('category_archetype', 'archetypes.id', '=', 'category_archetype.archetype_id')
-            ->leftJoin('categories', 'category_archetype.category_id', '=', 'categories.id')
+            ->leftJoin('archetype_category', 'archetypes.id', '=', 'archetype_category.archetype_id')
+            ->leftJoin('categories', 'archetype_category.category_id', '=', 'categories.id')
             ->leftJoin('archetype_usage', 'archetypes.id', '=', 'archetype_usage.archetype_id')
             ->leftJoin('usages', 'archetype_usage.usage_id', '=', 'usages.id')
             ->leftJoin('items', 'items.archetype_id', '=', 'archetypes.id')
@@ -259,6 +261,7 @@ class ArchetypeController extends Controller
                 'archetypes.description',
                 'archetypes.notes',
                 'archetypes.code',
+                'archetypes.resource',
                 DB::raw('GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC SEPARATOR ", ") as categories'),
                 DB::raw('GROUP_CONCAT(DISTINCT categories.id ORDER BY categories.id ASC SEPARATOR ", ") as category_ids'),
                 DB::raw('GROUP_CONCAT(DISTINCT usages.name ORDER BY usages.name ASC SEPARATOR ", ") as usages'),
@@ -274,6 +277,24 @@ class ArchetypeController extends Controller
         if (!empty($search)) {
             $query->where(function ($query) use ($search) {
                 $query->where('archetypes.name', 'like', '%' . $search . '%');
+            });
+        }
+
+        if (!empty($resource)) {
+            $query->where(function ($query) use ($resource) {
+                $query->where('archetypes.resource', '=',  $resource );
+            });
+        }
+
+        if (!empty($categoryId)) {
+            $query->where(function ($query) use ($categoryId) {
+                $query->where('archetype_category.category_id', '=',  $categoryId );
+            });
+        }
+
+        if (!empty($usageId)) {
+            $query->where(function ($query) use ($usageId) {
+                $query->where('archetype_usage.usage_id', '=',  $usageId );
             });
         }
 
@@ -480,44 +501,6 @@ class ArchetypeController extends Controller
                 $archetype->usages()->sync($request->input('usage_ids'));
             }
 
-            // Handle new images
-            if ($request->hasFile('newImages')) {
-                foreach ($request->file('newImages') as $image) {
-                    // Generate a unique filename based on the current date and user ID
-                    $timestamp = now()->format('YmdHis'); // Current date and time
-                    $userId = auth()->id(); // Authenticated user's ID
-                    $extension = $image->getClientOriginalExtension(); // Get the image's original extension
-                    $filename = "{$timestamp}_{$userId}.{$extension}";
-
-                    // Store the image with the unique filename
-                    $imagePath = $image->storeAs('images', $filename, 'public'); // Store in `storage/app/public/images`
-
-                    // Save image path to the database
-                    ArchetypeImage::create([
-                        'archetype_id' => $archetype->id,
-                        'path' => $imagePath,
-                        'created_by' => $userId,
-                    ]);
-                }
-            }
-
-
-            if ($request->removedImages) {
-                foreach ($request->removedImages as $imageId) {
-                    // Find the image by ID
-                    $image = ArchetypeImage::find($imageId);
-
-
-                    // Check if the image exists
-                    if ($image) {
-                        // Delete the image file from storage
-                        Storage::disk('public')->delete($image->path);
-
-                        // Delete the image record from the database
-                        $image->delete();
-                    }
-                }
-            }
             return $archetype;
         });
 

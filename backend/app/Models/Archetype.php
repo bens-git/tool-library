@@ -9,7 +9,7 @@ class Archetype extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description', 'created_by', 'notes', 'code'];
+    protected $fillable = ['name', 'description', 'created_by', 'notes', 'code', 'resource'];
 
     public function categories()
     {

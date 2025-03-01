@@ -21,7 +21,7 @@ class UsageController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function getUserUsages(Request $request)
+    public function getMyUsages(Request $request)
     {
 
         // Get request parameters
@@ -52,17 +52,21 @@ class UsageController extends Controller
 
         // Apply pagination
 
-        if ($request->paginate && $request->paginate != 'false') {
-
-            $archetypes = $query->paginate($itemsPerPage, ['*'], 'page', $page);
-            $usagesArray = $archetypes->items();
-            $totalCount = $archetypes->total();
+        if ($request->itemsPerPage == -1) {
+            $usagesArray = $query->get()->toArray();
+            $totalCount = count($usagesArray);
+        } else {
+            $usages = $query->paginate($itemsPerPage, ['*'], 'page', $page);
+            $usagesArray = $usages->items();
+            $totalCount = $usages->total();
         }
+
 
         // Return response
         return response()->json([
-            'count' => $totalCount,
-            'usages' => $usagesArray
+            'total' => $totalCount,
+            'data' => $usagesArray,
+            'success' =>true
         ]);
     }
 
@@ -87,7 +91,7 @@ class UsageController extends Controller
 
         $usage = Usage::create($validated);
 
-        return response()->json($usage);
+        return response()->json(['success' => true, 'data' => $usage, 'message' => 'Archetype created']);
     }
 
 
@@ -111,7 +115,7 @@ class UsageController extends Controller
 
 
 
-        return response()->json($usage);
+        return response()->json(['success' => true, 'data' => $usage, 'message' => 'Archetype created']);
     }
 
     /**

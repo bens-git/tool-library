@@ -45,4 +45,10 @@ class Item extends Model
     {
         return $this->belongsTo(Brand::class);
     }
+
+
+    public function rentals()
+    {
+        return $this->hasMany(Rental::class);
+    }
 }
