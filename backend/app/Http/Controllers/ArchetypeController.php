@@ -244,7 +244,6 @@ class ArchetypeController extends Controller
         $usageId = $request->input('usageId');
 
 
-
         // Base query for data
         $query = Archetype::query()
             ->leftJoin('archetype_category', 'archetypes.id', '=', 'archetype_category.archetype_id')
@@ -314,7 +313,6 @@ class ArchetypeController extends Controller
                 $query->orderBy($key, $order);
             }
         }
-
 
         // Apply pagination
         //paginate or not depending on items per page
@@ -422,10 +420,11 @@ class ArchetypeController extends Controller
             'code' => 'nullable|string|max:255',
             'category_ids' => 'nullable|array',
             'category_ids.*' => 'integer|exists:categories,id',
+            'resource' => 'nullable|string',
             'usage_ids' => 'nullable|array',
             'usage_ids.*' => 'integer|exists:usages,id',
         ]);
-        $user = auth()->user();
+        $user = Auth::user();
 
         $validated['created_by'] = $user->id;
 

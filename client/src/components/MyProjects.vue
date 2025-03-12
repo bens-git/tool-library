@@ -161,14 +161,14 @@
     usageStore.fetchMyUsages ();
     brandStore.fetchMyBrands();
     autocompleteArchetypes.value =
-      await archetypeStore.fetchAutocompleteSelectArchetypes();
+      await archetypeStore.fetchAutocompleteArchetypes();
     autocompleteBrands.value = await brandStore.fetchAutocompleteSelectBrands();
   });
   
   // Autocomplete Archetype Search handler
   const onAutocompleteArchetypeSearch = async (query) => {
     autocompleteArchetypes.value =
-      await archetypeStore.fetchAutocompleteSelectArchetypes(query);
+      await archetypeStore.fetchAutocompleteArchetypes(query);
   };
   
   // Autocomplete brand Search handler

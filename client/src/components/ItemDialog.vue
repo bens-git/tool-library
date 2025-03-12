@@ -70,8 +70,9 @@
 
           <v-date-input
             density="compact"
-            v-model="localItem.purchased_at"
-            label="Purchased At"
+            :disabled="true"
+            v-model="localItem.created_at"
+            label="Created At"
             prepend-icon=""
             persistent-placeholder
             :error-messages="responseStore.response?.errors?.purchased_at"
@@ -187,6 +188,7 @@ watch(dialog, (newVal) => {
 const initialize = () => {
   localItem.value = {
     ...props.item,
+    created_at: props.item?.created_at || new Date().toISOString(),
   };
 };
 
@@ -196,7 +198,7 @@ const onOpen = async () => {
   initialize();
   responseStore.$reset();
   autocompleteArchetypes.value =
-    await archetypeStore.fetchAutocompleteSelectArchetypes();
+    await archetypeStore.fetchAutocompleteArchetypes();
   autocompleteBrands.value = await brandStore.fetchAutocompleteSelectBrands();
 };
 
@@ -234,7 +236,7 @@ const saveItem = async () => {
 // Autocomplete Archetype Search handler
 const onAutocompleteArchetypeSearch = async (query) => {
   autocompleteArchetypes.value =
-    await archetypeStore.fetchAutocompleteSelectArchetypes(query);
+    await archetypeStore.fetchAutocompleteArchetypes(query);
 };
 
 // Autocomplete brand Search handler

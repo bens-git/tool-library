@@ -33,8 +33,8 @@ export const useArchetypeStore = defineStore("archetype", {
     myArchetypesListItemsPerPage: 10,
     myArchetypesListSortBy: [{ key: "name", order: "asc" }],
     myArchetypesListFilters: {
-      usage:null,
-      category:null,
+      usage: null,
+      category: null,
       search: null,
       resource: null,
     },
@@ -71,15 +71,16 @@ export const useArchetypeStore = defineStore("archetype", {
       this.fetchArchetypesWithItems();
     },
 
-    updateMyArchetypesListOptions({ page, itemsPerPage, sortBy }) {
+    updateMyArchetypesListOptions({ page, itemsPerPage, sortBy, resource }) {
       this.myArchetypesListPage = page;
       this.myArchetypesListItemsPerPage = itemsPerPage;
       this.myArchetypesListSortBy = sortBy;
+      this.myArchetypesListFilters.resource = resource;
 
       this.fetchMyArchetypes();
     },
 
-    async fetchAutocompleteSelectArchetypes(search) {
+    async fetchAutocompleteArchetypes(search, resource = null) {
       const { fetchRequest } = useApi();
 
       const archetypes = await fetchRequest(
@@ -92,11 +93,7 @@ export const useArchetypeStore = defineStore("archetype", {
           usageId: null,
           brandId: null,
           archetypeId: null,
-          startDate: null,
-          endDate: null,
-          location: null,
-          radius: null,
-          resource: null,
+          resource: resource,
         }
       );
 
@@ -241,17 +238,17 @@ export const useArchetypeStore = defineStore("archetype", {
     async postArchetype(archetypeData) {
       const { sendRequest } = useApi();
 
-     const data =await sendRequest("archetypes", "post", archetypeData);
+      const data = await sendRequest("archetypes", "post", archetypeData);
 
       await this.fetchMyArchetypes();
 
-      return data
+      return data;
     },
 
     async saveMyArchetype(archetype) {
       const { sendRequest } = useApi();
 
-     const data=await sendRequest(
+      const data = await sendRequest(
         `archetypes/${archetype.id}`, // API endpoint
         "put", // HTTP method
         archetype // Payload
@@ -259,8 +256,7 @@ export const useArchetypeStore = defineStore("archetype", {
 
       await this.fetchMyArchetypes();
 
-      return data
-
+      return data;
     },
 
     async deleteArchetype(archetypeId) {

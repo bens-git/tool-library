@@ -6,7 +6,11 @@
           :color="aim == 'edit' ? 'primary' : 'success'"
           class="text-none font-weight-regular"
           :prepend-icon="aim == 'edit' ? 'mdi-pencil' : 'mdi-plus'"
-          :text="aim == 'edit' ? `Edit Archetype` : `Create Archetype`"
+          :text="
+            aim == 'edit'
+              ? `Edit ` + resource + ` Archetype`
+              : `Create ` + resource + ` Archetype`
+          "
           variant="tonal"
           v-bind="activatorProps"
           block
@@ -14,7 +18,11 @@
       </template>
       <v-card
         :prepend-icon="aim == 'edit' ? 'mdi-pencil' : 'mdi-plus'"
-        :title="aim == 'edit' ? `Edit Archetype` : `Create Archetype`"
+        :title="
+          aim == 'edit'
+            ? `Edit ` + resource + ` Archetype`
+            : `Create ` + resource + ` Archetype`
+        "
       >
         <v-card-text v-if="localArchetype">
           <v-row dense>
@@ -76,21 +84,16 @@
               ></v-autocomplete>
             </v-col>
 
-            <v-col cols="12" md="4" sm="6">
-              <v-autocomplete
-                density="compact"
-                v-model="localArchetype.resource"
-                :items="['TOOL', 'MATERIAL']"
-                label="Resource"
-                :error-messages="responseStore?.response?.errors?.resource"
-              ></v-autocomplete>
-            </v-col>
+         
           </v-row>
         </v-card-text>
         <v-divider></v-divider>
 
         <v-card-actions>
           <v-spacer></v-spacer>
+
+
+          <v-btn text="My Items" variant="plain" @click="myItems()"></v-btn>
 
           <v-btn text="Close" variant="plain" @click="dialog = false"></v-btn>
 
@@ -117,13 +120,18 @@
 <script setup>
 import { shallowRef, ref, watch, onMounted } from "vue";
 import { useArchetypeStore } from "@/stores/archetype";
+import { useItemStore } from "@/stores/item";
 import { useCategoryStore } from "@/stores/category";
 import { useUsageStore } from "@/stores/usage";
 import { useResponseStore } from "@/stores/response";
+import { useRouter, useRoute } from "vue-router";
+
+const router = useRouter();
 
 const dialog = shallowRef(false);
 
 const archetypeStore = useArchetypeStore();
+const itemStore = useItemStore();
 const categoryStore = useCategoryStore();
 const usageStore = useUsageStore();
 const responseStore = useResponseStore();
@@ -147,7 +155,7 @@ watch(dialog, (newVal) => {
 
 // Function to initialize
 const initializeLocalArchetype = () => {
-  console.log("init");
+  console.log(props);
   if (props.aim == "edit" && props.archetype) {
     localArchetype.value = {
       ...props.archetype,
@@ -159,12 +167,12 @@ const initializeLocalArchetype = () => {
       category: null,
       usage: null,
       notes: "",
-      resource: "TOOL",
+      resource: props.resource ?? "TOOL",
     };
   }
 };
 
-// const emit = defineEmits(["update:modelValue", "close"]);
+const emit = defineEmits(["created"]);
 
 const onOpen = async () => {
   await categoryStore.fetchCategories();
@@ -187,8 +195,14 @@ const save = async () => {
 
 const create = async () => {
   const data = await archetypeStore.postArchetype(localArchetype.value);
-  if (data.success) {
+  if (data?.success) {
+    emit('created')
     dialog.value = false;
   }
 };
+
+const myItems = ()=>{
+  itemStore.myItemsListFilters.archetypeId=localArchetype.value.id
+  router.push({  path: '/my-items' });
+}
 </script>

@@ -221,7 +221,6 @@ class ItemController extends Controller
             'description' => 'nullable|string',
             'serial' => 'nullable|string',
             'purchase_value' => 'nullable|numeric',
-            'purchased_at' => 'required|date',
             'manufactured_at' => 'nullable|date',
             'archetype.id' => 'required|numeric|exists:archetypes,id', // Adjust according to your needs
         ]);

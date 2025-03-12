@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
-use App\Models\Package;
-use App\Models\Material;
-use App\Models\Vendor;
-use App\Models\Country;
+
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -26,15 +23,39 @@ class JobController extends Controller
         $itemsPerPage = $request->input('itemsPerPage', 10);
         $sortBy = $request->input('sortBy');
         $search = $request->input('search', '');
+        $archetypeId = $request->input('archetypeId');
+        $projectId = $request->input('projectId');
+        $baseId = $request->input('baseId');
 
         // Base query for data
-        $query = Job::with(['creator', 'material', 'product']);
+        $query = Job::with(['creator', 'base', 'component', 'tool', 'product', 'projects']);
 
 
         // Apply search filter if needed
         if (!empty($search)) {
             $query->where(function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%');
+            });
+        }
+
+        if (!empty($archetypeId)) {
+            $query->where(function ($query) use ($archetypeId) {
+                $query->where('base_id', '=',  $archetypeId);
+                $query->orWhere('component_id', '=',  $archetypeId);
+                $query->orWhere('product_id', '=',  $archetypeId);
+            });
+        }
+
+        if (!empty($baseId)) {
+            $query->where(function ($query) use ($baseId) {
+                $query->where('base_id', '=',  $baseId);
+             
+            });
+        }
+
+        if (!empty($projectId)) {
+            $query->where(function ($query) use ($projectId) {
+                $query->where('project_id', '=',  $projectId);
             });
         }
 
@@ -56,6 +77,38 @@ class JobController extends Controller
             $jobs = $query->paginate($itemsPerPage, ['*'], 'page', $page);
             $jobArray = $jobs->items();
             $total = $jobs->total();
+        }
+
+        $productIds = array_column($jobArray, 'product_id');
+
+        // Fetch random item images for archetypes missing archetype images
+        $itemImages = DB::table('item_images')
+            ->select('items.archetype_id', DB::raw('MIN(item_images.id) as id'), DB::raw('MIN(item_images.path) as path'))
+            ->join('items', 'items.id', '=', 'item_images.item_id')
+            ->whereIn('items.archetype_id', $productIds)
+            ->groupBy('items.archetype_id')
+            ->inRandomOrder()
+            ->get()
+            ->keyBy('archetype_id');
+
+
+        $images = [];
+        // Merge in the item images where archetype images are missing
+        foreach ($itemImages as $archetypeId => $image) {
+            if (!isset($images[$archetypeId])) {
+                $images[$archetypeId] = [
+                    [
+                        'id' => $image->id,
+                        'path' => '/storage/' . $image->path
+                    ]
+                ];
+            }
+        }
+
+
+        // Combine archetypes with their images
+        foreach ($jobArray as &$job) {
+            $job['images'] = $images[$job['product_id']] ?? null;
         }
 
 
@@ -84,13 +137,19 @@ class JobController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'material_id' => 'required|integer|exists:materials,id',
-            'product_id' => 'required|integer|exists:materials,id',
+            'base_id' => 'required|integer|exists:archetypes,id|different:product_id|different:component_id',
+            'product_id' => 'required|integer|exists:archetypes,id|different:base_id|different:component_id',
+            'component_id' => 'nullable|integer|exists:archetypes,id|different:base_id|different:product_id',
+            'tool_id' => 'nullable|integer|exists:archetypes,id|different:base_id|different:product_id|different:component_id',
+        ], [
+            'base_id.required' => 'There must be a base',
+            'product_id.required' => 'There must be a product',
         ]);
         $job = DB::transaction(function () use ($validated) {
 
-            $user = auth()->user();
-            $validated['creator_id'] = $user->id;
+            $user = Auth::user();
+
+            $validated['created_by'] = $user->id;
 
             $job = Job::create($validated);
 
@@ -117,20 +176,23 @@ class JobController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'material_id' => 'required|integer|exists:materials,id',
-            'product_id' => 'required|integer|exists:materials,id',
+            'description' => 'nullable|string',
+            'base_id' => 'required|integer|exists:archetypes,id',
+            'component_id' => 'nullable|integer|exists:archetypes,id',
+            'product_id' => 'required|integer|exists:archetypes,id',
+            'tool_id' => 'nullable|integer|exists:archetypes,id',
         ]);
 
         $job = Job::findOrFail($id);
         $job->fill($validated);
         $job->save();
 
+        return response()->json(['success' => true, 'message' => 'Job updated', 'data'=>$job]);
 
-        return response()->json($job);
     }
 
 
-   
+
 
     /**
      * Remove the specified resource from storage.
@@ -152,5 +214,4 @@ class JobController extends Controller
 
         return response()->json(['message' => 'Job deleted successfully']);
     }
-
 }

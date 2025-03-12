@@ -308,7 +308,7 @@ const headers = [
 // Autocomplete Archetype Search handler
 const onAutocompleteArchetypeSearch = async (query) => {
   autocompleteArchetypes.value =
-    await archetypeStore.fetchAutocompleteSelectArchetypes(query);
+    await archetypeStore.fetchAutocompleteArchetypes(query);
 };
 const onAutocompleteBrandSearch = async (query) => {
   autocompleteBrands.value =
@@ -443,7 +443,7 @@ onMounted(async () => {
   categoryStore.fetchCategories();
   usageStore.fetchUsages();
   autocompleteArchetypes.value =
-    await archetypeStore.fetchAutocompleteSelectArchetypes();
+    await archetypeStore.fetchAutocompleteArchetypes();
   autocompleteBrands.value = await brandStore.fetchAutocompleteSelectBrands();
 });
 </script>

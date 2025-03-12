@@ -7,6 +7,8 @@
           :prepend-icon="isEdit ? 'mdi-edit' : 'mdi-plus'"
           :text="isEdit ? 'Edit Job' : 'Create Job'"
           variant="tonal"
+          :color="isEdit ? 'primary' : 'success'"
+          block
           v-bind="activatorProps"
         ></v-btn>
       </template>
@@ -33,41 +35,73 @@
                 :error-messages="responseStore.response?.errors?.description"
               ></v-textarea>
             </v-col>
+
             <v-col cols="12" md="4" sm="6">
+              <!-- create material dialog -->
+              <ArchetypeDialog
+                aim="create"
+                resource="MATERIAL"
+                @created="refreshMaterials()"
+              />
+            </v-col>
+            <v-col cols="12" md="4" sm="6">
+          
               <v-autocomplete
                 density="compact"
-                v-model="localJob.material_id"
+                v-model="localJob.base"
                 :items="materials"
-                label="Material"
-                clearable
+                label="Base"
                 item-title="name"
                 item-value="id"
-                :error-messages="responseStore.response?.errors?.material_id"
+                :return-object="true"
+                @update:search="debouncedAutocompleteBaseSearch"
+                :error-messages="responseStore.response?.errors?.base"
+                :disabled="Boolean(base)"
               ></v-autocomplete>
-
-              <!-- create material dialog -->
-              <ArchetypeDialog :isEdit="false" resource="MATERIAL" />
             </v-col>
 
             <v-col cols="12" md="4" sm="6">
               <v-autocomplete
                 density="compact"
-                v-model="localJob.product_id"
+                v-model="localJob.component"
                 :items="materials"
-                label="Product"
+                label="Component"
                 clearable
                 item-title="name"
                 item-value="id"
-                :error-messages="responseStore.response?.errors?.product_id"
-              ></v-autocomplete
-            ></v-col>
+                :return-object="true"
+                @update:search="debouncedAutocompleteComponentSearch"
+                :error-messages="responseStore.response?.errors?.component_id"
+              ></v-autocomplete>
+            </v-col>
+
+            <v-col cols="12" md="4" sm="6">
+              <v-autocomplete
+                density="compact"
+                v-model="localJob.product"
+                :items="materials"
+                label="Product"
+                item-title="name"
+                item-value="id"
+                :return-object="true"
+                @update:search="debouncedAutocompleteProductSearch"
+                :error-messages="responseStore.response?.errors?.product"
+              ></v-autocomplete>
+              <ArchetypeDialog
+                aim="edit"
+                resource="MATERIAL"
+                :archetype="localJob.product"
+                @modified="refreshMaterials()"
+              />
+
+            </v-col>
 
             <v-col cols="12" md="4" sm="6">
               <v-autocomplete
                 density="compact"
                 v-model="localJob.archetype_id"
-                :items="toolArchetypes"
-                label="Archetype"
+                :items="tools"
+                label="Tool"
                 clearable
                 item-title="name"
                 item-value="id"
@@ -96,13 +130,6 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-file-input
-            density="compact"
-            @change="handleFileChange"
-            label="Upload Image"
-            prepend-icon="mdi-camera"
-            accept="image/*"
-          ></v-file-input>
 
           <v-btn text="Close" variant="plain" @click="dialog = false"></v-btn>
 
@@ -133,16 +160,6 @@ import { useArchetypeStore } from "@/stores/archetype";
 import { useResponseStore } from "@/stores/response";
 import ArchetypeDialog from "./ArchetypeDialog.vue";
 
-// Create a local state variable to sync with modelValue
-//const localModelValue = ref(props.modelValue);
-
-// // Watch for changes in modelValue from the parent
-// watch(
-//   () => props.modelValue,
-//   (newValue) => {
-//     localModelValue.value = newValue;
-//   }
-// );
 const dialog = shallowRef(false);
 
 const jobStore = useJobStore();
@@ -152,13 +169,16 @@ const responseStore = useResponseStore();
 // const apiBaseUrl = process.env.VUE_APP_API_HOST;
 
 const localJob = ref(null);
-const toolArchetypes = ref([]);
+const tools = ref([]);
 const materials = ref([]);
-const newImages = ref(null);
+const autocompleteBases = ref([]);
+const autocompleteComponents = ref([]);
+const autocompleteProducts = ref([]);
 
 const props = defineProps({
   isEdit: Boolean,
   job: Object,
+  base: Object,
 });
 
 // Watch the dialog's state
@@ -180,7 +200,9 @@ const initializeLocalJob = () => {
     localJob.value = {
       name: "",
       description: "",
-      material_id: null,
+      material_ids: [],
+      base_id: props.base?.id,
+      base: props.base,
       product_id: null,
       tool_id: null,
       created_by: null,
@@ -190,45 +212,80 @@ const initializeLocalJob = () => {
 };
 
 // const emit = defineEmits(["update:modelValue", "close"]);
+const refreshMaterials = async () => {
+  materials.value = await archetypeStore.fetchAutocompleteArchetypes(
+    null,
+    "MATERIAL"
+  );
+};
+
+const refreshTools = async () => {
+  tools.value = await archetypeStore.fetchAutocompleteArchetypes(null, "TOOL");
+};
 
 const onOpen = async () => {
-  initializeLocalJob();
   responseStore.$reset();
   //   tools.resource = "TOOL";
   // tools.value = (await archetypeStore.fetchArchetypes()).data;
   // tools.resource = "MATERIAL";
-  materials.value = (await archetypeStore.fetchMaterialResources()).data;
+  await refreshMaterials();
+  await refreshTools();
   initializeLocalJob();
+  autocompleteBases.value = await archetypeStore.fetchAutocompleteArchetypes();
+  autocompleteComponents.value =
+    await archetypeStore.fetchAutocompleteArchetypes();
+  autocompleteProducts.value =
+    await archetypeStore.fetchAutocompleteArchetypes();
 };
 
 const onClose = () => {};
 
-const save = () => {
-  dialog.value = false;
-};
-
-const create = async () => {
-  const newJob = await jobStore.postJob(localJob.value);
-  if (newJob && newJob.id) {
-    localJob.value = newJob;
-  }
-
-  //add new images
-  if (localJob.value.id) {
-    for (const image of newImages.value) {
-      await jobStore.postImage(localJob.value.id, image);
-    }
-  }
+const save = async () => {
+  const newJob = await jobStore.putJob(localJob.value);
 
   if (responseStore.response.success) {
     dialog.value = false;
   }
 };
 
-const handleFileChange = (event) => {
-  const files = event.target.files;
-  if (files.length) {
-    newImages.value.push(...Array.from(files));
+const create = async () => {
+  const newJob = await jobStore.postJob(localJob.value);
+
+  if (responseStore.response.success) {
+    dialog.value = false;
   }
 };
+
+// Autocomplete product Search handler
+const onAutocompleteProductSearch = async (query) => {
+  autocompleteProducts.value =
+    await archetypeStore.fetchAutocompleteArchetypes(query);
+};
+
+// Autocomplete component Search handler
+const onAutocompleteComponentSearch = async (query) => {
+  autocompleteComponents.value =
+    await archetypeStore.fetchAutocompleteArchetypes(query);
+};
+
+// Autocomplete component Search handler
+const onAutocompleteBaseSearch = async (query) => {
+  autocompleteBases.value =
+    await archetypeStore.fetchAutocompleteArchetypes(query);
+};
+
+// Debounced search function
+const debouncedAutocompleteProductSearch = _.debounce(
+  onAutocompleteProductSearch,
+  300
+);
+const debouncedAutocompleteComponentSearch = _.debounce(
+  onAutocompleteComponentSearch,
+  300
+);
+
+const debouncedAutocompleteBaseSearch = _.debounce(
+  onAutocompleteBaseSearch,
+  300
+);
 </script>

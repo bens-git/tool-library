@@ -6,7 +6,7 @@ export const useJobStore = defineStore("job", {
     jobsListJobs: [],
     jobsListTotalJobs: 0,
     jobsListSelectedJob: null,
-    jobsListFilters: { search: "" },
+    jobsListFilters: { search: "", archetype: null, project: null },
     jobsListPage: 1,
     jobsListItemsPerPage: 10,
     jobsListSortBy: [{ key: "name", order: "asc" }],
@@ -31,33 +31,53 @@ export const useJobStore = defineStore("job", {
           itemsPerPage: this.jobsListItemsPerPage,
           sortBy: this.jobsListSortBy,
           search: this.jobsListFilters.search,
+          archetypeId: this.jobsListFilters.archetype?.id,
+          projectId: this.jobsListFilters.project?.id,
         }
       );
       this.jobsListJobs = data.data;
       this.jobsListTotalJobs = data.total;
     },
 
+    async fetchAutocompleteJobs({ search: search, baseId: baseId }) {
+      const { fetchRequest } = useApi();
+      const jobs = await fetchRequest("jobs", {
+        itemsPerPage: 1000,
+        sortBy: null,
+        search: search,
+        baseId: baseId,
+      });
+
+      return jobs.data;
+    },
+
     async postJob(formData) {
       const { sendRequest } = useApi();
       const data = await sendRequest(`jobs`, "POST", formData);
       if (data?.success) {
-        this.jobsListSelecteJob = data.data;
-        this.jobsListJobs.push(data.data);
-        this.jobsListTotalJobs++;
+        this.fetchJobs();
+
         return data.data;
       }
     },
 
-    async saveJob(formData) {
+    async putJob(formData) {
+      console.log(formData);
       const { sendRequest } = useApi();
-      await sendRequest(
-        "put", // HTTP method
-        `jobs/${this.selectedJob.id}`, // API endpoint
-        formData, // Payload
-        (data) => {
-          this.selectedJob = data;
-        }
-      );
+      const data = await sendRequest(`jobs/${formData.id}`, "PUT", {
+        name: formData.name,
+        description: formData.description,
+        base_id: formData.base?.id,
+        component_id: formData.component?.id,
+        product_id: formData.product?.id,
+        tool_id: formData.tool?.id,
+      });
+
+      if (data?.success) {
+        this.fetchJobs();
+
+        return data.data;
+      }
     },
 
     async deleteJob() {

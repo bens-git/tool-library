@@ -1,13 +1,21 @@
 <template>
   <v-container class="d-flex justify-center">
-    <v-card title="Jobs" flat style="min-width: 88vw; min-height: 88vh">
+    <v-card flat style="min-width: 88vw; min-height: 88vh">
+      <template #title>
+        <div class="d-flex justify-space-between align-center">
+          Jobs
+          <v-btn variant="text" :to="{ name: 'project-list' }">
+            Go to Project List
+          </v-btn>
+        </div>
+      </template>
       <template v-slot:text>
         <v-row>
           <!-- Search Field -->
           <v-col cols="12" md="3">
             <v-text-field
               density="compact"
-              v-model="jobStore.search"
+              v-model="jobStore.jobsListFilters.search"
               label="Search"
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
@@ -21,27 +29,35 @@
           <v-col cols="12" md="4">
             <v-autocomplete
               density="compact"
-              v-model="jobStore.selectedProjectId"
-              :items="jobStore.projects"
+              v-model="jobStore.jobsListFilters.project"
+              :items="autocompleteProjects"
               label="Project"
               item-title="name"
               item-value="id"
-              :clearable="true"
-              @update:modelValue="debounceSearch"
+              hide-no-data
+              hide-details
+              return-object
+              clearable
+              @update:model-value="debounceSearch"
+              @update:search="debouncedAutocompleteProjectSearch"
             />
           </v-col>
 
-          <!-- Material -->
+          <!-- Archetype -->
           <v-col cols="12" md="4">
             <v-autocomplete
               density="compact"
-              v-model="jobStore.selectedMaterialId"
-              :items="jobStore.materials"
-              label="Material"
+              v-model="jobStore.jobsListFilters.archetype"
+              :items="autocompleteArchetypes"
+              label="Archetype"
               item-title="name"
               item-value="id"
-              :clearable="true"
-              @update:modelValue="debounceSearch"
+              hide-no-data
+              hide-details
+              return-object
+              clearable
+              @update:model-value="debounceSearch"
+              @update:search="debouncedAutocompleteArchetypeSearch"
             />
           </v-col>
         </v-row>
@@ -75,7 +91,7 @@
         <!-- Image column -->
         <template v-slot:[`item.image`]="{ item }">
           <v-img
-            v-if="item.images.length > 0"
+            v-if="item.images?.length > 0"
             :src="fullImageUrl(item.images[0].path)"
             max-height="200"
             max-width="200"
@@ -88,9 +104,7 @@
         </template>
 
         <template v-slot:[`item.actions`]="{ item }">
-          <v-btn icon @click="editArchetype(item)" v-if="userStore.user">
-            <v-icon>mdi-information</v-icon>
-          </v-btn>
+          <JobDialog :isEdit="true" :job="item" v-if="userStore.user" />
 
           <v-btn icon @click="goToLogin" v-else>
             <v-icon>mdi-login</v-icon>
@@ -103,12 +117,19 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import { useArchetypeStore } from "@/stores/archetype";
 import { useJobStore } from "@/stores/job";
+import { useProjectStore } from "@/stores/project";
+import { useUserStore } from "@/stores/user";
 import _ from "lodash";
 import JobDialog from "./JobDialog.vue";
 import { useRouter } from "vue-router";
+import debounce from "lodash/debounce";
 
+const archetypeStore = useArchetypeStore();
 const jobStore = useJobStore();
+const projectStore = useProjectStore();
+const userStore = useUserStore();
 
 const router = useRouter();
 
@@ -162,6 +183,9 @@ const headers = [
   },
 ];
 
+const autocompleteArchetypes = ref([]);
+const autocompleteProjects = ref([]);
+
 const debounceSearch = _.debounce(() => {
   jobStore.fetchJobs();
 }, 300);
@@ -175,7 +199,36 @@ const goToLogin = () => {
   router.push({ name: "login-form" }); // Adjust the route name as necessary
 };
 
-onMounted(async () => {});
+onMounted(async () => {
+  autocompleteArchetypes.value =
+    await archetypeStore.fetchAutocompleteArchetypes();
+
+  autocompleteProjects.value = await projectStore.fetchAutocompleteProjects();
+});
+
+const onAutocompleteArchetypeSearch = async (query) => {
+  autocompleteArchetypes.value =
+    await archetypeStore.fetchAutocompleteArchetypes(query);
+};
+
+const onAutocompleteProjectSearch = async (query) => {
+  autocompleteProjects.value =
+    await projectStore.fetchAutocompleteProjects(query);
+};
+
+const debouncedAutocompleteArchetypeSearch = debounce(
+  onAutocompleteArchetypeSearch,
+  300
+);
+
+const debouncedAutocompleteProjectSearch = debounce(
+  onAutocompleteProjectSearch,
+  300
+);
+
+const jobList = () => {
+  router.push({ path: "/job-list" });
+};
 </script>
 
 <style>

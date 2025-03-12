@@ -60,8 +60,11 @@
         <v-list-item @click="myItems">
           <v-list-item-title>My Items</v-list-item-title>
         </v-list-item>
-        <v-list-item @click="myArchetypes">
-          <v-list-item-title>My Archetypes</v-list-item-title>
+        <v-list-item @click="myMaterialArchetypes">
+          <v-list-item-title>My Material Archetypes</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="myToolArchetypes">
+          <v-list-item-title>My Tool Archetypes</v-list-item-title>
         </v-list-item>
         <v-list-item @click="myCategories">
           <v-list-item-title>My Categories</v-list-item-title>
@@ -125,9 +128,8 @@ const userStore = useUserStore();
 const logoutDialog = ref(false);
 
 const links = [
-  { text: "CATALOG", route: "archetype-list" },
-  // { text: "JOBS", route: "job-list" },
-  // { text: "PROJECTS", route: "project-list" },
+  { text: "MATERIALS & TOOLS", route: "archetype-list" },
+  { text: "WORK", route: "project-list" },
 ];
 
 // Safeguard to handle undefined or null paths
@@ -146,51 +148,55 @@ const confirmLogout = () => {
 const logout = async () => {
   logoutDialog.value = false;
   await userStore.logout();
-  router.push({ name: "login-form" });
+  router.push({  path: "/login-form" });
 };
 
 const editProfile = () => {
-  router.push({ name: "edit-user" });
+  router.push({  path: "/edit-user" });
 };
 
 const routeToDiscordLink = () => {
-  router.push({ name: "route-to-discord-link" });
+  router.push({  path: "/route-to-discord-link" });
 };
 
 const myItems = () => {
-  router.push({ name: "my-items" });
+  router.push({  path: "/my-items" });
 };
 
-const myArchetypes = () => {
-  router.push({ name: "my-archetypes" });
+const myToolArchetypes = () => {
+  router.push({  path: "/my-archetypes", query: { resource: "TOOL" } });
+};
+
+const myMaterialArchetypes = () => {
+  router.push({  path: "/my-archetypes", query: { resource: "MATERIAL" } });
 };
 
 const myCategories = () => {
-  router.push({ name: "my-categories" });
+  router.push({  path: "/my-categories" });
 };
 
 const myUsages = () => {
-  router.push({ name: "my-usages" });
+  router.push({  path: "/my-usages" });
 };
 
 const myBrands = () => {
-  router.push({ name: "my-brands" });
+  router.push({  path: "/my-brands" });
 };
 
 const myJobs = () => {
-  router.push({ name: "my-jobs" });
+  router.push({  path: "/my-jobs" });
 };
 
 const myProjects = () => {
-  router.push({ name: "my-projects" });
+  router.push({  path: "/my-projects" });
 };
 
 const myRentals = () => {
-  router.push({ name: "my-rentals" });
+  router.push({  path: "/my-rentals" });
 };
 
 const myLoans = () => {
-  router.push({ name: "my-loans" });
+  router.push({  path: "/my-loans" });
 };
 </script>
 
