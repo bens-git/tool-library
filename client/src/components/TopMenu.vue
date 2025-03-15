@@ -129,7 +129,7 @@ const logoutDialog = ref(false);
 
 const links = [
   { text: "MATERIALS & TOOLS", route: "archetype-list" },
-  { text: "WORK", route: "project-list" },
+  { text: "PROJECTS", route: "project-list" },
 ];
 
 // Safeguard to handle undefined or null paths

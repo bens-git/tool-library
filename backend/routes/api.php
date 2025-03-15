@@ -82,6 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::post('/items', [ItemController::class, 'store']);
     Route::post('/items/{id}/image', [ItemController::class, 'storeImage']);
+    Route::post('/subdivide-job/{id}', [JobController::class, 'subdivide']);
     Route::post('/jobs', [JobController::class, 'store']);
     Route::post('/link-with-discord', [AuthController::class, 'linkWithDiscord']);
     Route::post('/projects', [ProjectController::class, 'store']);

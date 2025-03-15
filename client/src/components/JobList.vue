@@ -110,6 +110,20 @@
             <v-icon>mdi-login</v-icon>
           </v-btn>
         </template>
+
+        <template v-slot:[`item.projects`]="{ item }">
+          <v-list>
+        <v-list-item
+          v-for="(project, index) in item.projects"
+          :key="index"
+          :title="project.name"
+        >
+          <!-- <template #prepend>
+            <v-icon>{{ item.icon }}</v-icon>
+          </template> -->
+        </v-list-item>
+      </v-list>
+        </template>
       </v-data-table-server>
     </v-card>
   </v-container>

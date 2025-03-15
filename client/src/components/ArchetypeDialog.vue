@@ -4,7 +4,6 @@
       <template v-slot:activator="{ props: activatorProps }">
         <v-btn
           :color="aim == 'edit' ? 'primary' : 'success'"
-          class="text-none font-weight-regular"
           :prepend-icon="aim == 'edit' ? 'mdi-pencil' : 'mdi-plus'"
           :text="
             aim == 'edit'

@@ -61,6 +61,17 @@ export const useJobStore = defineStore("job", {
       }
     },
 
+    async subdivideJob(formData) {
+      const { sendRequest } = useApi();
+      const data = await sendRequest(`subdivide-job/${formData.originalJob.id}`, "POST", formData);
+      if (data?.success) {
+        this.fetchJobs();
+
+      }
+      return data;
+
+    },
+
     async putJob(formData) {
       console.log(formData);
       const { sendRequest } = useApi();

@@ -36,15 +36,7 @@
               ></v-textarea>
             </v-col>
 
-            <v-col cols="12" md="4" sm="6">
-              <!-- create job dialog -->
-
-              <JobDialog
-                aim="create"
-                :base="finalJob?.product"
-                @created="refreshJobs()"
-              />
-            </v-col>
+            
             <v-col cols="12" md="4" sm="6">
               <v-select
                 density="compact"
@@ -58,14 +50,27 @@
               ></v-select>
 
               <v-btn
+              prepend-icon="mdi-plus"
+
                 color="primary"
-                text="Add Job"
+                text="Add Job to Project"
                 variant="tonal"
+                block
                 @click="addJob()"
               ></v-btn>
-            </v-col>
 
-            <v-col cols="12" md="4" sm="6">
+              <!-- create job dialog -->
+
+              <JobDialog
+                aim="create"
+                :base="finalJob?.product"
+                @created="refreshJobs()"
+              />
+            </v-col>
+            </v-row>
+            <v-row>
+
+            <v-col >
               <v-alert
                 color="error"
                 v-if="responseStore.response?.errors?.jobs"
@@ -90,20 +95,22 @@
                     {{ job.product.name }}</v-list-item-subtitle
                   >
 
-                  <template v-slot:append="{}">
+                  <template v-slot:prepend="{}">
                     <v-list-item-action class="flex-column align-end">
-                      <small
-                        class="mb-4 text-high-emphasis opacity-60"
-                        v-if="job.id == finalJob.id"
-                      >
+
                         <v-btn
+                          v-if="job.id == finalJob.id"
+                          prepend-icon="mdi-delete"
+
                           color="error"
                           text="Remove"
                           variant="tonal"
+                          block
                           @click="removeFinalJob"
                         ></v-btn>
-                      </small>
-
+                        <JobDialog :job="job" :isEdit="true"/>
+                        <SubdivideJobDialog :job="job" />
+                   
                       <v-spacer></v-spacer>
                     </v-list-item-action>
                   </template>
@@ -145,6 +152,7 @@ import { useProjectStore } from "@/stores/project";
 import { useJobStore } from "@/stores/job";
 import { useResponseStore } from "@/stores/response";
 import JobDialog from "./JobDialog.vue";
+import SubdivideJobDialog from "./SubdivideJobDialog.vue";
 
 const dialog = shallowRef(false);
 

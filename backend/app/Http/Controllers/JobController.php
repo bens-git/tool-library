@@ -8,6 +8,8 @@ use App\Models\Job;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Validator;
 
 class JobController extends Controller
 {
@@ -49,7 +51,6 @@ class JobController extends Controller
         if (!empty($baseId)) {
             $query->where(function ($query) use ($baseId) {
                 $query->where('base_id', '=',  $baseId);
-             
             });
         }
 
@@ -141,6 +142,9 @@ class JobController extends Controller
             'product_id' => 'required|integer|exists:archetypes,id|different:base_id|different:component_id',
             'component_id' => 'nullable|integer|exists:archetypes,id|different:base_id|different:product_id',
             'tool_id' => 'nullable|integer|exists:archetypes,id|different:base_id|different:product_id|different:component_id',
+            'projects'   => 'required|array',
+            'projects.*.id' => 'required|exists:projects,id', // Validate each job ID
+
         ], [
             'base_id.required' => 'There must be a base',
             'product_id.required' => 'There must be a product',
@@ -160,6 +164,62 @@ class JobController extends Controller
     }
 
 
+
+
+    /**
+     * Subdivide a job into 2 jobs
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function subdivide(Request $request, $id)
+    {
+
+
+
+        $validated = $request->validate([
+            'newIntermediateProduct' => [
+                'required',
+                'array'
+            ],
+            'newIntermediateProduct.id' => ['required', 'integer', 'exists:archetypes,id'],
+
+            'newJobName1' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('projects', 'name')->ignore($id), // Allows unchanged names
+            ],
+            'newJobName2' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('projects', 'name'),
+            ],
+            'base_id' => 'required|integer|exists:archetypes,id|different:product_id|different:component_id',
+            'product_id' => 'required|integer|exists:archetypes,id|different:base_id|different:component_id',
+            'component_id' => 'nullable|integer|exists:archetypes,id|different:base_id|different:product_id',
+            'tool_id' => 'nullable|integer|exists:archetypes,id|different:base_id|different:product_id|different:component_id',
+            'projects'   => 'required|array',
+            'projects.*.id' => 'required|exists:projects,id', // Validate each job ID
+
+        ], [
+            'base_id.required' => 'There must be a base',
+            'product_id.required' => 'There must be a product',
+        ]);
+        $job = DB::transaction(function () use ($validated) {
+
+            $user = Auth::user();
+
+            $validated['created_by'] = $user->id;
+
+            $job = Job::create($validated);
+
+            return $job;
+        });
+
+        return response()->json($job);
+    }
 
 
 
@@ -187,8 +247,7 @@ class JobController extends Controller
         $job->fill($validated);
         $job->save();
 
-        return response()->json(['success' => true, 'message' => 'Job updated', 'data'=>$job]);
-
+        return response()->json(['success' => true, 'message' => 'Job updated', 'data' => $job]);
     }
 
 
