@@ -2,23 +2,19 @@
   <v-container>
     <v-row justify="center">
       <v-col cols="12" md="8">
-        <v-card>
-          <v-card-title>
-            <span class="headline">Email Verification</span>
-          </v-card-title>
-          <v-card-subtitle>
-            <v-alert v-if="success" type="success" dismissible>
+        <v-card title="Email Verification">
+       
+          <v-card-text>
+            <v-alert v-if="success" type="success" >
               {{ successMessage }}
             </v-alert>
-            <v-alert v-if="error" type="error" dismissible>
+            <v-alert v-if="error" type="error" >
               {{ errorMessage }}
             </v-alert>
-          </v-card-subtitle>
+          </v-card-text>
           <v-card-actions>
-            <v-btn to="login-form" text>
-              Login
-            </v-btn>
-            <v-btn @click="navigateHome" color="primary">Go to Homepage</v-btn>
+            <LoginDialog />
+           
           </v-card-actions>
         </v-card>
       </v-col>
@@ -26,22 +22,20 @@
   </v-container>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      success: this.$route.query.success === 'true', // Read success status from query params
-      error: this.$route.query.error === 'true',     // Read error status from query params
-      successMessage: 'Your email has been successfully verified!',
-      errorMessage: 'There was an error verifying your email. Please try again.'
-    };
-  },
-  methods: {
-    navigateHome() {
-      this.$router.push('/'); // Redirect to homepage
-    }
-  }
-}
+<script setup>
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+import LoginDialog from "./LoginDialog.vue";
+
+const route = useRoute();
+
+const success = computed(() => route.query.success === "true");
+const error = computed(() => route.query.error === "true");
+
+const successMessage = "Your email has been successfully verified!";
+const errorMessage = "There was an error verifying your email. Please try again.";
+
+
 </script>
 
 <style scoped>

@@ -34,30 +34,13 @@ export const useLocationStore = defineStore("location", {
     },
 
     async updateUserLocation(location) {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      responseStore.clearResponse();
-      loadingStore.startLoading("updateUserLocation");
-
-      try {
-        if (location.id) {
-          const response = await axios.put(
-            `/user/location/${location.id}`,
-            location
-          );
-          const updatedLocation = response.data;
-          this.updateLocationInState(updatedLocation);
-          responseStore.setResponse(true, "Location updated successfully.");
-          return updatedLocation.id;
-        }
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-        return null;
-      } finally {
-        loadingStore.stopLoading("updateUserLocation");
-      }
+      const { sendRequest } = useApi();
+      const data = await sendRequest(
+        `/user/location/${location.id}`,
+        "PUT",
+        location
+      );
+      return data;
     },
 
     updateLocationInState(updatedLocation) {
@@ -74,7 +57,7 @@ export const useLocationStore = defineStore("location", {
 
       const data = await fetchRequest("me/location");
 
-      return data.data
+      return data.data;
     },
   },
 });

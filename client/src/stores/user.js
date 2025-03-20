@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
+import useApi from "@/stores/api";
 import axios from "../axios";
-import { useResponseStore } from "./response";
-import { useLoadingStore } from "./loading";
 
 export const useUserStore = defineStore("user", {
   state: () => ({
@@ -10,59 +9,25 @@ export const useUserStore = defineStore("user", {
 
   actions: {
     async register(userData) {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      responseStore.clearResponse();
-      loadingStore.startLoading("register");
+      const { sendRequest } = useApi();
+      const data = await sendRequest("register", "POST", userData);
 
-      try {
-        const response = await axios.post("/register", userData);
-        responseStore.setResponse(true, response.data.message);
-      } catch (error) {
-        responseStore.setResponse(
-          false,
-          error.response.data?.message
-            ? error.response.data?.message
-            : error.response.data?.[0]?.message
-              ? error.response.data?.[0]?.message
-              : "",
-          [error.response.data.errors]
-        );
-      } finally {
-        loadingStore.stopLoading("register");
-      }
+      return data;
     },
 
     async login(email, password) {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      responseStore.clearResponse();
-      loadingStore.startLoading("login");
+      const { sendRequest } = useApi();
 
-      try {
-        const response = await axios.post("/login", { email, password });
-        const token = response.data.token;
+      const data = await sendRequest("login", "POST", { email, password });
+      if (data?.success && data?.token) {
+        const token = data.token;
 
         localStorage.setItem("authToken", token);
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
         await this.getUser();
-
-        responseStore.setResponse(true, "Login successful.");
-      } catch (error) {
-        console.log(error);
-        responseStore.setResponse(
-          false,
-          error.response.data?.message
-            ? error.response.data?.message
-            : error.response.data?.[0]?.message
-              ? error.response.data?.[0]?.message
-              : "",
-          [error.response.data.errors]
-        );
-      } finally {
-        loadingStore.stopLoading("login");
       }
+      return data;
     },
 
     loginToDiscord() {
@@ -83,191 +48,85 @@ export const useUserStore = defineStore("user", {
     },
 
     async linkWithDiscord(code) {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      responseStore.clearResponse();
-      loadingStore.startLoading("linkWithDiscord");
+      const { sendRequest } = useApi();
 
-      try {
-        const response = await axios.post("/link-with-discord", { code: code });
-        await this.getUser();
-        responseStore.setResponse(true, response.data.message);
-      } catch (error) {
-        responseStore.setResponse(
-          false,
-          error.response.data?.message
-            ? error.response.data?.message
-            : error.response.data?.[0]?.message
-              ? error.response.data?.[0]?.message
-              : "",
-          [error.response.data.errors]
-        );
-      } finally {
-        loadingStore.stopLoading("linkWithDiscord");
-      }
+      const data = await sendRequest("link-with-discord", "POST", {
+        code: code,
+      });
+      await this.getUser();
     },
 
     async logout() {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      responseStore.clearResponse();
-      loadingStore.startLoading("logout");
+      const { sendRequest } = useApi();
 
-      try {
-        await axios.post("/logout");
-        this.user = null;
+      const data = await sendRequest("logout", "POST");
+      this.user = null;
 
-        localStorage.removeItem("authToken");
-        delete axios.defaults.headers.common["Authorization"];
-        responseStore.setResponse(true, "Logout successful.");
-      } catch (error) {
-        this.user = null;
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("user");
-        delete axios.defaults.headers.common["Authorization"];
-        responseStore.setResponse(true, "Logout successful.");
-      } finally {
-        loadingStore.stopLoading("logout");
-      }
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      delete axios.defaults.headers.common["Authorization"];
     },
 
     async getUser() {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      responseStore.clearResponse();
-      loadingStore.startLoading("getUser");
+      const { fetchRequest } = useApi();
 
-      try {
-        const response = await axios.get("/user");
-        this.user = response.data;
-      } catch (error) {
-        console.log(error);
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("getUser");
-      }
+      const data = await fetchRequest("user");
+      this.user = data.data;
     },
 
     async updateUser(user) {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      responseStore.clearResponse();
-      loadingStore.startLoading("updateUser");
+      const { sendRequest } = useApi();
 
-      try {
-        const response = await axios.put(`/user/${user.id}`, user);
-        this.user = response.data;
-        responseStore.setResponse(true, "User updated successfully.");
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("updateUser");
+      const data = await sendRequest(`me`, "PUT", user);
+
+      if (data?.success) {
+        this.user = data.data;
       }
     },
 
     async deleteUser() {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      responseStore.clearResponse();
-      loadingStore.startLoading("deleteUser");
+      const { sendRequest } = useApi();
 
-      try {
-        await axios.delete(`/user`);
+      const data = await sendRequest("user", "DELETE");
+
+      if (data?.success) {
         this.user = null;
-        responseStore.setResponse(true, "User deleted successfully.");
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("deleteUser");
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        delete axios.defaults.headers.common["Authorization"];
       }
+
+      return data;
     },
 
     async changePassword(currentPassword, newPassword, confirmPassword) {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      responseStore.clearResponse();
-      loadingStore.startLoading("changePassword");
+      const { sendRequest } = useApi();
 
-      try {
-        // Prepare the data to be sent in the request
-        const data = {
-          current_password: currentPassword,
-          new_password: newPassword,
-          new_password_confirmation: confirmPassword,
-        };
+      // Prepare the data to be sent in the request
+      const user = {
+        current_password: currentPassword,
+        new_password: newPassword,
+        new_password_confirmation: confirmPassword,
+      };
 
-        // Make the PUT request to update the password
-        await axios.put(`/user/password`, data);
-
-        // Update the user data if needed
-        // this.user = response.data; // Uncomment if you have user data to update
-
-        // Set success response
-        responseStore.setResponse(true, "User password updated successfully.");
-      } catch (error) {
-        // Set error response
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("changePassword");
-      }
+      const data = await sendRequest("/user/password", "PUT", user);
     },
 
     async changePasswordWithToken(newPassword, confirmPassword, token) {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      responseStore.clearResponse();
-      loadingStore.startLoading("changePassword");
+      const user = {
+        new_password: newPassword,
+        new_password_confirmation: confirmPassword,
+        token: token,
+      };
+      const { sendRequest } = useApi();
 
-      try {
-        // Prepare the data to be sent in the request
-        const data = {
-          new_password: newPassword,
-          new_password_confirmation: confirmPassword,
-          token: token,
-        };
-
-        // Make the PUT request to update the password
-        await axios.put(`/user/password-with-token`, data);
-
-        // Update the user data if needed
-        // this.user = response.data; // Uncomment if you have user data to update
-
-        // Set success response
-        responseStore.setResponse(true, "User password updated successfully.");
-      } catch (error) {
-        // Set error response
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("changePassword");
-      }
+      const data = await sendRequest("/user/password-with-token", "PUT", user);
     },
 
     async requestPasswordReset(email) {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
-      responseStore.clearResponse();
-      loadingStore.startLoading("requestPasswordReset");
+      const { sendRequest } = useApi();
 
-      try {
-        await axios.post(`/request-password-reset`, email);
-        responseStore.setResponse(true, "Password request sent.");
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("requestPasswordReset");
-      }
+      const data = await sendRequest("request-password-reset", "POST", email);
     },
   },
 

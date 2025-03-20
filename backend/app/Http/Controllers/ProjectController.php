@@ -92,8 +92,9 @@ class ProjectController extends Controller
 
             if ($finalJob && $finalJob->product_id) {
 
-
-                $project['images'] = $images[$finalJob->product_id];
+                if (isset($images[$finalJob->product_id])) {
+                    $project['images'] = $images[$finalJob->product_id];
+                }
             }
         }
 

@@ -12,7 +12,7 @@
       <template v-slot:text>
         <v-row>
           <!-- Search Field -->
-          <v-col cols="12" md="3">
+          <v-col>
             <v-text-field
               density="compact"
               v-model="jobStore.jobsListFilters.search"
@@ -26,7 +26,7 @@
           </v-col>
 
           <!-- Project -->
-          <v-col cols="12" md="4">
+          <v-col >
             <v-autocomplete
               density="compact"
               v-model="jobStore.jobsListFilters.project"
@@ -44,7 +44,7 @@
           </v-col>
 
           <!-- Archetype -->
-          <v-col cols="12" md="4">
+          <v-col v-if="!mobile">
             <v-autocomplete
               density="compact"
               v-model="jobStore.jobsListFilters.archetype"
@@ -73,7 +73,9 @@
             ></v-btn>
 
             <!-- create job dialog -->
-            <JobDialog :isEdit="false" />
+            <JobDialog :isEdit="false" v-if="userStore.user" />
+
+
           </v-col>
         </v-row>
       </template>
@@ -106,9 +108,10 @@
         <template v-slot:[`item.actions`]="{ item }">
           <JobDialog :isEdit="true" :job="item" v-if="userStore.user" />
 
-          <v-btn icon @click="goToLogin" v-else>
-            <v-icon>mdi-login</v-icon>
-          </v-btn>
+          <LoginDialog v-else />
+
+          <DeleteJobDialog :job="item" v-if="userStore.user" />
+
         </template>
 
         <template v-slot:[`item.projects`]="{ item }">
@@ -139,6 +142,11 @@ import _ from "lodash";
 import JobDialog from "./JobDialog.vue";
 import { useRouter } from "vue-router";
 import debounce from "lodash/debounce";
+import { useDisplay } from "vuetify";
+import LoginDialog from "./LoginDialog.vue";
+import DeleteJobDialog from "./DeleteJobDialog.vue";
+
+const { mobile } = useDisplay();
 
 const archetypeStore = useArchetypeStore();
 const jobStore = useJobStore();
@@ -204,14 +212,6 @@ const debounceSearch = _.debounce(() => {
   jobStore.fetchJobs();
 }, 300);
 
-const editJob = (job) => {
-  jobStore.selectedJob = job;
-  editJobDialog.value = true;
-};
-
-const goToLogin = () => {
-  router.push({ name: "login-form" }); // Adjust the route name as necessary
-};
 
 onMounted(async () => {
   autocompleteArchetypes.value =
@@ -240,9 +240,7 @@ const debouncedAutocompleteProjectSearch = debounce(
   300
 );
 
-const jobList = () => {
-  router.push({ path: "/job-list" });
-};
+
 </script>
 
 <style>

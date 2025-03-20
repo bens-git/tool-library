@@ -197,22 +197,10 @@ export const useItemStore = defineStore("item", {
 
     // Action to fetch an item by its ID from the items array
     async fetchItemById(itemId) {
-      const responseStore = useResponseStore();
-      const loadingStore = useLoadingStore();
+      const { fetchRequest } = useApi();
 
-      loadingStore.startLoading("fetchItemById");
-
-      try {
-        const response = await apiClient.get(`items/${itemId}`);
-        this.currentItem = response.data;
-        responseStore.setResponse(true, "Item fetched successfully");
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("fetchItemById");
-      }
+      const data = await fetchRequest(`items/${itemId}`);
+      this.currentItem = data.data;
     },
 
     itemCode(item) {
@@ -278,7 +266,7 @@ export const useItemStore = defineStore("item", {
 
       const data = await sendRequest(`items`, "POST", itemData);
 
-      await this.fetchMyItems()
+      await this.fetchMyItems();
       return data;
     },
 

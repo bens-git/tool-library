@@ -23,16 +23,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+
 
 
 
 //Authentication routes
 // Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
-Route::middleware(['api', 'web'])->post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/request-password-reset', [AuthController::class, 'requestPasswordReset']);
@@ -43,6 +41,9 @@ Route::get('/items/{id}', [ItemController::class, 'show']);
 Route::get('/archetypes-with-items', [ArchetypeController::class, 'getArchetypesWithItems']);
 Route::get('/archetypes', [ArchetypeController::class, 'index']);
 Route::get('/archetypes/{id}', [ArchetypeController::class, 'show']);
+Route::get('/projects', [ProjectController::class, 'index']);
+Route::get('/jobs', [JobController::class, 'index']);
+
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/usages', [ArchetypeController::class, 'getUsages']);
 Route::get('/brands', [BrandController::class, 'getUsages']);
@@ -61,12 +62,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/items/{id}/rented-dates', [RentalController::class, 'getItemRentedDates']);
     Route::get('/items/{id}/unavailable-dates', [ItemController::class, 'getItemUnavailableDates']);
     Route::get('/items', [ItemController::class, 'index']);
-    Route::get('/jobs', [JobController::class, 'index']);
-    Route::get('/projects', [ProjectController::class, 'index']);
     Route::get('/rented-dates', [RentalController::class, 'getRentedDates']);
     Route::get('/me/brands', [BrandController::class, 'index'])->name('user.brands');
     Route::get('/me/categories', [CategoryController::class, 'getMyCategories'])->name('user.categories');
     Route::get('/me/items', [ItemController::class, 'index'])->name('user.items');
+    Route::get('/user', [AuthController::class, 'show']);
     Route::get('/user/loans', [RentalController::class, 'getUserLoans']);
     Route::get('/me/location', [AuthController::class, 'getLocation']);
     Route::get('/user/rentals', [RentalController::class, 'getUserRentals']);
@@ -91,7 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/update-usage/{id}', [UsageController::class, 'update']);
     Route::post('/usages', [UsageController::class, 'store']);
     
-    Route::put('/user/{userId}', [AuthController::class, 'update']);
+    Route::put('/me', [AuthController::class, 'update']);
     Route::put('/jobs/{id}', [JobController::class, 'update']);
     Route::put('/projects/{id}', [ProjectController::class, 'update']);
     Route::put('/user/location/{locationId}', [AuthController::class, 'updateLocation']);

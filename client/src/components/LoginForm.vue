@@ -1,65 +1,64 @@
 <template>
-    <v-card class="my-5">
-        <v-card-title>
-            Login
-        </v-card-title>
-        <v-card-text>
-            <v-form @submit.prevent="login">
-                <v-text-field v-model="email" name="email" autocomplete="email" label="Email"
-                    :error-messages="responseStore?.response?.errors[0]?.email" required />
+  <v-card v-if="!userStore.user" prepend-icon="mdi-login" title="Login">
+    <v-card-text>
+      <v-text-field
+        v-model="email"
+        name="email"
+        autocomplete="email"
+        label="Email"
+        :error-messages="responseStore?.response?.errors?.email"
+        required
+      />
 
-                <v-text-field v-model="password" name="password" autocomplete="current-password" label="Password"
-                    type="password" :error-messages="responseStore?.response?.errors[0]?.password" required />
+      <v-text-field
+        v-model="password"
+        name="password"
+        autocomplete="current-password"
+        label="Password"
+        type="password"
+        :error-messages="responseStore?.response?.errors?.password"
+        required
+      />
+    </v-card-text>
+    <v-divider></v-divider>
 
-                <v-btn type="submit" color="primary">
-                    Login
-                </v-btn>
-            </v-form>
-            <div v-if="userStore.user" class="mt-3">
-                Logged in as: {{ userStore.user.name }}
-            </div>
-        </v-card-text>
-    </v-card>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+
+      <v-btn text="Cancel" variant="plain" @click="dialog = false"></v-btn>
+
+      <v-btn
+        color="success"
+        text="Login"
+        variant="tonal"
+        @click="login"
+      ></v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 <script setup>
-import { ref } from 'vue';
-import { useUserStore } from '../stores/user';
+import { shallowRef, ref } from "vue";
+import { useUserStore } from "@/stores/user";
+import { useResponseStore } from "@/stores/response";
 import { useRouter } from "vue-router";
-import { useResponseStore } from '../stores/response';
-
-const email = ref('');
-const password = ref('');
-const userStore = useUserStore();
-const errors = ref({});
-const generalError = ref('');
+const dialog = shallowRef(false);
 const router = useRouter();
 const responseStore = useResponseStore();
 
+const props = defineProps({});
+const email = ref("");
+const password = ref("");
+
+const userStore = useUserStore();
+const emit = defineEmits(["logged_in"]);
+
 const login = async () => {
-    errors.value = {};
-    responseStore.clearResponse(); // Clear previous responses
-    try {
-        await userStore.login(email.value, password.value);
+  responseStore.clearResponse(); // Clear previous responses
 
-        if (!responseStore.response?.success) {
-            errors.value = responseStore.response.errors.errors || {}; // Ensure it's an object
-        } else {
-            router.push({ name: 'archetype-list' }); // Use router to navigate to login page after logout
-        }
-
-    } catch (error) {
-        console.log(error);
-    }
-};
-
-const logout = async () => {
-    await userStore.logout();
+  const data = await userStore.login(email.value, password.value);
+  if (data?.success) {
+    emit("logged_in");
+    router.push({ name: "archetype-list" }); // Use router to navigate to login page after logout
+  }
 };
 </script>
-
-<style scoped>
-.v-card {
-    max-width: 400px;
-    margin: 0 auto;
-}
-</style>

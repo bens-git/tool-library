@@ -10,9 +10,9 @@
         </div>
       </template>
       <template v-slot:text>
-        <v-row>
+        <v-row> 
           <!-- Search Field -->
-          <v-col cols="12" md="3">
+          <v-col >
             <v-text-field
               density="compact"
               v-model="projectStore.projectsListFilters.search"
@@ -26,7 +26,7 @@
           </v-col>
 
           <!-- Project -->
-          <v-col cols="12" md="4">
+          <v-col >
             <v-autocomplete
               density="compact"
               v-model="projectStore.projectsListFilters.project"
@@ -44,7 +44,7 @@
           </v-col>
 
           <!-- Archetype -->
-          <v-col cols="12" md="4">
+          <v-col v-if="!mobile">
             <v-autocomplete
               density="compact"
               v-model="projectStore.projectsListFilters.archetype"
@@ -73,7 +73,7 @@
             ></v-btn>
 
             <!-- create project dialog -->
-            <ProjectDialog :isEdit="false" />
+            <ProjectDialog :isEdit="false" v-if="userStore.user" />
           </v-col>
         </v-row>
       </template>
@@ -116,9 +116,8 @@
             v-if="userStore.user?.id == item.created_by"
           />
 
-          <v-btn icon @click="goToLogin" v-else>
-            <v-icon>mdi-login</v-icon>
-          </v-btn>
+          <LoginDialog v-else />
+        
         </template>
       </v-data-table-server>
     </v-card>
@@ -126,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref,  onMounted } from "vue";
 import { useArchetypeStore } from "@/stores/archetype";
 import { useJobStore } from "@/stores/job";
 import { useProjectStore } from "@/stores/project";
@@ -136,6 +135,10 @@ import ProjectDialog from "./ProjectDialog.vue";
 import DeleteProjectDialog from "./DeleteProjectDialog.vue";
 import { useRouter } from "vue-router";
 import debounce from "lodash/debounce";
+import { useDisplay } from "vuetify";
+import LoginDialog from "./LoginDialog.vue";
+
+const { mobile } = useDisplay();
 
 const archetypeStore = useArchetypeStore();
 const jobStore = useJobStore();
@@ -179,8 +182,6 @@ const headers = [
     sortable: true,
     key: "name",
   },
-
- 
 ];
 
 const autocompleteArchetypes = ref([]);
@@ -190,14 +191,6 @@ const debounceSearch = _.debounce(() => {
   projectStore.fetchProjects();
 }, 300);
 
-const editProject = (project) => {
-  projectStore.selectedProject = project;
-  editProjectDialog.value = true;
-};
-
-const goToLogin = () => {
-  router.push({ name: "login-form" }); // Adjust the route name as necessary
-};
 
 onMounted(async () => {
   autocompleteArchetypes.value =

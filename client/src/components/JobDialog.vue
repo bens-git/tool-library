@@ -52,7 +52,7 @@
               item-value="id"
               :return-object="true"
               @update:search="debouncedAutocompleteBaseSearch"
-              :error-messages="responseStore.response?.errors?.base_id"
+              :error-messages="responseStore.response?.errors?.['base.id']"
               :disabled="Boolean(base)"
             ></v-autocomplete>
           </v-col>
@@ -68,7 +68,7 @@
               item-value="id"
               :return-object="true"
               @update:search="debouncedAutocompleteComponentSearch"
-              :error-messages="responseStore.response?.errors?.component_id"
+              :error-messages="responseStore.response?.errors?.['component.id']"
             ></v-autocomplete>
           </v-col>
 
@@ -82,7 +82,7 @@
               item-value="id"
               :return-object="true"
               @update:search="debouncedAutocompleteProductSearch"
-              :error-messages="responseStore.response?.errors?.product_id"
+              :error-messages="responseStore.response?.errors?.['product.id']"
             ></v-autocomplete>
             <ArchetypeDialog
               aim="edit"
@@ -102,7 +102,7 @@
               item-value="id"
               :return-object="true"
               @update:search="debouncedAutocompleteToolSearch"
-              :error-messages="responseStore.response?.errors?.tool_id"
+              :error-messages="responseStore.response?.errors?.['tool.id']"
             ></v-autocomplete
           ></v-col>
 

@@ -32,6 +32,7 @@
           <v-divider></v-divider>
   
           <v-card-actions>
+            {{responseStore}}
             <v-spacer></v-spacer>
   
             <v-btn text="Close" variant="plain" @click="dialog = false"></v-btn>

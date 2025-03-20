@@ -111,7 +111,6 @@ class BrandController extends Controller
         $brand = Brand::create($validated);
 
         return response()->json(['success' => true, 'data' => $brand, 'message' => 'Archetype created']);
-
     }
 
 
@@ -156,15 +155,10 @@ class BrandController extends Controller
         $brand = Brand::where('id', $id)->where('created_by', $user->id)->first();
 
         if (!$brand) {
-            return response()->json(['message' => 'Brand not found or you do not have permission to delete it'], 404);
+            return response()->json(['success' => false, 'message' => 'Brand not found or you do not have permission to delete it'], 404);
         }
 
-        //check if there are related items
-        $items = Item::where('brand_id', '=', $brand->id);
-        if ($items->count() > 0) {
-            return response()->json(['message' => 'There are ' . $items->count() . ' items associated with this brand. You must delete them first.'], 404);
-        }
-
+      
         // Delete the brand 
         $brand->delete();
 

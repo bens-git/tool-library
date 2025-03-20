@@ -2,16 +2,22 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Archetype;
 
 class Job extends Model
 {
-    use HasFactory;
     public $timestamps = false;
 
-    protected $fillable = ['name', 'created_by', 'base_id', 'product_id', 'component_id', 'tool_id', 'description'];
+    protected $fillable = [
+        'name',
+        'base_id',
+        'product_id',
+        'component_id',
+        'tool_id',
+        'description',
+        'created_by'
+    ];
 
     public function base()
     {
@@ -35,7 +41,7 @@ class Job extends Model
 
     public function creator()
     {
-        return $this->belongsTo(User::class)->select('id', 'name');
+        return $this->belongsTo(User::class, 'created_by')->select('id', 'name');
     }
 
     public function projects()

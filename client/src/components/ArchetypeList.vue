@@ -1,7 +1,7 @@
 <template>
   <v-container class="d-flex justify-center">
     <v-card
-      title="Catalog"
+      title="Materials & Tools"
       flat
       style="min-width: 90vw; max-height: 88vh; min-height: 88vh"
     >
@@ -22,7 +22,7 @@
           </v-col>
 
           <!-- Archetype -->
-          <v-col>
+          <v-col v-if="!mobile">
             <v-autocomplete
               density="compact"
               v-model="archetypeStore.selectedArchetypeId"
@@ -40,7 +40,7 @@
           </v-col>
 
           <!-- Category -->
-          <v-col>
+          <v-col v-if="!mobile">
             <v-autocomplete
               density="compact"
               v-model="archetypeStore.selectedCategoryId"
@@ -54,7 +54,7 @@
           </v-col>
 
           <!-- Usage -->
-          <v-col>
+          <v-col v-if="!mobile">
             <v-autocomplete
               density="compact"
               v-model="archetypeStore.selectedUsageId"
@@ -68,7 +68,7 @@
           </v-col>
 
           <!-- Brand -->
-          <v-col>
+          <v-col v-if="!mobile">
             <v-autocomplete
               density="compact"
               v-model="archetypeStore.selectedBrandId"
@@ -85,7 +85,7 @@
             ></v-autocomplete>
           </v-col>
 
-          <v-col>
+          <v-col v-if="!mobile">
             <v-date-input
               density="compact"
               v-model="archetypeStore.dateRange"
@@ -153,17 +153,8 @@
           <!-- Actions column -->
           <template v-slot:[`item.actions`]="{ item }">
             <ArchetypeItemsDialog :archetype="item" v-if="userStore.user" />
-            <v-btn
-              color="success"
-              class="text-none font-weight-regular"
-              block
-              text="Login"
-              @click="goToLogin"
-              variant="tonal"
-              v-else
-            >
-              <v-icon>mdi-login</v-icon>
-            </v-btn>
+            <LoginDialog  v-else/>
+           
           </template>
 
           <!-- Image column -->
@@ -218,6 +209,10 @@ import { useRouter } from "vue-router";
 import LocationPicker from "./LocationPicker.vue"; // Import your location picker component
 import debounce from "lodash/debounce";
 import useApi from "@/stores/api";
+import { useDisplay } from "vuetify";
+import LoginDialog from "./LoginDialog.vue";
+
+const { mobile } = useDisplay();
 
 const categoryStore = useCategoryStore();
 const usageStore = useUsageStore();
@@ -333,9 +328,7 @@ const editArchetype = (archetype) => {
   dialog.value = true;
 };
 
-const goToLogin = () => {
-  router.push({ name: "login-form" }); // Adjust the route name as necessary
-};
+
 
 // Computed properties for date constraints
 const today = new Date();

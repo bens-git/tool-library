@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class JobController extends Controller
 {
@@ -137,30 +137,71 @@ class JobController extends Controller
 
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'base_id' => 'required|integer|exists:archetypes,id|different:product_id|different:component_id',
-            'product_id' => 'required|integer|exists:archetypes,id|different:base_id|different:component_id',
-            'component_id' => 'nullable|integer|exists:archetypes,id|different:base_id|different:product_id',
-            'tool_id' => 'nullable|integer|exists:archetypes,id|different:base_id|different:product_id|different:component_id',
-            'projects'   => 'required|array',
-            'projects.*.id' => 'required|exists:projects,id', // Validate each job ID
+            'name' => 'required|string|max:255|unique:jobs',
+            'base'   => 'required|array',
+            'base.id' => ['required', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:tool.id',],
+            'product'   => 'required|array',
+            'product.id' => ['required', 'integer', 'exists:archetypes,id', 'different:base.id', 'different:component.id', 'different:tool.id',],
+            'component'   => 'nullable|array',
+            'component.id' => ['nullable', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:tool.id',],
+            'tool'   => 'nullable|array',
+            'tool.id' => ['nullable', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:component.id', 'different:base.id',],
+            'projects'   => 'nullable|array',
+            'projects.*.id' => 'nullable|integer|exists:projects,id', // Validate each job ID
 
         ], [
-            'base_id.required' => 'There must be a base',
-            'product_id.required' => 'There must be a product',
+            'base.id.required' => 'There must be a base',
+            'base.id.different' => 'The base must be different than the product and tool',
+            'product.id.required' => 'There must be a product',
+            'product.id.different' => 'The product must be different than the base component and tool',
+            'projects.required' => 'There must be a project',
+            'component.id.different' => 'The component must be different than the product and tool',
+            'tool.id.different' => 'The tool must be different than the base, component and product',
         ]);
         $job = DB::transaction(function () use ($validated) {
 
             $user = Auth::user();
 
-            $validated['created_by'] = $user->id;
+            $baseId = $validated['base']['id'];
+            $productId = $validated['product']['id'];
 
-            $job = Job::create($validated);
+            if (isset($validated['component'])) {
+                $componentData = $validated['component'];
+            }
+
+            if (isset($validated['tool'])) {
+                $toolData = $validated['tool'];
+            }
+
+            Log::info('Base Data:', ['base_id' => $baseId ?? null]);
+
+            $job = Job::create([
+                'name' => $validated['name'],
+                'base_id' => $baseId,
+                'product_id' => $productId,
+                'component_id' => $componentData['id'] ?? null,
+                'tool_id' =>  $toolData['id'] ?? null,
+                'description' => $validated['description'] ?? null,
+                'created_by' => $user->id
+            ]);
+
+
+            // If projects are provided, attach them to the job
+            if (!empty($validated['projects'])) {
+                $projectIds = collect($validated['projects'])->pluck('id'); // Extract project IDs
+                $job->projects()->attach($projectIds); // Attach projects to the job
+            }
+
+
 
             return $job;
         });
 
-        return response()->json($job);
+        $response['data'] = $job;
+        $response['success'] = true;
+        $response['message'] = 'Job created';
+
+        return response()->json($response);
     }
 
 
@@ -235,17 +276,68 @@ class JobController extends Controller
     {
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'base_id' => 'required|integer|exists:archetypes,id',
-            'component_id' => 'nullable|integer|exists:archetypes,id',
-            'product_id' => 'required|integer|exists:archetypes,id',
-            'tool_id' => 'nullable|integer|exists:archetypes,id',
+            'name' => 'required|string|max:255|unique:jobs',
+            'base'   => 'required|array',
+            'base.id' => ['required', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:tool.id',],
+            'product'   => 'required|array',
+            'product.id' => ['required', 'integer', 'exists:archetypes,id', 'different:base.id', 'different:component.id', 'different:tool.id',],
+            'component'   => 'nullable|array',
+            'component.id' => ['nullable', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:tool.id',],
+            'tool'   => 'nullable|array',
+            'tool.id' => ['nullable', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:component.id', 'different:base.id',],
+            'projects'   => 'nullable|array',
+            'projects.*.id' => 'nullable|integer|exists:projects,id', // Validate each job ID
+
+        ], [
+            'base.id.required' => 'There must be a base',
+            'base.id.different' => 'The base must be different than the product and tool',
+            'product.id.required' => 'There must be a product',
+            'product.id.different' => 'The product must be different than the base component and tool',
+            'projects.required' => 'There must be a project',
+            'component.id.different' => 'The component must be different than the product and tool',
+            'tool.id.different' => 'The tool must be different than the base, component and product',
         ]);
 
-        $job = Job::findOrFail($id);
-        $job->fill($validated);
-        $job->save();
+        $job = DB::transaction(function () use ($id, $validated) {
+
+            $user = Auth::user();
+
+            $baseId = $validated['base']['id'];
+            $productId = $validated['product']['id'];
+
+            if (isset($validated['component'])) {
+                $componentData = $validated['component'];
+            }
+
+            if (isset($validated['tool'])) {
+                $toolData = $validated['tool'];
+            }
+
+            Log::info('Base Data:', ['base_id' => $baseId ?? null]);
+            $job = Job::findOrFail($id);
+            $job->name = $validated['name'];
+            $job->base_id = $baseId;
+            $job->product_id = $productId;
+            $job->component_id = $componentData['id'] ?? null;
+            $job->tool_id =  $toolData['id'] ?? null;
+            $job->description = $validated['description'] ?? null;
+            $job->created_by = $user->id;
+            $job->save();
+
+
+            // If there are projects to sync, do so
+            if (isset($validated['projects']) && is_array($validated['projects'])) {
+                // Extract the project IDs from the validated data
+                $projectIds = array_map(function ($project) {
+                    return $project['id'];
+                }, $validated['projects']);
+
+                // Sync the projects to the job
+                $job->projects()->sync($projectIds);
+            }
+
+            return $job;
+        });
 
         return response()->json(['success' => true, 'message' => 'Job updated', 'data' => $job]);
     }
@@ -262,9 +354,9 @@ class JobController extends Controller
     public function destroy($id)
     {
         $user = Auth::user();
-        $job = Job::where('id', $id)->where('creator_id', $user->id)->first();
+        $job = Job::where('id', $id)->where('created_by', $user->id)->first();
         if (!$job) {
-            return response()->json(['message' => 'Blueprint not found or you do not have permission to delete it'], 404);
+            return response()->json(['message' => 'Job not found or you do not have permission to delete it'], 404);
         }
 
 

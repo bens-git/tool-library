@@ -1,40 +1,29 @@
 <template>
   <v-app>
     <v-main>
-      <TopMenu @toggleDrawer="drawer = !drawer" />
-
-      <v-navigation-drawer v-model="drawer" app temporary>
-        <v-list>
-          <v-list-item v-for="link in links" :key="link.text" @click="drawer = false">
-            <v-list-item-title>
-              <v-btn :href="link.url">
-                {{ link.text }}
-              </v-btn>
-            </v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-navigation-drawer>
+      <TopMenu />
 
       <router-view />
 
       <!-- Snackbar for error messages -->
-      <v-snackbar v-model="showError" multi-line :timeout="5000">
+      <v-snackbar v-model="showError" color="error" multi-line :timeout="5000">
         {{ responseStore.response.message }}
         <template v-slot:actions>
-          <v-btn variant="text" @click="showError = false">
-            Close
-          </v-btn>
+          <v-btn variant="text" @click="showError = false"> Close </v-btn>
         </template>
       </v-snackbar>
 
       <!-- Snackbar for success messages -->
-      <v-snackbar v-model="showSuccess" multi-line :timeout="5000" color="success">
+      <v-snackbar
+        v-model="showSuccess"
+        multi-line
+        :timeout="5000"
+        color="success"
+      >
         {{ responseStore.response.message }}
 
         <template v-slot:actions>
-          <v-btn variant="text" @click="showSuccess = false">
-            Close
-          </v-btn>
+          <v-btn variant="text" @click="showSuccess = false"> Close </v-btn>
         </template>
       </v-snackbar>
 
@@ -47,11 +36,11 @@
 </template>
 
 <script>
-import TopMenu from './components/TopMenu.vue';
-import { ref, watch, computed } from 'vue';
-import { useUserStore } from './stores/user';
-import { useLoadingStore } from './stores/loading';
-import { useResponseStore } from './stores/response';
+import TopMenu from "./components/TopMenu.vue";
+import { ref, watch, computed } from "vue";
+import { useUserStore } from "./stores/user";
+import { useLoadingStore } from "./stores/loading";
+import { useResponseStore } from "./stores/response";
 
 export default {
   components: {
@@ -65,29 +54,30 @@ export default {
     const showSuccess = ref(false);
 
     // Watch for changes in the responseStore to display the appropriate snackbar
-    watch(() => responseStore.response, (newResponse) => {
-      if (newResponse.errors.length > 0) {
-        showError.value = true;
-      } else if (newResponse.success) {
-        showSuccess.value = true;
-      }
-    }, { deep: true });
+    watch(
+      () => responseStore.response,
+      (newResponse) => {
+        if (Object.keys(newResponse.errors).length || (!newResponse.success && newResponse.message)) {
+          showError.value = true;
+        } else if (newResponse.success) {
+          showSuccess.value = true;
+        }
+      },
+      { deep: true }
+    );
 
     // Computed property to determine if any process is loading
-    const isLoading = computed(() => loadingStore?.loadingProcesses?.length > 0);
+    const isLoading = computed(
+      () => loadingStore?.loadingProcesses?.length > 0
+    );
 
     return {
-      drawer: false,
       showError,
       showSuccess,
       userStore,
       loadingStore,
       responseStore,
       isLoading,
-      links: [
-        { text: "HOLDFAST", url: "https://holdfast.group" },
-        { text: "CATALOG", route: "/" },
-      ],
     };
   },
 };
@@ -108,4 +98,3 @@ body,
   flex-direction: column;
 }
 </style>
-

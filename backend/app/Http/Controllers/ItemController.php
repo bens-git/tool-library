@@ -226,7 +226,7 @@ class ItemController extends Controller
         ]);
 
 
-        $user = auth()->user();
+        $user = auth::user();
 
         // Decode the validated JSON
         $archetype = Archetype::findOrFail($request->archetype['id']);
@@ -282,7 +282,7 @@ class ItemController extends Controller
 
         ]);
 
-        $user = auth()->user();
+        $user = auth::user();
 
         $validated['created_by'] = $user->id;
 
@@ -333,13 +333,15 @@ class ItemController extends Controller
 
         // Check if the item was found
         if (!$item) {
-            return response()->json([
-                'message' => 'Item not found'
-            ], Response::HTTP_NOT_FOUND);
+            abort(500, 'Item not found');
         }
 
-        // Return the item as JSON
-        return response()->json($item);
+
+        $response['data'] = $item;
+
+        // Return response
+        return response()->json($response);
+
     }
 
 

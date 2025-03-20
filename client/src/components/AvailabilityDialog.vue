@@ -9,6 +9,7 @@
           text="Item Availability"
           variant="tonal"
           v-bind="activatorProps"
+          block
         ></v-btn>
       </template>
       <v-card

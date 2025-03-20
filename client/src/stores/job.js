@@ -63,13 +63,15 @@ export const useJobStore = defineStore("job", {
 
     async subdivideJob(formData) {
       const { sendRequest } = useApi();
-      const data = await sendRequest(`subdivide-job/${formData.originalJob.id}`, "POST", formData);
+      const data = await sendRequest(
+        `subdivide-job/${formData.originalJob.id}`,
+        "POST",
+        formData
+      );
       if (data?.success) {
         this.fetchJobs();
-
       }
       return data;
-
     },
 
     async putJob(formData) {
@@ -91,20 +93,11 @@ export const useJobStore = defineStore("job", {
       }
     },
 
-    async deleteJob() {
+    async deleteJob(jobId) {
       const { sendRequest } = useApi();
-      await sendRequest(
-        "delete", // HTTP method
-        `jobs/${this.selectedJob.id}`, // API endpoint
-        null, // Payload
-        () => {
-          this.jobs = this.jobs.filter(
-            (jobs) => jobs.id !== this.selectedJob.id
-          );
-          this.totalJobs -= 1;
-          this.selectedJob = null;
-        }
-      );
+      const data = await sendRequest(`jobs/${jobId}`, "DELETE");
+
+      this.fetchJobs();
     },
   },
 });

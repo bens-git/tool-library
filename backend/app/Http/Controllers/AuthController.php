@@ -2,18 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Location;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\ValidateUserEmail;
 use App\Mail\PasswordResetEmail;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
+use App\Mail\ValidateUserEmail;
+use App\Models\Item;
+use App\Models\Location;
+use App\Models\Rental;
+use App\Models\User;
 use GuzzleHttp\Client;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+
 
 class Coordinates
 {
@@ -36,15 +42,13 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
             'password' => 'required|string|min:8',
-            'street_address' => 'required|string|max:255',
+            'repeatPassword' => 'required|string|same:password',
             'city' => 'required|string|max:255',
             'state' => 'required|string|max:255',
             'country' => 'required|string|max:255',
-            'postal_code' => 'required|string|max:20',
-            'building_name' => 'nullable|string|max:255',
-            'floor_number' => 'nullable|string|max:50',
-            'unit_number' => 'nullable|string|max:50',
+
         ]);
+
 
         // Check if the email already exists with an email_verification_token
         $existingUser = User::where('email', $validatedData['email'])
@@ -75,14 +79,9 @@ class AuthController extends Controller
 
         // Create a new location
         $location = Location::create([
-            'street_address' => $validatedData['street_address'],
             'city' => $validatedData['city'],
             'state' => $validatedData['state'],
             'country' => $validatedData['country'],
-            'postal_code' => $validatedData['postal_code'],
-            'building_name' => $validatedData['building_name'] ?? null,
-            'floor_number' => $validatedData['floor_number'] ?? null,
-            'unit_number' => $validatedData['unit_number'] ?? null,
             'latitude' => $latitude ?? null,
             'longitude' => $longitude ?? null,
         ]);
@@ -100,9 +99,17 @@ class AuthController extends Controller
         // Send validation email
         Mail::to($user->email)->send(new ValidateUserEmail($user));
 
-        return response()->json(['message' => 'User registered successfully. Please check your email to validate your account.']);
+        return response()->json(['success' => true, 'message' => 'User registered successfully. Please check your email to validate your account.']);
     }
 
+    public function show()
+    {
+        $user = Auth::user();
+        if ($user instanceof \App\Models\User) {
+            $user->load('location');
+        }
+        return response()->json(['success' => true, 'data' => $user]);
+    }
 
     public function requestPasswordReset(Request $request)
     {
@@ -182,9 +189,6 @@ class AuthController extends Controller
         return redirect()->away(config('app.front_end_url') . '/email-verified?success=true');
     }
 
-
-
-
     public function resetPasswordWithToken(Request $request)
     {
         $user = User::where('password_reset_token', $request->token)->first();
@@ -211,6 +215,7 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -219,12 +224,12 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([['message' => 'Invalid credentials']], 401);
+            return response()->json(['success' => false,  'errors' => ['password' => ['Invalid credentials']]], 400);
         }
 
         $token = $user->createToken('API Token')->plainTextToken;
 
-        return response()->json(['token' => $token]);
+        return response()->json(['success' => true, 'token' => $token]);
     }
 
     public function logout(Request $request)
@@ -241,7 +246,7 @@ class AuthController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, $userId)
+    public function update(Request $request)
     {
         // Get the authenticated user
         $user = Auth::user();
@@ -249,20 +254,18 @@ class AuthController extends Controller
         // Validate the request data
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'location_id' => 'required|exists:locations,id',
-
         ]);
 
         // Update the user fields
         $user->name = $validatedData['name'];
-        $user->location_id = $validatedData['location_id'];
 
         // Save the updated user and location
         /** @var \App\Models\User $user */
         $user->save();
+        $user->load('location');
 
         // Return the updated user data
-        return response()->json($user);
+        return response()->json(['success' => true, 'data' => $user]);
     }
 
     /**
@@ -284,14 +287,9 @@ class AuthController extends Controller
 
         // Validate the request data
         $validatedData = $request->validate([
-            'street_address' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'state' => 'required|string|max:255',
             'country' => 'required|string|max:255',
-            'postal_code' => 'required|string|max:20',
-            'building_name' => 'nullable|string|max:255',
-            'floor_number' => 'nullable|integer',
-            'unit_number' => 'nullable|integer',
         ]);
 
         // Find the location and update it
@@ -299,9 +297,9 @@ class AuthController extends Controller
         $location->update($validatedData);
 
         // Return the updated location data
-        return response()->json($location);
-    }
+        return response()->json(['success' => true, 'data'=> $location]);
 
+    }
 
     /**
      * Get the authenticated user's location.
@@ -316,7 +314,7 @@ class AuthController extends Controller
 
         // Check if the user has an associated location
         if ($user && $user->location) {
-            $data['data']=$user->location;
+            $data['data'] = $user->location;
             return response()->json($data);
         }
 
@@ -331,10 +329,49 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
+        $response = DB::transaction(function () use ($user) {
 
-        /** @var \App\Models\User $user */
-        $user->delete();
-        return response()->json(['message' => 'User deleted successfully.']);
+            //check if user is currently renting anything
+            $isRenting = Rental::where('rented_by', $user->id)->whereIn('status', ['active', 'booked', 'overdue', 'holding']);
+            if ($isRenting->count()) {
+                abort(500, 'Can not delete account that is currently renting items');
+            }
+
+            $rentals = Rental::where('rented_by', $user->id);
+            $rentals->delete();
+
+            //check if user is loaning anything
+            $isLoaning = Rental::with('item')->whereHas('item', function ($query) use ($user) {
+                $query->where('owned_by', $user->id);
+            })->get();
+            if ($isLoaning->count()) {
+                abort(500, 'Can not delete account that is currently loaning items');
+            }
+
+            //delete user items
+            $items = Item::with('images', 'rentals')->where('owned_by', $user->id)->get();
+
+            // Delete the image files from storage
+            foreach ($items as $item) {
+
+
+
+                // Delete the image files from storage
+                foreach ($item->images as $image) {
+                    Storage::disk('public')->delete($image->path);
+                }
+
+                // Delete the records from the item_images table
+                $item->images()->delete();
+                $item->delete();
+            }
+
+
+            /** @var \App\Models\User $user */
+            $user->delete();
+        });
+
+        return response()->json(['success' => true, 'message' => 'User deleted successfully.']);
     }
     /**
      * Update the authenticated user's password.
@@ -366,7 +403,6 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Password updated successfully.']);
     }
-
 
     public function linkWithDiscord(Request $request)
     {

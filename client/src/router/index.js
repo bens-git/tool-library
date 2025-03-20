@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
 import EmailVerified from "@/components/EmailVerified.vue";
-import EditUser from "@/components/EditUser.vue";
-import LoginForm from "@/components/LoginForm.vue";
 import ArchetypeList from "@/components/ArchetypeList.vue";
 import ProjectList from "@/components/ProjectList.vue";
 import JobList from "@/components/JobList.vue";
@@ -15,7 +13,6 @@ import MyProjects from "@/components/MyProjects.vue";
 import MyRentals from "@/components/MyRentals.vue";
 import MyLoans from "@/components/MyLoans.vue";
 import DiscordResponse from "@/components/DiscordResponse.vue";
-import RouteToDiscordLink from "@/components/RouteToDiscordLink.vue";
 import { useUserStore } from "@/stores/user"; // Adjust the import path as necessary
 
 const routes = [
@@ -37,28 +34,15 @@ const routes = [
     component: JobList,
   },
 
-  {
-    path: "/login-form",
-    name: "login-form",
-    component: LoginForm,
-    meta: { requiresGuest: true }, // Only accessible if not logged in
-  },
-  {
-    path: "/route-to-discord-link",
-    name: "route-to-discord-link",
-    component: RouteToDiscordLink,
-  },
+
+
   {
     path: "/discord-response",
     name: "discord-response",
     component: DiscordResponse,
   },
 
-  {
-    path: "/register-form",
-    component: () => import("@/components/RegisterForm.vue"),
-    meta: { requiresGuest: true }, // Only accessible if not logged in
-  },
+
   {
     path: "/request-password-reset-form",
     component: () => import("@/components/RequestPasswordResetForm.vue"),
@@ -69,12 +53,7 @@ const routes = [
     component: () => import("@/components/ResetPassword.vue"),
     meta: { requiresGuest: true }, // Only accessible if not logged in
   },
-  {
-    path: "/edit-user",
-    name: "edit-user",
-    component: EditUser,
-    meta: { requiresAuth: true },
-  },
+  
   {
     path: "/my-items",
     name: "my-items",

@@ -1,7 +1,13 @@
 <template>
-  <v-app-bar app dark>
-    <v-app-bar-nav-icon v-if="isSmallScreen" @click="$emit('toggleDrawer')" />
+  <v-app-bar density="compact">
+    <!-- Show Nav Icon Only on Mobile -->
+    <v-app-bar-nav-icon v-if="mobile" @click="drawer = !drawer" />
 
+    <v-toolbar-title>Tool-Library</v-toolbar-title>
+
+    <v-spacer />
+
+    <!-- Always Show User Menu -->
     <v-menu v-if="userStore.user">
       <template v-slot:activator="{ props }">
         <v-btn color="primary" v-bind="props">
@@ -38,103 +44,87 @@
         <v-list-item @click="myBrands">
           <v-list-item-title>My Brands</v-list-item-title>
         </v-list-item>
-        <!-- <v-list-item @click="myJobs">
-          <v-list-item-title>My Jobs</v-list-item-title>
+
+        <v-list-item>
+          <EditProfileDialog />
         </v-list-item>
-        <v-list-item @click="myProjects">
-          <v-list-item-title>My Projects</v-list-item-title>
-        </v-list-item> -->
-        <v-list-item @click="editProfile">
-          <v-list-item-title>Edit Profile</v-list-item-title>
-        </v-list-item>
-        <v-list-item @click="routeToDiscordLink">
-          <v-list-item-title>Link With Discord</v-list-item-title>
-        </v-list-item>
-        <v-list-item @click="confirmLogout">
-          <v-list-item-title>Logout</v-list-item-title>
+        <v-list-item><LinkWithDiscordDialog /></v-list-item> 
+        <v-list-item>
+          <LogoutDialog />
         </v-list-item>
       </v-list>
     </v-menu>
 
-    
-
-    <v-app-bar-title>
-      <a
-        href="https://holdfast.group"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <v-img
-          src="@/assets/logo.png"
-          alt="Logo"
-          contain
-          max-height="40"
-          max-width="40"
-        />
-      </a>
-    </v-app-bar-title>
-
-    <v-btn v-if="!userStore.user" to="login-form" text> Login </v-btn>
-    <v-btn v-if="!userStore.user" to="register-form" text> Register </v-btn>
-    <v-btn v-if="!userStore.user" to="request-password-reset-form" text>
-      Forgot Password
-    </v-btn>
-
-    <v-toolbar-title> Tool-Library </v-toolbar-title>
-
-    <v-spacer />
-
-    <div v-for="link in links" :key="link.text">
-      <!-- Debug output to help with identifying matching logic -->
-      <v-btn
-        v-if="link.route"
-        :to="link.route"
-        text
-        :class="{ active: isActiveRoute(link.route) }"
-      >
-        {{ link.text }}
+    <!-- Additional Links on Larger Screens -->
+    <template v-if="!mobile">
+      <LoginDialog v-if="!userStore.user" />
+      <RegistrationDialog v-if="!userStore.user" />
+      <v-btn v-if="!userStore.user" to="request-password-reset-form" text>
+        Forgot Password
       </v-btn>
-      <v-btn v-else :href="link.url" text>
-        {{ link.text }}
-      </v-btn>
-    </div>
 
-    <v-spacer />
+      <v-spacer />
 
+      <div v-for="link in links" :key="link.text">
+        <v-btn
+          v-if="link.route"
+          :to="link.route"
+          text
+          :class="{ active: isActiveRoute(link.route) }"
+        >
+          {{ link.text }}
+        </v-btn>
+        <v-btn v-else :href="link.url" text>
+          {{ link.text }}
+        </v-btn>
+      </div>
 
-   
-
-    <!-- Logout Confirmation Dialog -->
-    <v-dialog v-model="logoutDialog" max-width="400">
-      <v-card>
-        <v-card-title class="text-h5">Confirm Logout</v-card-title>
-        <v-card-text>Are you sure you want to log out?</v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="red" text @click="logoutDialog = false">Cancel</v-btn>
-          <v-btn color="green" text @click="logout">Yes</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+      <v-spacer />
+    </template>
   </v-app-bar>
+
+  <!-- Navigation Drawer for Mobile -->
+  <v-navigation-drawer v-model="drawer" temporary>
+    <v-list>
+      <LoginDialog v-if="!userStore.user" />
+
+      <RegistrationDialog v-if="!userStore.user" />
+      <v-list-item
+        v-if="!userStore.user"
+        @click="router.push('request-password-reset-form')"
+        >Forgot Password</v-list-item
+      >
+
+      <v-list-item
+        v-for="link in links"
+        :key="link.text"
+        @click="router.push(link.route)"
+        >{{ link.text }}</v-list-item
+      >
+    </v-list>
+  </v-navigation-drawer>
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import { useDisplay } from "vuetify";
 import { useUserStore } from "@/stores/user";
 import { useRouter, useRoute } from "vue-router";
+import LogoutDialog from "./LogoutDialog.vue";
+import RegistrationDialog from "./RegistrationDialog.vue";
+import LoginDialog from "./LoginDialog.vue";
+import LinkWithDiscordDialog from "./LinkWithDiscordDialog.vue";
+import EditProfileDialog from "./EditProfileDialog.vue";
 
 const route = useRoute();
 const router = useRouter();
-const { smAndDown } = useDisplay();
-const isSmallScreen = computed(() => smAndDown.value);
+const { mobile } = useDisplay();
+const drawer = ref(false);
 const userStore = useUserStore();
-const logoutDialog = ref(false);
 
 const links = [
-  { text: "MATERIALS & TOOLS", route: "archetype-list" },
-  { text: "PROJECTS", route: "project-list" },
+  { text: "Materials & Tools", route: "archetype-list" },
+  { text: "Projects", route: "project-list" },
 ];
 
 // Safeguard to handle undefined or null paths
@@ -146,62 +136,48 @@ const isActiveRoute = (linkRoute) => {
   return normalizePath(route.path) === normalizePath(linkRoute);
 };
 
-const confirmLogout = () => {
-  logoutDialog.value = true;
-};
-
-const logout = async () => {
-  logoutDialog.value = false;
-  await userStore.logout();
-  router.push({  path: "/login-form" });
-};
-
 const editProfile = () => {
-  router.push({  path: "/edit-user" });
-};
-
-const routeToDiscordLink = () => {
-  router.push({  path: "/route-to-discord-link" });
+  router.push({ path: "/edit-user" });
 };
 
 const myItems = () => {
-  router.push({  path: "/my-items" });
+  router.push({ path: "/my-items" });
 };
 
 const myToolArchetypes = () => {
-  router.push({  path: "/my-archetypes", query: { resource: "TOOL" } });
+  router.push({ path: "/my-archetypes", query: { resource: "TOOL" } });
 };
 
 const myMaterialArchetypes = () => {
-  router.push({  path: "/my-archetypes", query: { resource: "MATERIAL" } });
+  router.push({ path: "/my-archetypes", query: { resource: "MATERIAL" } });
 };
 
 const myCategories = () => {
-  router.push({  path: "/my-categories" });
+  router.push({ path: "/my-categories" });
 };
 
 const myUsages = () => {
-  router.push({  path: "/my-usages" });
+  router.push({ path: "/my-usages" });
 };
 
 const myBrands = () => {
-  router.push({  path: "/my-brands" });
+  router.push({ path: "/my-brands" });
 };
 
 const myJobs = () => {
-  router.push({  path: "/my-jobs" });
+  router.push({ path: "/my-jobs" });
 };
 
 const myProjects = () => {
-  router.push({  path: "/my-projects" });
+  router.push({ path: "/my-projects" });
 };
 
 const myRentals = () => {
-  router.push({  path: "/my-rentals" });
+  router.push({ path: "/my-rentals" });
 };
 
 const myLoans = () => {
-  router.push({  path: "/my-loans" });
+  router.push({ path: "/my-loans" });
 };
 </script>
 

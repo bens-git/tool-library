@@ -10,7 +10,11 @@ class Project extends Model
     use HasFactory;
     public $timestamps = false;
 
-    protected $fillable = ['name', 'created_by',  'description'];
+    protected $fillable = [
+        'name',
+        'created_by',
+        'description'
+    ];
 
 
 

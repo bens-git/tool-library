@@ -189,7 +189,11 @@ class RentalController extends Controller
                 ];
             });
 
-        return response()->json($rentals);
+        $response['data'] = $rentals;
+        $response['total'] =  $rentals->count();
+
+        // Return response
+        return response()->json($response);
     }
 
 

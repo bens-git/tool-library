@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import apiClient from "@/axios";
 import { useLoadingStore } from "./loading";
 import { useResponseStore } from "./response";
+import useApi from "@/stores/api";
 
 export const useRentalStore = defineStore("rental", {
   state: () => ({
@@ -11,22 +12,10 @@ export const useRentalStore = defineStore("rental", {
 
   actions: {
     async fetchRentals() {
-      const loadingStore = useLoadingStore();
-      const responseStore = useResponseStore();
+      const { fetchRequest } = useApi();
 
-      loadingStore.startLoading("fetchRentals");
-
-      try {
-        const response = await apiClient.get("/user/rentals");
-        this.rentals = response.data; // Adjust based on the API response structure
-        responseStore.setResponse(true, "Rentals fetched successfully");
-      } catch (error) {
-        responseStore.setResponse(false, error.response.data.message, [
-          error.response.data.errors,
-        ]);
-      } finally {
-        loadingStore.stopLoading("fetchRentals");
-      }
+      const data = await fetchRequest("/user/rentals");
+      this.rentals = data.data; // Adjust based on the API response structure
     },
 
     async fetchLoans() {
@@ -163,7 +152,6 @@ export const useRentalStore = defineStore("rental", {
         if (index !== -1) {
           // Update the rental's status
           this.loans[index].status = "holding";
-          console.log(this.rentals);
         }
 
         responseStore.setResponse(
