@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::table('items', function (Blueprint $table) {
             // Drop the existing foreign key constraint
-            $table->dropForeign('items_brand_id_foreign');
+            if (Schema::hasColumn('brand_id', 'items_brand_id_foreign')) {
+                $table->dropForeign('items_brand_id_foreign');
+            }
 
             $table->foreign('brand_id')->references('id')->on('brands')->nullOnDelete();
         });
