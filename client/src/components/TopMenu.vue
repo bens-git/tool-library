@@ -3,7 +3,9 @@
     <!-- Show Nav Icon Only on Mobile -->
     <v-app-bar-nav-icon v-if="mobile" @click="drawer = !drawer" />
 
-    <v-toolbar-title>Tool-Library</v-toolbar-title>
+    <v-toolbar-title>
+      <v-icon left>mdi-hammer</v-icon>Tool-Library</v-toolbar-title
+    >
 
     <v-spacer />
 
@@ -48,7 +50,7 @@
         <v-list-item>
           <EditProfileDialog />
         </v-list-item>
-        <v-list-item><LinkWithDiscordDialog /></v-list-item> 
+        <v-list-item><LinkWithDiscordDialog /></v-list-item>
         <v-list-item>
           <LogoutDialog />
         </v-list-item>

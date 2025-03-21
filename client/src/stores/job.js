@@ -75,15 +75,14 @@ export const useJobStore = defineStore("job", {
     },
 
     async putJob(formData) {
-      console.log(formData);
       const { sendRequest } = useApi();
       const data = await sendRequest(`jobs/${formData.id}`, "PUT", {
         name: formData.name,
         description: formData.description,
-        base_id: formData.base?.id,
-        component_id: formData.component?.id,
-        product_id: formData.product?.id,
-        tool_id: formData.tool?.id,
+        base: formData.base,
+        component: formData.component,
+        product: formData.product,
+        tool: formData.tool,
       });
 
       if (data?.success) {

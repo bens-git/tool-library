@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
-
+use App\Models\Archetype;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -217,49 +217,142 @@ class JobController extends Controller
     {
 
 
+        DB::transaction(function () use ($request, $id) {
 
-        $validated = $request->validate([
-            'newIntermediateProduct' => [
-                'required',
-                'array'
-            ],
-            'newIntermediateProduct.id' => ['required', 'integer', 'exists:archetypes,id'],
+            $validated = $request->validate([
+                'newIntermediateProduct' => [
+                    'required',
+                    'array'
+                ],
+                'newIntermediateProduct.id' => ['required', 'integer', 'exists:archetypes,id'],
 
-            'newJobName1' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('projects', 'name')->ignore($id), // Allows unchanged names
-            ],
-            'newJobName2' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('projects', 'name'),
-            ],
-            'base_id' => 'required|integer|exists:archetypes,id|different:product_id|different:component_id',
-            'product_id' => 'required|integer|exists:archetypes,id|different:base_id|different:component_id',
-            'component_id' => 'nullable|integer|exists:archetypes,id|different:base_id|different:product_id',
-            'tool_id' => 'nullable|integer|exists:archetypes,id|different:base_id|different:product_id|different:component_id',
-            'projects'   => 'required|array',
-            'projects.*.id' => 'required|exists:projects,id', // Validate each job ID
+                'newJob1' => [
+                    'required',
+                    'array',
+                ],
+                'newJob1.name' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Rule::unique('jobs', 'name')->ignore($request['originalJob.id']), // Allows unchanged names
+                ],
+                'newJob1.base'   => 'required|array',
+                'newJob1.base.id' => ['required', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:tool.id',],
+                'newJob1.product'   => 'required|array',
+                'newJob1.product.id' => ['required', 'integer', 'exists:archetypes,id', 'different:base.id', 'different:component.id', 'different:tool.id',],
+                'newJob1.component'   => 'nullable|array',
+                'newJob1.component.id' => ['nullable', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:tool.id',],
+                'newJob1.tool'   => 'nullable|array',
+                'newJob1.tool.id' => ['nullable', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:component.id', 'different:base.id',],
+                'newJob1.projects'   => 'nullable|array',
+                'newJob1.projects.*.id' => 'nullable|integer|exists:projects,id', // Validate each job ID
 
-        ], [
-            'base_id.required' => 'There must be a base',
-            'product_id.required' => 'There must be a product',
-        ]);
-        $job = DB::transaction(function () use ($validated) {
 
+                'newJob2' => [
+                    'required',
+                    'array',
+                ],
+                'newJob2.name' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    'different:newJob1.name',
+                    Rule::unique('jobs', 'name')->ignore($request['originalJob.id']), // Allows unchanged names
+                ],
+                'newJob2.base'   => 'required|array',
+                'newJob2.base.id' => ['required', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:tool.id',],
+                'newJob2.product'   => 'required|array',
+                'newJob2.product.id' => ['required', 'integer', 'exists:archetypes,id', 'different:base.id', 'different:component.id', 'different:tool.id',],
+                'newJob2.component'   => 'nullable|array',
+                'newJob2.component.id' => ['nullable', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:tool.id',],
+                'newJob2.tool'   => 'nullable|array',
+                'newJob2.tool.id' => ['nullable', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:component.id', 'different:base.id',],
+                'newJob2.projects'   => 'nullable|array',
+                'newJob2.projects.*.id' => 'nullable|integer|exists:projects,id', // Validate each job ID
+
+
+                'originalJob' => [
+                    'required',
+                    'array',
+                ],
+
+            ]);
             $user = Auth::user();
 
-            $validated['created_by'] = $user->id;
+            $newIntermediateArchetype = Archetype::findOrFail($validated['newIntermediateProduct']['id']);
+            Log::info('test' . $validated['originalJob']['id']);
 
-            $job = Job::create($validated);
+            $originalJob = Job::where('id', $validated['originalJob']['id'])->where('created_by', $user->id)->firstOrFail();
 
-            return $job;
+            $base1Id = $validated['newJob1']['base']['id'];
+            $product1Id = $validated['newJob1']['product']['id'];
+
+            if (isset($validated['newJob1']['component'])) {
+                $component1Data = $validated['newJob1']['component'];
+            }
+
+            if (isset($validated['newJob1']['tool'])) {
+                $tool1Data = $validated['newJob1']['tool'];
+            }
+            $newJob1 = Job::create([
+                'name' => $validated['newJob1']['name'],
+                'base_id' => $base1Id,
+                'product_id' => $product1Id,
+                'component_id' => $component1Data['id'] ?? null,
+                'tool_id' =>  $tool1Data['id'] ?? null,
+                'description' => $validated['newJob1']['description'] ?? null,
+                'created_by' => $user->id
+
+            ]);
+
+            $base2Id = $validated['newJob2']['base']['id'];
+            $product2Id = $validated['newJob2']['product']['id'];
+
+            if (isset($validated['newJob2']['component'])) {
+                $component2Data = $validated['newJob2']['component'];
+            }
+
+            if (isset($validated['newJob2']['tool'])) {
+                $tool2Data = $validated['newJob2']['tool'];
+            }
+            $newJob2 = Job::create([
+                'name' => $validated['newJob2']['name'],
+                'base_id' => $base2Id,
+                'product_id' => $product2Id,
+                'component_id' => $component2Data['id'] ?? null,
+                'tool_id' =>  $tool2Data['id'] ?? null,
+                'description' => $validated['newJob2']['description'] ?? null,
+                'created_by' => $user->id
+
+            ]);
+
+            $originalJob->load('projects');
+
+            $syncData1 = [];
+            foreach ($originalJob->projects as $project) {
+                $syncData1[$project->id] = ['order' => $project->pivot->order ?? 1]; // Include 'order' field
+            }
+
+            $syncData2 = [];
+            foreach ($originalJob->projects as $project) {
+                $syncData2[$project->id] = ['order' => $project->pivot->order ? $project->pivot->order + 1 : 2]; // Include 'order' field
+            }
+
+            // Sync projects with order field
+            $newJob1->projects()->sync($syncData1);
+            $newJob2->projects()->sync($syncData2);
+
+
+            $originalJob->delete();
+
+
+            return true;
         });
 
-        return response()->json($job);
+        $response['success'] = true;
+        $response['message'] = 'Job subdivided';
+
+        return response()->json($response);
     }
 
 
@@ -276,7 +369,12 @@ class JobController extends Controller
     {
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:jobs',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('jobs')->ignore($id), // Allows unchanged names
+            ],
             'base'   => 'required|array',
             'base.id' => ['required', 'integer', 'exists:archetypes,id', 'different:product.id', 'different:tool.id',],
             'product'   => 'required|array',
@@ -313,7 +411,6 @@ class JobController extends Controller
                 $toolData = $validated['tool'];
             }
 
-            Log::info('Base Data:', ['base_id' => $baseId ?? null]);
             $job = Job::findOrFail($id);
             $job->name = $validated['name'];
             $job->base_id = $baseId;

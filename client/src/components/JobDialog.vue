@@ -252,7 +252,7 @@ const onOpen = async () => {
 const onClose = () => {};
 
 const save = async () => {
-  const newJob = await jobStore.putJob(localJob.value);
+  const data = await jobStore.putJob(localJob.value);
 
   if (responseStore.response.success) {
     dialog.value = false;

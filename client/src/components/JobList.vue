@@ -111,6 +111,7 @@
           <LoginDialog v-else />
 
           <DeleteJobDialog :job="item" v-if="userStore.user" />
+          <SubdivideJobDialog :job="item" v-if="userStore.user" />
 
         </template>
 
@@ -133,7 +134,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import { useArchetypeStore } from "@/stores/archetype";
 import { useJobStore } from "@/stores/job";
 import { useProjectStore } from "@/stores/project";
@@ -145,6 +146,7 @@ import debounce from "lodash/debounce";
 import { useDisplay } from "vuetify";
 import LoginDialog from "./LoginDialog.vue";
 import DeleteJobDialog from "./DeleteJobDialog.vue";
+import SubdivideJobDialog from "./SubdivideJobDialog.vue";
 
 const { mobile } = useDisplay();
 
@@ -153,7 +155,6 @@ const jobStore = useJobStore();
 const projectStore = useProjectStore();
 const userStore = useUserStore();
 
-const router = useRouter();
 
 const apiHost = process.env.VUE_APP_API_HOST;
 const environment = process.env.VUE_APP_ENVIRONMENT;
@@ -163,12 +164,6 @@ const baseURL =
 
 const fullImageUrl = (imagePath) => {
   return `${baseURL}/${imagePath}`;
-};
-
-const isJobDialogOpen = ref(false);
-
-const onJobDialogOpen = () => {
-  fetchSomeData();
 };
 
 const headers = [
@@ -244,11 +239,5 @@ const debouncedAutocompleteProjectSearch = debounce(
 </script>
 
 <style>
-.custom-dialog .v-overlay__content {
-  pointer-events: none;
-}
 
-.custom-dialog .v-card {
-  pointer-events: auto;
-}
 </style>

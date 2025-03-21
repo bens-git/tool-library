@@ -25,30 +25,45 @@
                   v-model="newJob1.name"
                   label="New Job Name #1"
                   :error-messages="
-                    responseStore.response?.errors?.new_job_name_1
+                    responseStore.response?.errors?.new_job_1_name
                   "
-                ></v-text-field> </v-col></v-row
-            ><v-row
-              ><v-col><DisplayJob :job="job" /></v-col
+                ></v-text-field> </v-col
+            ></v-row>
+            <v-row
+              ><v-col>
+                <v-autocomplete
+                  density="compact"
+                  v-model="newJob1.tool"
+                  :items="tools"
+                  label="Job 1 Tool"
+                  item-title="name"
+                  item-value="id"
+                  :return-object="true"
+                  @update:search="debouncedAutocompleteTool1Search"
+                  :error-messages="responseStore.response?.errors?.job_1_tool"
+                ></v-autocomplete> </v-col
+            ></v-row>
+            <v-row
+              ><v-col><DisplayJob :job="newJob1" /></v-col
             ></v-row>
           </v-col>
           <v-col>
             <v-autocomplete
               density="compact"
               v-model="newIntermediateProduct"
-              :items="materials"
+              :items="autocompleteIntermediateProducts"
               label="New Intermediate Product"
               item-title="name"
               item-value="id"
               :return-object="true"
-              @update:search="debouncedAutocompleteProductSearch"
-              :error-messages="responseStore.response?.errors?.product_id"
+              @update:search="debouncedAutocompleteIntermediateProductSearch"
+              :error-messages="responseStore.response?.errors?.newIntermediateProduct"
             ></v-autocomplete>
 
             <ArchetypeDialog
               aim="create"
               resource="MATERIAL"
-              @created="refreshMaterials()"
+              @created="debouncedAutocompleteIntermediateProductSearch()"
             />
           </v-col>
           <v-col>
@@ -59,11 +74,26 @@
                   v-model="newJob2.name"
                   label="New Job Name #2"
                   :error-messages="
-                    responseStore.response?.errors?.new_job_name_2
+                    responseStore.response?.errors?.new_job_2_name
                   "
-                ></v-text-field> </v-col></v-row
-            ><v-row
-              ><v-col><DisplayJob :job="job" /></v-col
+                ></v-text-field> </v-col
+            ></v-row>
+            <v-row
+              ><v-col>
+                <v-autocomplete
+                  density="compact"
+                  v-model="newJob2.tool"
+                  :items="tools"
+                  label="Job 2 Tool"
+                  item-title="name"
+                  item-value="id"
+                  :return-object="true"
+                  @update:search="debouncedAutocompleteTool2Search"
+                  :error-messages="responseStore.response?.errors?.job_2_tool"
+                ></v-autocomplete> </v-col
+            ></v-row>
+            <v-row
+              ><v-col><DisplayJob :job="newJob2" /></v-col
             ></v-row>
           </v-col>
         </v-row>
@@ -106,13 +136,9 @@ const newJob1 = ref(null);
 const newJob2 = ref(null);
 const tools = ref([]);
 const materials = ref([]);
-const projects = ref([]);
-const autocompleteBases = ref([]);
-const autocompleteComponents = ref([]);
-const autocompleteProducts = ref([]);
-const autocompleteTools = ref([]);
-const newJobName1 = ref("");
-const newJobName2 = ref("");
+const autocompleteTools1 = ref([]);
+const autocompleteTools2 = ref([]);
+const autocompleteIntermediateProducts = ref([]);
 const newIntermediateProduct = ref(null);
 
 const props = defineProps({
@@ -144,44 +170,40 @@ const initializeLocalJob = () => {
     };
 
     newJob1.value.name = localJob.value.name + " A";
-    newJob2.value.name = localJob.value.name + " B";
+    newJob1.value.product = newIntermediateProduct.value;
+    newJob1.value.tool = localJob.value.tool;
+    newJob1.value.product = newIntermediateProduct.value;
+    newJob2.value.base = newIntermediateProduct.value;
+    newJob2.value.tool = null;
   }
 };
 
-// const emit = defineEmits(["update:modelValue", "close"]);
-const refreshMaterials = async () => {
-  materials.value = await archetypeStore.fetchAutocompleteArchetypes(
-    null,
-    "MATERIAL"
-  );
-
-  //remove original base
-  materials.value = materials.value.filter(
-    (material) =>
-      material.id !== localJob?.value?.base.id &&
-      material.id !== localJob?.value?.product?.id &&
-      material.id !== localJob?.value?.component?.id
-  );
-};
-
-const refreshTools = async () => {
-  tools.value = await archetypeStore.fetchAutocompleteArchetypes(null, "TOOL");
-};
+watch(
+  () => newIntermediateProduct.value,
+  (newVal) => {
+    if (newVal) {
+      console.log('new int prod')
+      newJob1.value.product = newIntermediateProduct.value;
+      newJob2.value.base = newIntermediateProduct.value;
+    }
+  }
+);
 
 const onOpen = async () => {
   responseStore.$reset();
 
   initializeLocalJob();
 
-  await refreshMaterials();
-  await refreshTools();
-
-  autocompleteBases.value = await archetypeStore.fetchAutocompleteArchetypes();
-  autocompleteComponents.value =
-    await archetypeStore.fetchAutocompleteArchetypes();
-  autocompleteProducts.value =
-    await archetypeStore.fetchAutocompleteArchetypes();
-  autocompleteTools.value = await archetypeStore.fetchAutocompleteArchetypes();
+  autocompleteIntermediateProducts.value =
+    await archetypeStore.fetchAutocompleteArchetypes(null, "MATERIAL");
+  autocompleteTools1.value = await archetypeStore.fetchAutocompleteArchetypes(
+    null,
+    "TOOL"
+  );
+  autocompleteTools2.value = await archetypeStore.fetchAutocompleteArchetypes(
+    null,
+    "TOOL"
+  );
 };
 
 const onClose = () => {};
@@ -191,7 +213,7 @@ const subdivide = async () => {
     originalJob: localJob.value,
     newJob1: newJob1.value,
     newJob2: newJob2.value,
-    newIntermediateProduct: newIntermediateProduct.value
+    newIntermediateProduct: newIntermediateProduct.value,
   });
 
   if (data?.success) {
@@ -200,62 +222,36 @@ const subdivide = async () => {
 };
 
 // Autocomplete product Search handler
-const onAutocompleteProductSearch = async (query) => {
-  autocompleteProducts.value =
-    await archetypeStore.fetchAutocompleteArchetypes(query);
-
-  //remove original base
-  autocompleteProducts.value = autocompleteProducts.value.filter(
-    (product) => product.id !== localJob.value.base.id
-  );
-};
-
-// Autocomplete component Search handler
-const onAutocompleteComponentSearch = async (query) => {
-  autocompleteComponents.value =
-    await archetypeStore.fetchAutocompleteArchetypes(query);
-};
-
-// Autocomplete component Search handler
-const onAutocompleteBaseSearch = async (query) => {
-  autocompleteBases.value =
+const onAutocompleteIntermediateProductSearch = async (query) => {
+  autocompleteIntermediateProducts.value =
     await archetypeStore.fetchAutocompleteArchetypes(query);
 };
 
 // Autocomplete tool Search handler
-const onAutocompleteToolSearch = async (query) => {
-  autocompleteTools.value =
+const onAutocompleteTools1Search = async (query) => {
+  autocompleteTools1.value =
     await archetypeStore.fetchAutocompleteArchetypes(query);
 };
 
-// Autocomplete product Search handler
-const onAutocompleteProjectSearch = async (query) => {
-  autocompleteProduct.value =
-    await projectStore.fetchAutocompleteProjects(query);
+// Autocomplete tool Search handler
+const onAutocompleteTools2Search = async (query) => {
+  autocompleteTools2.value =
+    await archetypeStore.fetchAutocompleteArchetypes(query);
 };
 
 // Debounced search function
-const debouncedAutocompleteProductSearch = _.debounce(
-  onAutocompleteProductSearch,
-  300
-);
-const debouncedAutocompleteComponentSearch = _.debounce(
-  onAutocompleteComponentSearch,
+const debouncedAutocompleteIntermediateProductSearch = _.debounce(
+  onAutocompleteIntermediateProductSearch,
   300
 );
 
-const debouncedAutocompleteBaseSearch = _.debounce(
-  onAutocompleteBaseSearch,
+const debouncedAutocompleteTool1Search = _.debounce(
+  onAutocompleteTools1Search,
   300
 );
 
-const debouncedAutocompleteToolSearch = _.debounce(
-  onAutocompleteToolSearch,
-  300
-);
-
-const debouncedAutocompleteProjectSearch = _.debounce(
-  onAutocompleteProjectSearch,
+const debouncedAutocompleteTool2Search = _.debounce(
+  onAutocompleteTools2Search,
   300
 );
 </script>
