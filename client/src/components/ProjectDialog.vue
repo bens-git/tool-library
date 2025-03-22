@@ -36,7 +36,6 @@
               ></v-textarea>
             </v-col>
 
-            
             <v-col cols="12" md="4" sm="6">
               <v-select
                 density="compact"
@@ -50,8 +49,7 @@
               ></v-select>
 
               <v-btn
-              prepend-icon="mdi-plus"
-
+                prepend-icon="mdi-plus"
                 color="primary"
                 text="Add Job to Project"
                 variant="tonal"
@@ -67,10 +65,9 @@
                 @created="refreshJobs()"
               />
             </v-col>
-            </v-row>
-            <v-row>
-
-            <v-col >
+          </v-row>
+          <v-row>
+            <v-col>
               <v-alert
                 color="error"
                 v-if="responseStore.response?.errors?.jobs"
@@ -97,20 +94,18 @@
 
                   <template v-slot:prepend="{}">
                     <v-list-item-action class="flex-column align-end">
+                      <v-btn
+                        v-if="job.id == finalJob.id"
+                        prepend-icon="mdi-delete"
+                        color="error"
+                        text="Remove"
+                        variant="tonal"
+                        block
+                        @click="removeFinalJob"
+                      ></v-btn>
+                      <JobDialog :job="job" :isEdit="true" @saved="refreshProject" />
+                      <SubdivideJobDialog :job="job" />
 
-                        <v-btn
-                          v-if="job.id == finalJob.id"
-                          prepend-icon="mdi-delete"
-
-                          color="error"
-                          text="Remove"
-                          variant="tonal"
-                          block
-                          @click="removeFinalJob"
-                        ></v-btn>
-                        <JobDialog :job="job" :isEdit="true"/>
-                        <SubdivideJobDialog :job="job" />
-                   
                       <v-spacer></v-spacer>
                     </v-list-item-action>
                   </template>
@@ -180,12 +175,9 @@ watch(dialog, (newVal) => {
   }
 });
 
-// Function to initialize
-const initializeLocalProject = () => {
+const refreshProject = async () => {
   if (props.isEdit && props.project) {
-    localProject.value = {
-      ...props.project,
-    };
+    localProject.value = await projectStore.show(props.project.id);
   } else {
     localProject.value = {
       name: "",
@@ -194,6 +186,11 @@ const initializeLocalProject = () => {
       created_by: null,
     };
   }
+};
+
+// Function to initialize
+const initializeLocalProject = () => {
+  refreshProject();
 };
 
 const finalJob = computed(() => {

@@ -109,6 +109,64 @@ class ProjectController extends Controller
 
 
 
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        $project = Project::with(['creator', 'jobs', 'jobs.base', 'jobs.component', 'jobs.product', 'finalJob'])->find($id);
+
+        $productId = null;
+
+        $finalJob = $project->finalJob()->first();
+
+        if ($finalJob) {
+            $productId = $finalJob->product_id;
+        }
+
+        // Fetch random item images for archetypes missing archetype images
+        $itemImages = DB::table('item_images')
+            ->select('items.archetype_id', DB::raw('MIN(item_images.id) as id'), DB::raw('MIN(item_images.path) as path'))
+            ->join('items', 'items.id', '=', 'item_images.item_id')
+            ->where('items.archetype_id', $productId)
+            ->groupBy('items.archetype_id')
+            ->inRandomOrder()
+            ->get()
+            ->keyBy('archetype_id');
+
+        $images = [];
+        // Merge in the item images where archetype images are missing
+        foreach ($itemImages as $archetypeId => $image) {
+            if (!isset($images[$archetypeId])) {
+                $images[$archetypeId] = [
+                    [
+                        'id' => $image->id,
+                        'path' => '/storage/' . $image->path
+                    ]
+                ];
+            }
+        }
+
+
+
+
+        if ($finalJob && $finalJob->product_id) {
+
+            if (isset($images[$finalJob->product_id])) {
+                $project['images'] = $images[$finalJob->product_id];
+            }
+        }
+
+
+
+        // Return response
+        return response()->json([
+            'success' => true,
+            'data' => $project
+        ]);
+    }
 
 
     /**

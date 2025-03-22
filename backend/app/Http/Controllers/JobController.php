@@ -122,6 +122,55 @@ class JobController extends Controller
 
 
 
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+
+        $job = Job::with(['creator', 'base', 'component', 'tool', 'product', 'projects'])->find($id);
+
+
+        $productId = $job->product_id;
+
+        // Fetch random item images for archetypes missing archetype images
+        $itemImages = DB::table('item_images')
+            ->select('items.archetype_id', DB::raw('MIN(item_images.id) as id'), DB::raw('MIN(item_images.path) as path'))
+            ->join('items', 'items.id', '=', 'item_images.item_id')
+            ->where('items.archetype_id', $productId)
+            ->groupBy('items.archetype_id')
+            ->inRandomOrder()
+            ->get()
+            ->keyBy('archetype_id');
+
+
+        $images = [];
+        // Merge in the item images where archetype images are missing
+        foreach ($itemImages as $archetypeId => $image) {
+            if (!isset($images[$archetypeId])) {
+                $images[$archetypeId] = [
+                    [
+                        'id' => $image->id,
+                        'path' => '/storage/' . $image->path
+                    ]
+                ];
+            }
+        }
+
+
+        // Combine archetypes with their images
+        $job['images'] = $images[$job['product_id']] ?? null;
+
+
+
+        // Return response
+        return response()->json([
+            'success' => true,
+            'data' => $job
+        ]);
+    }
 
 
 

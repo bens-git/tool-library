@@ -88,7 +88,7 @@
               aim="edit"
               resource="MATERIAL"
               :archetype="localJob.product"
-              @modified="refreshMaterials()"
+              @saved="[refreshMaterials(), refreshJob()]"
             />
           </v-col>
 
@@ -194,27 +194,9 @@ watch(dialog, (newVal) => {
     onClose();
   }
 });
-const emit = defineEmits(["created"]);
+const emit = defineEmits(["created", "saved"]);
 
-// Function to initialize
-const initializeLocalJob = () => {
-  if (props.isEdit && props.job) {
-    localJob.value = {
-      ...props.job,
-    };
-  } else {
-    localJob.value = {
-      name: "",
-      description: "",
-      material_ids: [],
-      base: props.base,
-      product: null,
-      tool: null,
-      created_by: null,
-      image_path: null,
-    };
-  }
-};
+
 
 // const emit = defineEmits(["update:modelValue", "close"]);
 const refreshMaterials = async () => {
@@ -232,6 +214,23 @@ const refreshProjects = async () => {
   projects.value = await projectStore.fetchAutocompleteProjects();
 };
 
+const refreshJob = async () => {
+  if (props.isEdit && props.job) {
+    localJob.value = await jobStore.show(props.job.id);
+  } else {
+    localJob.value = {
+      name: "",
+      description: "",
+      material_ids: [],
+      base: props.base,
+      product: null,
+      tool: null,
+      created_by: null,
+      image_path: null,
+    };
+  }
+};
+
 const onOpen = async () => {
   responseStore.$reset();
   //   tools.resource = "TOOL";
@@ -240,7 +239,7 @@ const onOpen = async () => {
   await refreshMaterials();
   await refreshTools();
   await refreshProjects();
-  initializeLocalJob();
+  await refreshJob();
   autocompleteBases.value = await archetypeStore.fetchAutocompleteArchetypes();
   autocompleteComponents.value =
     await archetypeStore.fetchAutocompleteArchetypes();
@@ -256,6 +255,7 @@ const save = async () => {
   const data = await jobStore.putJob(localJob.value);
 
   if (responseStore.response.success) {
+    emit("saved");
     dialog.value = false;
   }
 };

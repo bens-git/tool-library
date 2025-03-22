@@ -61,7 +61,11 @@ export const useProjectStore = defineStore("project", {
 
     async putProject(formData) {
       const { sendRequest } = useApi();
-      const data = await sendRequest(`projects/${formData.id}`, "PUT", formData);
+      const data = await sendRequest(
+        `projects/${formData.id}`,
+        "PUT",
+        formData
+      );
 
       if (data?.success) {
         this.fetchProjects();
@@ -74,6 +78,13 @@ export const useProjectStore = defineStore("project", {
       const data = await sendRequest(`projects/${id}`, "DELETE");
 
       this.fetchProjects();
+    },
+
+    async show(id) {
+      const { fetchRequest } = useApi();
+      const data = await fetchRequest(`projects/${id}`);
+
+      return data?.data;
     },
   },
 });

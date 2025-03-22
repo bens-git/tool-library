@@ -166,7 +166,7 @@ const initializeLocalArchetype = () => {
   }
 };
 
-const emit = defineEmits(["created"]);
+const emit = defineEmits(["created", "saved"]);
 
 const onOpen = async () => {
   await categoryStore.fetchCategories();
@@ -183,6 +183,7 @@ const save = async () => {
   const data = await archetypeStore.saveMyArchetype(localArchetype.value);
 
   if (data.success) {
+    emit("saved");
     dialog.value = false;
   }
 };

@@ -42,7 +42,9 @@ Route::get('/archetypes-with-items', [ArchetypeController::class, 'getArchetypes
 Route::get('/archetypes', [ArchetypeController::class, 'index']);
 Route::get('/archetypes/{id}', [ArchetypeController::class, 'show']);
 Route::get('/projects', [ProjectController::class, 'index']);
+Route::get('/projects/{id}', [ProjectController::class, 'show']);
 Route::get('/jobs', [JobController::class, 'index']);
+Route::get('/jobs/{id}', [JobController::class, 'show']);
 
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/usages', [ArchetypeController::class, 'getUsages']);
@@ -90,7 +92,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/update-category/{id}', [CategoryController::class, 'update']);
     Route::post('/update-usage/{id}', [UsageController::class, 'update']);
     Route::post('/usages', [UsageController::class, 'store']);
-    
+
     Route::put('/me', [AuthController::class, 'update']);
     Route::put('/jobs/{id}', [JobController::class, 'update']);
     Route::put('/projects/{id}', [ProjectController::class, 'update']);

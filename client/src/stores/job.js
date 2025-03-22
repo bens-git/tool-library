@@ -98,5 +98,11 @@ export const useJobStore = defineStore("job", {
 
       this.fetchJobs();
     },
+
+    async show(id) {
+      const { fetchRequest } = useApi();
+      const data = await fetchRequest(`jobs/${id}`);
+      return data?.data;
+    },
   },
 });
