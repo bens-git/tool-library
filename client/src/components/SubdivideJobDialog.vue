@@ -34,7 +34,7 @@
                 <v-autocomplete
                   density="compact"
                   v-model="newJob1.tool"
-                  :items="tools"
+                  :items="autocompleteTools1"
                   label="Job 1 Tool"
                   item-title="name"
                   item-value="id"
@@ -83,7 +83,7 @@
                 <v-autocomplete
                   density="compact"
                   v-model="newJob2.tool"
-                  :items="tools"
+                  :items="autocompleteTools2"
                   label="Job 2 Tool"
                   item-title="name"
                   item-value="id"
