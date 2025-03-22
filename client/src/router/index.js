@@ -12,6 +12,7 @@ import MyJobs from "@/components/MyJobs.vue";
 import MyProjects from "@/components/MyProjects.vue";
 import MyRentals from "@/components/MyRentals.vue";
 import MyLoans from "@/components/MyLoans.vue";
+import LinkWithDiscordForm from "@/components/LinkWithDiscordForm.vue";
 import DiscordResponse from "@/components/DiscordResponse.vue";
 import { useUserStore } from "@/stores/user"; // Adjust the import path as necessary
 
@@ -34,7 +35,11 @@ const routes = [
     component: JobList,
   },
 
-
+  {
+    path: "/route-to-discord-link",
+    name: "route-to-discord-link",
+    component: LinkWithDiscordForm,
+  },
 
   {
     path: "/discord-response",
