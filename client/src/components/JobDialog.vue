@@ -194,6 +194,7 @@ watch(dialog, (newVal) => {
     onClose();
   }
 });
+const emit = defineEmits(["created"]);
 
 // Function to initialize
 const initializeLocalJob = () => {
@@ -263,6 +264,7 @@ const create = async () => {
   const newJob = await jobStore.postJob(localJob.value);
 
   if (responseStore.response.success) {
+    emit("created");
     dialog.value = false;
   }
 };
