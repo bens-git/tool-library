@@ -3,7 +3,6 @@
     <template v-slot:activator="{ props: activatorProps }">
       <v-btn
         color="error"
-        class="text-none font-weight-regular"
         prepend-icon="mdi-delete"
         text="Delete Archetype"
         variant="tonal"
