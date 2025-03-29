@@ -281,19 +281,19 @@ class ArchetypeController extends Controller
 
         if (!empty($resource)) {
             $query->where(function ($query) use ($resource) {
-                $query->where('archetypes.resource', '=',  $resource );
+                $query->where('archetypes.resource', '=',  $resource);
             });
         }
 
         if (!empty($categoryId)) {
             $query->where(function ($query) use ($categoryId) {
-                $query->where('archetype_category.category_id', '=',  $categoryId );
+                $query->where('archetype_category.category_id', '=',  $categoryId);
             });
         }
 
         if (!empty($usageId)) {
             $query->where(function ($query) use ($usageId) {
-                $query->where('archetype_usage.usage_id', '=',  $usageId );
+                $query->where('archetype_usage.usage_id', '=',  $usageId);
             });
         }
 
@@ -390,6 +390,27 @@ class ArchetypeController extends Controller
 
 
 
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+
+        $archetype = Archetype::with(['categories', 'usages'])->findOrFail($id);
+
+
+
+        // Return response
+        return response()->json([
+            'success' => true,
+            'data' => $archetype
+        ]);
+    }
+
+
+
 
     /**
      * Store a newly created resource in storage.
@@ -460,7 +481,7 @@ class ArchetypeController extends Controller
 
 
         // Preprocess the inputs to convert comma-separated strings into arrays
-        if ($request->has('category_ids') && is_string($request->input('category_ids'))) {
+        if ($request->has('categories') && is_string($request->input('category_ids'))) {
             $request->merge([
                 'category_ids' => array_map('intval', explode(',', $request->input('category_ids')))
             ]);
@@ -478,27 +499,42 @@ class ArchetypeController extends Controller
             'description' => 'nullable|string|max:1000',
             'notes' => 'nullable|string|max:1000',
             'code' => 'nullable|string|max:255',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'integer|exists:categories,id',
-            'usage_ids' => 'nullable|array',
-            'usage_ids.*' => 'integer|exists:usages,id',
+            'categories'   => 'nullable|array',
+            'categories.*.id' => 'nullable|integer|exists:categories,id', // Validate each job ID
+            'usages'   => 'nullable|array',
+            'usages.*.id' => 'nullable|integer|exists:usages,id', // Validate each job ID
+
 
         ]);
 
         $archetype = DB::transaction(function () use ($request, $id) {
 
             $archetype = Archetype::findOrFail($id);
-            $archetype->fill($request->except('newImages', 'removedImages'));
+            $archetype->fill($request->all());
             $archetype->save();
 
             // Sync categories and usages
-            if ($request->has('category_ids')) {
-                $archetype->categories()->sync($request->input('category_ids'));
+
+            if (isset($request['categories']) && is_array($request['categories'])) {
+                $categoryIds = array_map(function ($category) {
+                    return $category['id'];
+                }, $request['categories']);
+
+                // Sync the projects to the job
+                $archetype->categories()->sync($categoryIds);
             }
 
-            if ($request->has('usage_ids')) {
-                $archetype->usages()->sync($request->input('usage_ids'));
+
+            if (isset($request['usages']) && is_array($request['usages'])) {
+                $usageIds = array_map(function ($usage) {
+                    return $usage['id'];
+                }, $request['usages']);
+
+                // Sync the projects to the job
+                $archetype->usages()->sync($usageIds);
             }
+
+
 
             return $archetype;
         });

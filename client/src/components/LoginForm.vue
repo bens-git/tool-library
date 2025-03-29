@@ -58,7 +58,7 @@ const login = async () => {
   const data = await userStore.login(email.value, password.value);
   if (data?.success) {
     emit("logged_in");
-    router.push({ name: "archetype-list" }); // Use router to navigate to login page after logout
+    router.push({ name: "item-list" }); // Use router to navigate to login page after logout
   }
 };
 </script>

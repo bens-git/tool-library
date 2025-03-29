@@ -108,7 +108,7 @@ class CategoryController extends Controller
 
         $category = Category::create($validated);
 
-        return response()->json(['success' => true, 'data' => $category, 'message' => 'Archetype created']);
+        return response()->json(['success' => true, 'data' => $category, 'message' => 'Category created']);
     }
 
 
@@ -133,7 +133,7 @@ class CategoryController extends Controller
 
 
 
-        return response()->json(['success' => true, 'data' => $category, 'message' => 'Archetype created']);
+        return response()->json(['success' => true, 'data' => $category, 'message' => 'Category updated']);
     }
 
     /**

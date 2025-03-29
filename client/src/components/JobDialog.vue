@@ -200,18 +200,18 @@ const emit = defineEmits(["created", "saved"]);
 
 // const emit = defineEmits(["update:modelValue", "close"]);
 const refreshMaterials = async () => {
-  materials.value = await archetypeStore.fetchAutocompleteArchetypes(
+  materials.value = await archetypeStore.indexForAutocomplete(
     null,
     "MATERIAL"
   );
 };
 
 const refreshTools = async () => {
-  tools.value = await archetypeStore.fetchAutocompleteArchetypes(null, "TOOL");
+  tools.value = await archetypeStore.indexForAutocomplete(null, "TOOL");
 };
 
 const refreshProjects = async () => {
-  projects.value = await projectStore.fetchAutocompleteProjects();
+  projects.value = await projectStore.indexForAutocomplete();
 };
 
 const refreshJob = async () => {
@@ -233,20 +233,17 @@ const refreshJob = async () => {
 
 const onOpen = async () => {
   responseStore.$reset();
-  //   tools.resource = "TOOL";
-  // tools.value = (await archetypeStore.fetchArchetypes()).data;
-  // tools.resource = "MATERIAL";
   await refreshMaterials();
   await refreshTools();
   await refreshProjects();
   await refreshJob();
-  autocompleteBases.value = await archetypeStore.fetchAutocompleteArchetypes();
+  autocompleteBases.value = await archetypeStore.indexForAutocomplete();
   autocompleteComponents.value =
-    await archetypeStore.fetchAutocompleteArchetypes();
+    await archetypeStore.indexForAutocomplete();
   autocompleteProducts.value =
-    await archetypeStore.fetchAutocompleteArchetypes();
-  autocompleteTools.value = await archetypeStore.fetchAutocompleteArchetypes();
-  autocompleteProjects.value = await projectStore.fetchAutocompleteProjects();
+    await archetypeStore.indexForAutocomplete();
+  autocompleteTools.value = await archetypeStore.indexForAutocomplete();
+  autocompleteProjects.value = await projectStore.indexForAutocomplete();
 };
 
 const onClose = () => {};
@@ -272,31 +269,31 @@ const create = async () => {
 // Autocomplete product Search handler
 const onAutocompleteProductSearch = async (query) => {
   autocompleteProducts.value =
-    await archetypeStore.fetchAutocompleteArchetypes(query);
+    await archetypeStore.indexForAutocomplete(query);
 };
 
 // Autocomplete component Search handler
 const onAutocompleteComponentSearch = async (query) => {
   autocompleteComponents.value =
-    await archetypeStore.fetchAutocompleteArchetypes(query);
+    await archetypeStore.indexForAutocomplete(query);
 };
 
 // Autocomplete component Search handler
 const onAutocompleteBaseSearch = async (query) => {
   autocompleteBases.value =
-    await archetypeStore.fetchAutocompleteArchetypes(query);
+    await archetypeStore.indexForAutocomplete(query);
 };
 
 // Autocomplete tool Search handler
 const onAutocompleteToolSearch = async (query) => {
   autocompleteTools.value =
-    await archetypeStore.fetchAutocompleteArchetypes(query);
+    await archetypeStore.indexForAutocomplete(query);
 };
 
 // Autocomplete product Search handler
 const onAutocompleteProjectSearch = async (query) => {
   autocompleteProduct.value =
-    await projectStore.fetchAutocompleteProjects(query);
+    await projectStore.indexForAutocomplete(query);
 };
 
 // Debounced search function

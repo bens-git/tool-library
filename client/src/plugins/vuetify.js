@@ -23,5 +23,8 @@ export default createVuetify(
     // locale: 'en-CA',
     components: { VDateInput },
     directives,
-  },
+    display: {
+      mobileBreakpoint: "sm", // Check if this is set
+    },
+  }
 );

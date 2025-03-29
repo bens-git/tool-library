@@ -110,7 +110,7 @@ class BrandController extends Controller
 
         $brand = Brand::create($validated);
 
-        return response()->json(['success' => true, 'data' => $brand, 'message' => 'Archetype created']);
+        return response()->json(['success' => true, 'data' => $brand, 'message' => 'Brand created']);
     }
 
 
@@ -140,7 +140,7 @@ class BrandController extends Controller
         $brand->name = $request->name;
         $brand->save();
 
-        return response()->json(['success' => true, 'data' => $brand, 'message' => 'Archetype created']);
+        return response()->json(['success' => true, 'data' => $brand, 'message' => 'Brand created']);
     }
 
     /**

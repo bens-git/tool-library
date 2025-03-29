@@ -1,10 +1,11 @@
 <template>
   <v-container class="d-flex justify-center">
-    <v-card
-      title="Materials & Tools"
-      flat
-      style="min-width: 90vw; max-height: 88vh; min-height: 88vh"
-    >
+    <v-card flat style="min-width: 90vw; max-height: 88vh; min-height: 88vh">
+      <template #title>
+        <div class="d-flex justify-space-between align-center">
+          Archetypes
+        </div>
+      </template>
       <v-card-text>
         <v-row>
           <!-- Search Field -->
@@ -100,30 +101,26 @@
 
           <!-- Location Picker -->
           <v-col>
-            <v-text-field
-              density="compact"
-              label="Select location"
-              v-model="archetypeStore.address"
-              readonly
-              @click="openLocationPicker"
-            ></v-text-field>
+            <LocationDialog @setLocation="handleSetLocation" />
           </v-col>
 
-          <!-- Location Picker Dialog -->
-          <v-dialog v-model="locationPickerDialog" max-width="600px">
-            <v-card>
-              <v-card-title>Select Location on Map</v-card-title>
-              <v-card-text>
-                <!-- Use a map component for location selection -->
-                <LocationPicker @location-selected="handleLocationSelected" />
-              </v-card-text>
-              <v-card-actions>
-                <v-btn color="primary" @click="locationPickerDialog = false"
-                  >OK</v-btn
-                >
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
+          <v-col v-if="userStore.user">
+            <v-btn
+              @click="toggleOwned"
+              :color="showOwnedOnly ? 'primary' : 'default'"
+              variant="outlined"
+            >
+              <v-icon>{{
+                showOwnedOnly ? "mdi-check" : "mdi-filter-outline"
+              }}</v-icon>
+              Show Mine
+            </v-btn>
+          </v-col>
+
+          <v-col v-if="userStore.user">
+            <ArchetypeDialog aim="create" />
+          </v-col>
+
           <!-- Reset Button -->
           <v-col>
             <v-btn
@@ -152,9 +149,8 @@
         >
           <!-- Actions column -->
           <template v-slot:[`item.actions`]="{ item }">
-            <ArchetypeItemsDialog :archetype="item" v-if="userStore.user" />
-            <LoginDialog  v-else/>
-           
+            <ArchetypeDialog :archetype="item" v-if="userStore.user && item.created_by==userStore.user.id" />
+          
           </template>
 
           <!-- Image column -->
@@ -204,13 +200,13 @@ import { useArchetypeStore } from "@/stores/archetype";
 import { useUserStore } from "@/stores/user";
 import { useLocationStore } from "@/stores/location";
 import _ from "lodash";
-import ArchetypeItemsDialog from "./ArchetypeItemsDialog.vue";
 import { useRouter } from "vue-router";
-import LocationPicker from "./LocationPicker.vue"; // Import your location picker component
 import debounce from "lodash/debounce";
 import useApi from "@/stores/api";
 import { useDisplay } from "vuetify";
 import LoginDialog from "./LoginDialog.vue";
+import ArchetypeDialog from "./ArchetypeDialog.vue";
+import LocationDialog from "./LocationDialog.vue";
 
 const { mobile } = useDisplay();
 
@@ -224,13 +220,8 @@ const router = useRouter();
 
 const latitude = ref(null);
 const longitude = ref(null);
-const locationPickerDialog = ref(false);
 const autocompleteArchetypes = ref([]);
 const autocompleteBrands = ref([]);
-
-const openLocationPicker = () => {
-  locationPickerDialog.value = true;
-};
 
 const handleLocationSelected = ({ lat, lng }) => {
   latitude.value = lat;
@@ -303,11 +294,11 @@ const headers = [
 // Autocomplete Archetype Search handler
 const onAutocompleteArchetypeSearch = async (query) => {
   autocompleteArchetypes.value =
-    await archetypeStore.fetchAutocompleteArchetypes(query);
+    await archetypeStore.indexForAutocomplete(query);
 };
 const onAutocompleteBrandSearch = async (query) => {
   autocompleteBrands.value =
-    await brandStore.fetchAutocompleteSelectBrands(query);
+    await brandStore.indexForAutocomplete(query);
 };
 
 const debouncedAutocompleteArchetypeSearch = debounce(
@@ -320,15 +311,13 @@ const debouncedAutocompleteBrandSearch = debounce(
 );
 
 const debounceSearch = _.debounce(() => {
-  archetypeStore.fetchArchetypesWithItems();
+  archetypeStore.index();
 }, 300);
 
 const editArchetype = (archetype) => {
   selectedArchetype.value = archetype;
   dialog.value = true;
 };
-
-
 
 // Computed properties for date constraints
 const today = new Date();
@@ -369,8 +358,8 @@ watch(
   () => archetypeStore.location,
   async (newLocation) => {
     if (newLocation) {
-      // Call fetchArchetypes whenever location changes
-      archetypeStore.fetchArchetypesWithItems();
+      // Call index whenever location changes
+      archetypeStore.index();
     }
   }
 );
@@ -379,8 +368,8 @@ watch(
   () => archetypeStore.radius,
   async (newRadius) => {
     if (newRadius) {
-      // Call fetchArchetypes whenever location changes
-      archetypeStore.fetchArchetypesWithItems();
+      // Call index whenever location changes
+      archetypeStore.index();
     }
   }
 );
@@ -436,9 +425,21 @@ onMounted(async () => {
   categoryStore.fetchCategories();
   usageStore.fetchUsages();
   autocompleteArchetypes.value =
-    await archetypeStore.fetchAutocompleteArchetypes();
-  autocompleteBrands.value = await brandStore.fetchAutocompleteSelectBrands();
+    await archetypeStore.indexForAutocomplete();
+  autocompleteBrands.value = await brandStore.indexForAutocomplete();
 });
+
+const showOwnedOnly = ref(false);
+
+const toggleOwned = () => {
+  showOwnedOnly.value = !showOwnedOnly.value;
+};
+
+const handleSetLocation = (address, location, radius) => {
+  archetypeStore.itemListFilters.location = location;
+  itemStore.itemListFilters.radius = radius;
+  console.log("Received parameters:", address, location);
+};
 </script>
 
 <style>

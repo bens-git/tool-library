@@ -1,15 +1,14 @@
 <template>
-  <div class="pl-4 text-center">
     <v-dialog v-model="dialog" @open="onOpen">
       <template v-slot:activator="{ props: activatorProps }">
         <v-btn
           color="primary"
-          class="text-none font-weight-regular"
           prepend-icon="mdi-calendar"
           text="Item Availability"
           variant="tonal"
           v-bind="activatorProps"
           block
+          size="small"
         ></v-btn>
       </template>
       <v-card
@@ -62,7 +61,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
 </template>
 <script setup>
 import { shallowRef, ref, watch } from "vue";
@@ -97,7 +95,7 @@ const initialize = async () => {
 
   if (localItem.value.id) {
     try {
-      const dates = await itemStore.fetchItemUnavailableDates(
+      const dates = await itemStore.indexItemUnavailableDates(
         localItem.value.id
       );
       localItem.value.unavailableDates = dates;

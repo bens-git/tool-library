@@ -3,24 +3,27 @@ import EmailVerified from "@/components/EmailVerified.vue";
 import ArchetypeList from "@/components/ArchetypeList.vue";
 import ProjectList from "@/components/ProjectList.vue";
 import JobList from "@/components/JobList.vue";
-import MyItems from "@/components/MyItems.vue";
-import MyArchetypes from "@/components/MyArchetypes.vue";
-import MyCategories from "@/components/MyCategories.vue";
-import MyUsages from "@/components/MyUsages.vue";
-import MyBrands from "@/components/MyBrands.vue";
-import MyJobs from "@/components/MyJobs.vue";
-import MyProjects from "@/components/MyProjects.vue";
+import CategoryList from "@/components/CategoryList.vue";
+import UsageList from "@/components/UsageList.vue";
+import BrandList from "@/components/BrandList.vue";
 import MyRentals from "@/components/MyRentals.vue";
 import MyLoans from "@/components/MyLoans.vue";
 import LinkWithDiscordForm from "@/components/LinkWithDiscordForm.vue";
 import DiscordResponse from "@/components/DiscordResponse.vue";
 import { useUserStore } from "@/stores/user"; // Adjust the import path as necessary
+import ItemList from "@/components/ItemList.vue";
 
 const routes = [
   {
     path: "/archetype-list",
     name: "archetype-list",
     component: ArchetypeList,
+  },
+
+  {
+    path: "/item-list",
+    name: "item-list",
+    component: ItemList,
   },
 
   {
@@ -47,6 +50,11 @@ const routes = [
     component: DiscordResponse,
   },
 
+  {
+    path: "/login-form",
+    component: () => import("@/components/LoginForm.vue"),
+    meta: { requiresGuest: true }, // Only accessible if not logged in
+  },
 
   {
     path: "/request-password-reset-form",
@@ -60,52 +68,24 @@ const routes = [
   },
   
   {
-    path: "/my-items",
-    name: "my-items",
-    component: MyItems,
-    meta: { requiresAuth: true, requiresDiscord: true },
+    path: "/category-list",
+    name: "category-list",
+    component: CategoryList,
+    meta: { requiresDiscord: true },
   },
 
   {
-    path: "/my-archetypes",
-    name: "my-archetypes",
-    component: MyArchetypes,
-    meta: { requiresAuth: true, requiresDiscord: true },
+    path: "/usage-list",
+    name: "usage-list",
+    component: UsageList,
+    meta: { requiresDiscord: true },
   },
 
   {
-    path: "/my-categories",
-    name: "my-categories",
-    component: MyCategories,
-    meta: { requiresAuth: true, requiresDiscord: true },
-  },
-
-  {
-    path: "/my-usages",
-    name: "my-usages",
-    component: MyUsages,
-    meta: { requiresAuth: true, requiresDiscord: true },
-  },
-
-  {
-    path: "/my-brands",
-    name: "my-brands",
-    component: MyBrands,
-    meta: { requiresAuth: true, requiresDiscord: true },
-  },
-
-  {
-    path: "/my-jobs",
-    name: "my-jobs",
-    component: MyJobs,
-    meta: { requiresAuth: true, requiresDiscord: true },
-  },
-
-  {
-    path: "/my-projects",
-    name: "my-projects",
-    component: MyProjects,
-    meta: { requiresAuth: true, requiresDiscord: true },
+    path: "/brand-list",
+    name: "brand-list",
+    component: BrandList,
+    meta: { requiresDiscord: true },
   },
 
   {
@@ -122,7 +102,7 @@ const routes = [
   },
   {
     path: "/:catchAll(.*)",
-    redirect: "/archetype-list",
+    redirect: "/item-list",
   },
   {
     path: "/email-verified",
@@ -149,7 +129,7 @@ router.beforeEach((to, from, next) => {
     userStore.user
   ) {
     // Redirect to home page if user is already logged in
-    return next({ name: "archetype-list" });
+    return next({ name: "item-list" });
   }
 
   if (requiresAuth && !isAuthenticated) {

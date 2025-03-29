@@ -78,7 +78,7 @@ const initialize = async () => {
     ...props.item,
   };
 
-  await itemStore.fetchItemRentedDates(localItem.value);
+  await itemStore.indexItemRentedDates(localItem.value);
   rentedDates.value = itemStore.rentedDates; // Assuming rentedDates are stored in itemStore
 };
 

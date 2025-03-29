@@ -32,7 +32,6 @@
           <v-divider></v-divider>
   
           <v-card-actions>
-            {{responseStore}}
             <v-spacer></v-spacer>
   
             <v-btn text="Close" variant="plain" @click="dialog = false"></v-btn>
@@ -109,7 +108,7 @@
   };
   
   const save = async () => {
-    const data = await brandStore.updateBrand(localBrand.value);
+    const data = await brandStore.update(localBrand.value);
   
     if (data?.success) {
       dialog.value = false;
@@ -117,7 +116,7 @@
   };
   
   const create = async () => {
-    const data = await brandStore.createBrand(localBrand.value);
+    const data = await brandStore.store(localBrand.value);
     if (data?.success) {
       dialog.value = false;
     }

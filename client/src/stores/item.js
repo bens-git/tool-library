@@ -1,30 +1,25 @@
 import { defineStore } from "pinia";
 import apiClient from "@/axios";
-import { useResponseStore } from "./response";
+import { useUserStore } from "./user";
 import { useLoadingStore } from "./loading";
 import { useArchetypeStore } from "./archetype";
 import useApi from "@/stores/api";
 
 export const useItemStore = defineStore("item", {
   state: () => ({
-    myItemsListPage: 1,
-    myItemsListItemsPerPage: 10,
-    myItemsListSortBy: [{ key: "name", order: "asc" }],
-    myItemsListFilters: { archetypeId: null, brandId: null, search: null },
-    myItemsListItems: [],
-    myItemsListTotalItems: 0,
-
-    archetypeDialogItemListPage: 1,
-    archetypeDialogItemListItemsPerPage: 10,
-    archetypeDialogItemListSortBy: [{ key: "name", order: "asc" }],
-    archetypeDialogItemListFilters: {
+    itemListPage: 1,
+    itemListItemsPerPage: 10,
+    itemListSortBy: [{ key: "archetypes.name", order: "asc" }],
+    itemListFilters: {
       archetypeId: null,
       brandId: null,
       search: null,
-      dateRange: null,
+      radius: 10,
+      location: null,
+      userId: null,
     },
-    archetypeDialogItemListItems: [],
-    totalArchetypeDialogItemListItems: 0,
+    itemListItems: [],
+    itemListTotalItems: 0,
 
     resources: [],
     totalResources: 0,
@@ -33,54 +28,37 @@ export const useItemStore = defineStore("item", {
   }),
 
   actions: {
-    updateMyItemsListOptions({ page, itemsPerPage, sortBy }) {
-      this.myItemsListPage = page;
-      this.itemsPerPage = itemsPerPage;
-      this.myItemsListSortBy = sortBy;
+    async destroy(itemId) {
+      const { sendRequest } = useApi();
 
-      this.fetchMyItems();
+      const data = await sendRequest(`items/${itemId}`, "DELETE");
+      await this.index();
+      return data;
     },
 
-    async fetchArchetypeDialogItemListItems(archetypeId, location, radius) {
+    async index() {
       const { fetchRequest } = useApi();
-      const archetypeStore = useArchetypeStore();
 
-      const data = await fetchRequest("items", {
-        search: this.archetypeDialogItemListFilters.search,
-        dateRange: this.archetypeDialogItemListFilters.dateRange,
-        page: this.archetypeDialogItemsListPage,
-        itemsPerPage: this.archetypeDialogItemsListItemsPerPage,
-        sortBy: this.archetypeDialogItemsListSortBy,
-        archetypeId: archetypeId,
-        location: location,
-        radius: radius,
-        startDate: archetypeStore.dateRange[0],
-        endDate: archetypeStore.dateRange[archetypeStore.dateRange.length - 1],
+      const endPoint = this.itemListFilters.userId ? "me/items" : "/items";
+      const data = await fetchRequest(endPoint, {
+        page: this.itemListPage,
+        itemsPerPage: this.itemListItemsPerPage,
+        sortBy: this.itemListSortBy,
+        categoryId: this.itemListFilters.category?.id,
+        usageId: this.itemListFilters.usage?.id,
+        archetypeId: this.itemListFilters.archetypeId,
+        brandId: this.itemListFilters.brandId,
+        resource: this.itemListFilters.resource,
+        search: this.itemListFilters.search,
+        userId: this.itemListFilters.userId,
+        location: this.itemListFilters.location,
+        radius: this.itemListFilters.radius
       });
-      this.archetypeDialogItemListItems = data.data;
-      this.totalArchetypeDialogItemListItems = data.total;
+      this.itemListItems = data.data;
+      this.itemListTotalItems = data.total;
     },
 
-    async fetchMyItems() {
-      const { fetchRequest } = useApi();
-
-      const data = await fetchRequest(
-        "me/items", // API endpoint
-        {
-          page: this.myItemsListPage,
-          itemsPerPage: this.myItemsListItemsPerPage,
-          sortBy: this.myItemsListSortBy,
-          archetypeId: this.myItemsListFilters.archetypeId,
-          brandId: this.myItemsListFilters.brandId,
-          resource: this.myItemsListFilters.resource,
-          search: this.myItemsListFilters.search,
-        }
-      );
-      this.myItemsListItems = data.data;
-      this.myItemsListTotalItems = data.total;
-    },
-
-    async fetchItemUnavailableDates(itemId) {
+    async indexItemUnavailableDates(itemId) {
       const { fetchRequest } = useApi();
 
       const data = await fetchRequest(`items/${itemId}/unavailable-dates`);
@@ -111,7 +89,7 @@ export const useItemStore = defineStore("item", {
       return unavailableDates;
     },
 
-    async fetchItemRentedDates(itemId) {
+    async indexItemRentedDates(itemId) {
       const { fetchRequest } = useApi();
       const data = await fetchRequest(`items/${itemId}/rented-dates`);
 
@@ -137,13 +115,6 @@ export const useItemStore = defineStore("item", {
       const rentedDates = sortDatesAscending(data.data.map(localDateToUTC));
 
       return rentedDates;
-    },
-
-    async fetchResources() {
-      const { fetchRequest } = useApi();
-      const data = await fetchRequest(`resources`);
-      this.resources = data.data;
-      this.totalResources = data.total;
     },
 
     async bookRental(itemId, startDate, endDate) {
@@ -245,6 +216,7 @@ export const useItemStore = defineStore("item", {
 
       return itemCode;
     },
+
     outputReadableDateRange() {
       const archetypeStore = useArchetypeStore();
 
@@ -261,16 +233,19 @@ export const useItemStore = defineStore("item", {
       return `From: ${formatDate(archetypeStore.dateRange[0])} at 9:00 AM <br>
        To: ${formatDate(archetypeStore.dateRange[archetypeStore.dateRange.length - 1])} at 5:00 PM`;
     },
-    async createItem(itemData) {
+
+    async store(itemData) {
+      const userStore = useUserStore();
+
       const { sendRequest } = useApi();
 
       const data = await sendRequest(`items`, "POST", itemData);
-
-      await this.fetchMyItems();
+      this.itemListFilters.userId = userStore.user.id;
+      await this.index();
       return data;
     },
 
-    async updateMyItem(item) {
+    async update(item) {
       const { sendRequest } = useApi();
 
       const data = await sendRequest(
@@ -330,11 +305,12 @@ export const useItemStore = defineStore("item", {
       }
     },
 
-    async deleteItem(itemId) {
-      const { sendRequest } = useApi();
+    updateItemListOptions({ page, itemsPerPage, sortBy }) {
+      this.itemListPage = page;
+      this.itemListItemsPerPage = itemsPerPage;
+      this.itemListSortBy = sortBy;
 
-      await sendRequest(`items/${itemId}`, "DELETE");
-      await this.fetchMyItems();
+      this.index();
     },
   },
 });

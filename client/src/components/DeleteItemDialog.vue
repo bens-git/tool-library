@@ -1,41 +1,40 @@
 <template>
-  <div class="pl-4 text-center">
-    <v-dialog v-model="dialog" @open="onOpen">
-      <template v-slot:activator="{ props: activatorProps }">
+  <v-dialog v-model="dialog" @open="onOpen">
+    <template v-slot:activator="{ props: activatorProps }">
+      <v-btn
+        color="error"
+        prepend-icon="mdi-delete"
+        text="Delete Item"
+        variant="tonal"
+        v-bind="activatorProps"
+        block
+        size="small"
+
+      ></v-btn>
+    </template>
+    <v-card
+      v-if="localItem"
+      prepend-icon="mdi-delete"
+      title="Delete Item"
+      :subtitle="localItem.code"
+    >
+      <v-card-text> Are you sure you want to delete this item? </v-card-text>
+      <v-divider></v-divider>
+
+      <v-card-actions>
+        <v-spacer></v-spacer>
+
+        <v-btn text="Cancel" variant="plain" @click="dialog = false"></v-btn>
+
         <v-btn
           color="error"
-          class="text-none font-weight-regular"
-          prepend-icon="mdi-delete"
-          text="Delete Item"
+          text="Delete"
           variant="tonal"
-          v-bind="activatorProps"
-          block
+          @click="deleteItem"
         ></v-btn>
-      </template>
-      <v-card
-        v-if="localItem"
-        prepend-icon="mdi-delete"
-        title="Delete Item"
-        :subtitle="localItem.code"
-      >
-        <v-card-text> Are you sure you want to delete this item? </v-card-text>
-        <v-divider></v-divider>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-
-          <v-btn text="Cancel" variant="plain" @click="dialog = false"></v-btn>
-
-          <v-btn
-            color="error"
-            text="Delete"
-            variant="tonal"
-            @click="deleteItem"
-          ></v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-  </div>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 <script setup>
 import { shallowRef, ref, watch } from "vue";
@@ -79,8 +78,7 @@ const onOpen = async () => {
 const onClose = () => {};
 
 const deleteItem = () => {
-  console.log("delete");
-  itemStore.deleteItem(localItem.value.id);
+  itemStore.destroy(localItem.value.id);
   dialog.value = false;
 };
 </script>

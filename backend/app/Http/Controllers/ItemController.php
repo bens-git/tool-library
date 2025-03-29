@@ -13,6 +13,7 @@ use App\Models\Archetype;
 use App\Models\Brand;
 use App\Models\ItemUnavailableDate;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class ItemController extends Controller
 {
@@ -29,7 +30,6 @@ class ItemController extends Controller
         // Get request parameters
         $brandId = $request->input('brandId');
         $endDate = $request->input('endDate');
-        $hideOwn = $request->input('hideOwn');
         $itemsPerPage = $request->input('itemsPerPage', 10);
         $latitude = $request->input('location.lat');
         $longitude = $request->input('location.lng');
@@ -40,27 +40,69 @@ class ItemController extends Controller
         $sortBy = $request->input('sortBy');
         $startDate = $request->input('startDate');
         $archetypeId = $request->input('archetypeId');
+        $userId = $request->input('userId');
+        $categoryId = $request->input('categoryId');
+        $usageId = $request->input('usageId');
+
+        // show nothing until search
+        if (
+            !$latitude &&
+            !$longitude &&
+            !$brandId &&
+            !$endDate &&
+            !$resource &&
+            !$search &&
+            !$startDate &&
+            !$archetypeId &&
+            !$userId &&
+            !$categoryId &&
+            !$usageId
+        ) {
+            return response()->json([
+                'data' => [],
+                'total' => 0,
+            ]);
+        }
 
         // Build the query
-        $query = Item::with('archetype', 'brand')
+        $query = Item::with('archetype', 'archetype.categories', 'archetype.usages', 'brand')
             ->join('users', 'items.owned_by', '=', 'users.id')
             ->join('locations', 'users.location_id', '=', 'locations.id')
             ->join('archetypes', 'items.archetype_id', '=', 'archetypes.id')
+            ->leftJoin('archetype_category', 'items.archetype_id', '=', 'archetype_category.archetype_id')
+            ->leftJoin('archetype_usage', 'items.archetype_id', '=', 'archetype_usage.archetype_id')
             ->leftJoin('brands', 'items.brand_id', '=', 'brands.id');
 
-        // Apply archetype filter
         if (!empty($archetypeId)) {
-            $query->where('archetype_id', '=', $archetypeId);
+            $query->where('items.archetype_id', '=', $archetypeId);
         }
         // Apply brand filter
         if (!empty($brandId)) {
             $query->where('brand_id', '=', $brandId);
         }
 
+        // Apply category filter
+        if (!empty($categoryId)) {
+            $query->where('archetype_category.category_id', '=', $categoryId);
+        }
+
+         // Apply usage filter
+         if (!empty($usageId)) {
+            $query->where('archetype_usage.usage_id', '=', $usageId);
+        }
+
         // Apply resource filter
         if (!empty($resource)) {
             $query->where('archetypes.resource', '=', $resource);
         }
+
+        // Apply user filter
+        if (!empty($userId)) {
+            $user = Auth::user();
+            $query->where('owned_by', $user->id);
+        }
+
+
 
         if (!empty($search)) {
             $query->where(function ($query) use ($search) {
@@ -110,20 +152,8 @@ class ItemController extends Controller
             });
         }
 
-        // Check if the path is 'me/items' and filter by user if so
-        if ($request->path() == 'api/me/items') {
-            $user = $request->user();
-            $query->where('owned_by', $user->id);
-        }
 
-        // Hide own items if requested
-        if ($hideOwn) {
-            $user = Auth::user();
-            if (!$user) {
-                return response()->json(['message' => 'User not authenticated', 'error' => Response::HTTP_UNAUTHORIZED], 500);
-            }
-            $query->where('owned_by', '!=', $user->id);
-        }
+
 
         //Require discord user
         $query->where('users.discord_user_id', '!=', null);
@@ -132,7 +162,7 @@ class ItemController extends Controller
         $query->select(
             'items.code',
             'items.owned_by',
-            'archetype_id',
+            'items.archetype_id',
             'items.created_at',
             'items.description',
             'items.id',
@@ -282,21 +312,21 @@ class ItemController extends Controller
 
         ]);
 
-        $user = auth::user();
+        $user = Auth::user();
 
         $validated['created_by'] = $user->id;
 
         $item = Item::findOrFail($id);
 
 
-        DB::transaction(function () use ($request, $item) {
+        DB::transaction(function () use ($request, $item, $user) {
             // Assuming you have validated the request as shown earlier
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
 
                 // Generate a unique filename based on the current date and user ID
                 $timestamp = now()->format('YmdHis'); // Current date and time
-                $userId = auth()->id(); // Authenticated user's ID
+                $userId = $user->id; // Authenticated user's ID
                 $extension = $image->getClientOriginalExtension(); // Get the image's original extension
                 $filename = "{$timestamp}_{$userId}.{$extension}";
 
@@ -341,7 +371,6 @@ class ItemController extends Controller
 
         // Return response
         return response()->json($response);
-
     }
 
 

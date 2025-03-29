@@ -84,17 +84,39 @@ export default {
 </script>
 
 <style>
-html,
-body,
-#app {
+html, body, #app {
   height: 100%;
   margin: 0;
-  overflow: hidden !important; /* Disable vertical scrolling for the entire app */
+  overflow: hidden; /* Prevents scrolling on the full app */
 }
 
-.v-application {
+.v-container {
   height: 100%;
+}
+
+.v-card {
+  max-height: 100%;
+  max-width: 90vw;
+  height: 90vh; /* Adjusted to fit better */
+}
+
+.v-card-text {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto; /* Prevents overflow issues */
+}
+
+.v-data-table-server {
+  flex-grow: 1;
+  overflow: auto; /* Allows scrolling inside the table */
+}
+
+.v-dialog {
+  max-height: 90vh; /* Ensures dialog fits within viewport */
+  overflow: hidden; /* Prevents external scrolling issues */
   display: flex;
   flex-direction: column;
 }
+
 </style>

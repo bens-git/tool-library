@@ -422,6 +422,8 @@ class AuthController extends Controller
             'redirect_uri' => config('app.discord_redirect_uri'),
         ]);
 
+        Log::info(config('app.discord_redirect_uri'));
+
         $data = $response->json();
 
         if (!isset($data['access_token'])) {

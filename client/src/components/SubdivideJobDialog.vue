@@ -195,12 +195,12 @@ const onOpen = async () => {
   initializeLocalJob();
 
   autocompleteIntermediateProducts.value =
-    await archetypeStore.fetchAutocompleteArchetypes(null, "MATERIAL");
-  autocompleteTools1.value = await archetypeStore.fetchAutocompleteArchetypes(
+    await archetypeStore.indexForAutocomplete(null, "MATERIAL");
+  autocompleteTools1.value = await archetypeStore.indexForAutocomplete(
     null,
     "TOOL"
   );
-  autocompleteTools2.value = await archetypeStore.fetchAutocompleteArchetypes(
+  autocompleteTools2.value = await archetypeStore.indexForAutocomplete(
     null,
     "TOOL"
   );
@@ -224,19 +224,19 @@ const subdivide = async () => {
 // Autocomplete product Search handler
 const onAutocompleteIntermediateProductSearch = async (query) => {
   autocompleteIntermediateProducts.value =
-    await archetypeStore.fetchAutocompleteArchetypes(query);
+    await archetypeStore.indexForAutocomplete(query);
 };
 
 // Autocomplete tool Search handler
 const onAutocompleteTools1Search = async (query) => {
   autocompleteTools1.value =
-    await archetypeStore.fetchAutocompleteArchetypes(query);
+    await archetypeStore.indexForAutocomplete(query);
 };
 
 // Autocomplete tool Search handler
 const onAutocompleteTools2Search = async (query) => {
   autocompleteTools2.value =
-    await archetypeStore.fetchAutocompleteArchetypes(query);
+    await archetypeStore.indexForAutocomplete(query);
 };
 
 // Debounced search function

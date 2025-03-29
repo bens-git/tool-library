@@ -91,7 +91,7 @@ class UsageController extends Controller
 
         $usage = Usage::create($validated);
 
-        return response()->json(['success' => true, 'data' => $usage, 'message' => 'Archetype created']);
+        return response()->json(['success' => true, 'data' => $usage, 'message' => 'Usage created']);
     }
 
 
@@ -115,7 +115,7 @@ class UsageController extends Controller
 
 
 
-        return response()->json(['success' => true, 'data' => $usage, 'message' => 'Archetype created']);
+        return response()->json(['success' => true, 'data' => $usage, 'message' => 'Usage updated']);
     }
 
     /**

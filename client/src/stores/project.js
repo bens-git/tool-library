@@ -3,41 +3,42 @@ import useApi from "@/stores/api";
 
 export const useProjectStore = defineStore("project", {
   state: () => ({
-    projectsListProjects: [],
-    projectsListTotalProjects: 0,
-    projectsListSelectedProject: null,
-    projectsListFilters: { search: "" },
-    projectsListPage: 1,
-    projectsListItemsPerPage: 10,
-    projectsListSortBy: [{ key: "name", order: "asc" }],
+    projectListProjects: [],
+    projectListTotalProjects: 0,
+    projectListSelectedProject: null,
+    projectListFilters: { search: "", userId: null, archetype:null },
+    projectListPage: 1,
+    projectListItemsPerPage: 10,
+    projectListSortBy: [{ key: "name", order: "asc" }],
   }),
   getters: {},
 
   actions: {
-    updateProjectsListOptions({ page, itemsPerPage, sortBy }) {
-      this.projectsListPage = page;
-      this.projectsListItemsPerPage = itemsPerPage;
-      this.projectsListSortBy = sortBy;
+    async destroy(id) {
+      const { sendRequest } = useApi();
+      const data = await sendRequest(`projects/${id}`, "DELETE");
 
-      this.fetchProjects();
+      this.index();
+      return data;
     },
 
-    async fetchProjects() {
+    async index() {
       const { fetchRequest } = useApi();
       const data = await fetchRequest(
         "projects", // API endpoint
         {
-          page: this.projectsListPage,
-          itemsPerPage: this.projectsListItemsPerPage,
-          sortBy: this.projectsListSortBy,
-          search: this.projectsListFilters.search,
+          page: this.projectListPage,
+          itemsPerPage: this.projectListItemsPerPage,
+          sortBy: this.projectListSortBy,
+          search: this.projectListFilters.search,
         }
       );
-      this.projectsListProjects = data.data;
-      this.projectsListTotalProjects = data.total;
+      this.projectListProjects = data.data;
+      this.projectListTotalProjects = data.total;
+      return data;
     },
 
-    async fetchAutocompleteProjects(search, resource = null) {
+    async indexForAutocomplete(search, resource = null) {
       const { fetchRequest } = useApi();
 
       const projects = await fetchRequest("projects", {
@@ -50,16 +51,23 @@ export const useProjectStore = defineStore("project", {
       return projects.data;
     },
 
-    async postProject(formData) {
+    async show(id) {
+      const { fetchRequest } = useApi();
+      const data = await fetchRequest(`projects/${id}`);
+
+      return data?.data;
+    },
+
+    async store(formData) {
       const { sendRequest } = useApi();
       const data = await sendRequest(`projects`, "POST", formData);
       if (data?.success) {
-        this.fetchProjects();
-        return data;
+        this.index();
       }
+      return data;
     },
 
-    async putProject(formData) {
+    async update(formData) {
       const { sendRequest } = useApi();
       const data = await sendRequest(
         `projects/${formData.id}`,
@@ -68,23 +76,17 @@ export const useProjectStore = defineStore("project", {
       );
 
       if (data?.success) {
-        this.fetchProjects();
-        return data;
+        this.index();
       }
+      return data;
     },
 
-    async deleteProject(id) {
-      const { sendRequest } = useApi();
-      const data = await sendRequest(`projects/${id}`, "DELETE");
+    updateprojectListOptions({ page, itemsPerPage, sortBy }) {
+      this.projectListPage = page;
+      this.projectListItemsPerPage = itemsPerPage;
+      this.projectListSortBy = sortBy;
 
-      this.fetchProjects();
-    },
-
-    async show(id) {
-      const { fetchRequest } = useApi();
-      const data = await fetchRequest(`projects/${id}`);
-
-      return data?.data;
+      this.index();
     },
   },
 });

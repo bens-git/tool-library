@@ -209,9 +209,6 @@ const refreshJobs = async () => {
 const onOpen = async () => {
   initializeLocalProject();
   responseStore.$reset();
-  //   tools.resource = "TOOL";
-  // tools.value = (await archetypeStore.fetchArchetypes()).data;
-  // tools.resource = "MATERIAL";
   await refreshJobs();
   initializeLocalProject();
 };

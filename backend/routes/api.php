@@ -36,7 +36,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/request-password-reset', [AuthController::class, 'requestPasswordReset']);
 Route::put('/user/password-with-token', [AuthController::class, 'resetPasswordWithToken']);
 
-
+Route::get('/items', [ItemController::class, 'index']);
 Route::get('/items/{id}', [ItemController::class, 'show']);
 Route::get('/archetypes-with-items', [ArchetypeController::class, 'getArchetypesWithItems']);
 Route::get('/archetypes', [ArchetypeController::class, 'index']);
@@ -63,7 +63,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/items/{id}/rented-dates', [RentalController::class, 'getItemRentedDates']);
     Route::get('/items/{id}/unavailable-dates', [ItemController::class, 'getItemUnavailableDates']);
-    Route::get('/items', [ItemController::class, 'index']);
     Route::get('/rented-dates', [RentalController::class, 'getRentedDates']);
     Route::get('/me/brands', [BrandController::class, 'index'])->name('user.brands');
     Route::get('/me/categories', [CategoryController::class, 'getMyCategories'])->name('user.categories');

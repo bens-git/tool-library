@@ -6,8 +6,8 @@
         :prepend-icon="aim == 'edit' ? 'mdi-pencil' : 'mdi-plus'"
         :text="
           aim == 'edit'
-            ? `Edit ` + resource + ` Archetype`
-            : `Create ` + resource + ` Archetype`
+            ? `Edit` + (resource ? ' ' + resource : '') + ' Archetype'
+            : `Create` + (resource ? ' ' + resource : '') + ' Archetype'
         "
         variant="tonal"
         v-bind="activatorProps"
@@ -18,8 +18,8 @@
       :prepend-icon="aim == 'edit' ? 'mdi-pencil' : 'mdi-plus'"
       :title="
         aim == 'edit'
-          ? `Edit ` + resource + ` Archetype`
-          : `Create ` + resource + ` Archetype`
+          ? `Edit` + (resource ? ' ' + resource : '') + ' Archetype'
+          : `Create` + (resource ? ' ' + resource : '') + ' Archetype'
       "
     >
       <v-card-text v-if="localArchetype">
@@ -59,12 +59,18 @@
           <v-col cols="12" md="4" sm="6">
             <v-autocomplete
               density="compact"
-              :multiple="true"
-              v-model="localArchetype.category_ids"
-              :items="categoryStore.categories"
+              v-model="localArchetype.categories"
+              :items="autocompleteCategories"
               label="Category"
               item-title="name"
               item-value="id"
+              hide-no-data
+              hide-details
+              return-object
+              multiple
+              variant="outlined"
+              clearable
+              @update:search="debouncedAutocompleteCategorySearch"
               :error-messages="responseStore?.response?.errors?.category_ids"
             ></v-autocomplete>
           </v-col>
@@ -72,13 +78,18 @@
           <v-col cols="12" md="4" sm="6">
             <v-autocomplete
               density="compact"
-              :multiple="true"
-              v-model="localArchetype.usage_ids"
-              :items="usageStore.usages"
+              v-model="localArchetype.usages"
+              :items="autocompleteUsages"
               label="Usage"
               item-title="name"
               item-value="id"
-              :error-messages="responseStore?.response?.errors?.usage_ids"
+              hide-no-data
+              hide-details
+              return-object
+              multiple
+              variant="outlined"
+              clearable
+              @update:search-value="debouncedAutocompleteUsageSearch"
             ></v-autocomplete>
           </v-col>
         </v-row>
@@ -118,6 +129,7 @@ import { useItemStore } from "@/stores/item";
 import { useCategoryStore } from "@/stores/category";
 import { useUsageStore } from "@/stores/usage";
 import { useResponseStore } from "@/stores/response";
+import { useUserStore } from "@/stores/user";
 import { useRouter, useRoute } from "vue-router";
 
 const router = useRouter();
@@ -129,8 +141,11 @@ const itemStore = useItemStore();
 const categoryStore = useCategoryStore();
 const usageStore = useUsageStore();
 const responseStore = useResponseStore();
+const userStore = useUserStore();
 
 const localArchetype = ref(null);
+const autocompleteCategories = ref([]);
+const autocompleteUsages = ref([]);
 
 const props = defineProps({
   aim: String,
@@ -147,13 +162,13 @@ watch(dialog, (newVal) => {
   }
 });
 
+const refreshLocalArchetype = async () => {
+  localArchetype.value = await archetypeStore.show(props.archetype.id);
+};
 // Function to initialize
 const initializeLocalArchetype = () => {
-  console.log(props);
   if (props.aim == "edit" && props.archetype) {
-    localArchetype.value = {
-      ...props.archetype,
-    };
+    refreshLocalArchetype();
   } else {
     localArchetype.value = {
       name: "",
@@ -169,18 +184,41 @@ const initializeLocalArchetype = () => {
 const emit = defineEmits(["created", "saved"]);
 
 const onOpen = async () => {
-  await categoryStore.fetchCategories();
-  await usageStore.fetchUsages();
+  await categoryStore.index();
+  await usageStore.index();
+  autocompleteCategories.value = await categoryStore.indexForAutocomplete();
+  autocompleteUsages.value = await usageStore.indexForAutocomplete();
+
   initializeLocalArchetype();
   responseStore.$reset();
 };
+
+// Autocomplete category Search handler
+const onAutocompleteCategorySearch = async (query) => {
+  autocompleteCategories.value =
+    await categoryStore.indexForAutocomplete(query);
+};
+// Autocomplete usage Search handler
+const onAutocompleteUsageSearch = async (query) => {
+  autocompleteUsages.value = await usageStore.indexForAutocomplete(query);
+};
+
+const debouncedAutocompleteCategorySearch = _.debounce(
+  onAutocompleteCategorySearch,
+  300
+);
+
+const debouncedAutocompleteUsageSearch = _.debounce(
+  onAutocompleteUsageSearch,
+  300
+);
 
 const onClose = () => {
   console.log("Dialog closed");
 };
 
 const save = async () => {
-  const data = await archetypeStore.saveMyArchetype(localArchetype.value);
+  const data = await archetypeStore.update(localArchetype.value);
 
   if (data.success) {
     emit("saved");
@@ -197,7 +235,10 @@ const create = async () => {
 };
 
 const myItems = () => {
-  itemStore.myItemsListFilters.archetypeId = localArchetype.value.id;
-  router.push({ path: "/my-items" });
+  itemStore.itemListFilters.archetypeId = localArchetype.value.id;
+  itemStore.itemListFilters.userId = userStore.user?.id;
+  itemStore.index()
+  router.push({ path: "/item-list" });
+  dialog.value=false
 };
 </script>

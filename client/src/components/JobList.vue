@@ -210,19 +210,19 @@ const debounceSearch = _.debounce(() => {
 
 onMounted(async () => {
   autocompleteArchetypes.value =
-    await archetypeStore.fetchAutocompleteArchetypes();
+    await archetypeStore.indexForAutocomplete();
 
-  autocompleteProjects.value = await projectStore.fetchAutocompleteProjects();
+  autocompleteProjects.value = await projectStore.indexForAutocomplete();
 });
 
 const onAutocompleteArchetypeSearch = async (query) => {
   autocompleteArchetypes.value =
-    await archetypeStore.fetchAutocompleteArchetypes(query);
+    await archetypeStore.indexForAutocomplete(query);
 };
 
 const onAutocompleteProjectSearch = async (query) => {
   autocompleteProjects.value =
-    await projectStore.fetchAutocompleteProjects(query);
+    await projectStore.indexForAutocomplete(query);
 };
 
 const debouncedAutocompleteArchetypeSearch = debounce(

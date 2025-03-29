@@ -3,56 +3,66 @@ import useApi from "@/stores/api";
 
 export const useCategoryStore = defineStore("category", {
   state: () => ({
-    categories: [],
-    totalCategories: 0,
-    page: 1,
-    itemsPerPage: 10,
-    sortBy: "item_name",
-    order: "asc",
-    search: "",
-
-    myCategoriesListPage: 1,
-    myCategoriesListItemsPerPage: 10,
-    myCategoriesListSortBy: [{ key: "name", order: "asc" }],
-    myCategoriesListFilters: {
+    categoryListPage: 1,
+    categoryListItemsPerPage: 10,
+    categoryListSortBy: [{ key: "name", order: "asc" }],
+    categoryListFilters: {
       search: null,
     },
-    myCategoriesListCategories: [],
-    myCategoriesListTotalCategories: 0,
-    myCategoriesListSelectedCategories: null,
+    categoryListCategories: [],
+    categoryListTotalCategories: 0,
+    categoryListSelectedCategories: null,
   }),
   actions: {
-    async fetchCategories() {
-      const { fetchRequest } = useApi();
-      const data = await fetchRequest(
-        "categories", // API endpoint
-        {
-          page: this.page,
-          itemsPerPage: this.itemsPerPage,
-          sortBy: this.sortBy,
-          search: this.search,
-        }
-      );
-      this.categories = data?.data;
-      this.totalCategories = data?.total;
+    async destroy(categoryId) {
+      const { sendRequest } = useApi();
+      const data = await sendRequest(`categories/${categoryId}`, "delete");
+      await this.index();
+      return data;
     },
 
-    async fetchMyCategories() {
+    async index() {
       const { fetchRequest } = useApi();
       const data = await fetchRequest(
         "me/categories", // API endpoint
         {
-          page: this.myCategoriesListPage,
-          itemsPerPage: this.myCategoriesListItemsPerPage,
-          sortBy: this.myCategoriesListSortBy,
-          search: this.myCategoriesListFilters.search,
+          page: this.categoryListPage,
+          itemsPerPage: this.categoryListItemsPerPage,
+          sortBy: this.categoryListSortBy,
+          search: this.categoryListFilters.search,
         }
       );
-      this.myCategoriesListCategories = data?.data;
-      this.myCategoriesListTotalCategories = data?.total;
+      this.categoryListCategories = data?.data;
+      this.categoryListTotalCategories = data?.total;
+      return data.data;
     },
 
-    async createCategory(categoryData) {
+    async indexForAutocomplete(search) {
+      const { fetchRequest } = useApi();
+
+      const categories = await fetchRequest(
+        "categories", // API endpoint
+        {
+          itemsPerPage: 1000,
+          sortBy: null,
+          search: search,
+          categoryId: null,
+          usageId: null,
+          brandId: null,
+          archetypeId: null,
+          startDate: null,
+          endDate: null,
+          location: null,
+          radius: null,
+          resource: null,
+        }
+      );
+
+      return categories.data;
+    },
+
+   
+    async store(categoryData) {
       const { sendRequest } = useApi();
 
       const data = await sendRequest("categories", "post", categoryData);
@@ -62,27 +72,18 @@ export const useCategoryStore = defineStore("category", {
       return data;
     },
 
-    async updateCategory(category) {
+    async update(category) {
       const { sendRequest } = useApi();
 
       const data = await sendRequest(
-        `categories/${category.id}`, 
-        "put", 
-        category 
+        `categories/${category.id}`,
+        "put",
+        category
       );
 
       await this.fetchMyCategories();
 
       return data;
-    },
-
-    async deleteCategory(categoryId) {
-      const { sendRequest } = useApi();
-      await sendRequest(
-        `categories/${categoryId}`,
-        "delete" 
-      );
-      await this.fetchMyCategories();
     },
   },
 });

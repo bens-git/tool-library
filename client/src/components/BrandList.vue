@@ -1,21 +1,20 @@
 <template>
   <v-container class="d-flex justify-center">
     <v-card
-      title="My Brands"
-      :subtitle="userStore.user.name"
+      title="Brands"
       flat
       style="min-width: 90vw; max-height: 88vh; min-height: 88vh"
     >
       <v-card-text>
         <v-row>
           <v-col>
-            <BrandDialog aim="create" />
+            <BrandDialog aim="create" v-if="userStore.user"/>
           </v-col>
 
           <v-col>
             <v-text-field
               density="compact"
-              v-model="brandStore.myBrandsListFilters.search"
+              v-model="brandStore.brandListFilters.search"
               label="Search"
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
@@ -27,12 +26,12 @@
         </v-row>
 
         <v-data-table-server
-          :search="brandStore.myBrandsListFilters.search"
-          v-model:items-per-page="brandStore.myBrandsListItemsPerPage"
-          :items-length="brandStore.myBrandsListTotalBrands"
+          :search="brandStore.brandListFilters.search"
+          v-model:items-per-page="brandStore.brandListItemsPerPage"
+          :items-length="brandStore.brandListTotalBrands"
           :headers="headers"
-          @update:options="brandStore.updateMyBrandsListOptions"
-          :items="brandStore.myBrandsListBrands"
+          @update:options="brandStore.updateBrandListOptions"
+          :items="brandStore.brandListBrands"
           item-value="name"
           mobile-breakpoint="sm"
           fixed-header
@@ -74,14 +73,14 @@ const headers = [
 
 
 onMounted(async () => {
-  brandStore.fetchMyBrands();
+  brandStore.index();
  
 });
 
 
 const debounceSearch = _.debounce(() => {
   brandStore.page = 1;
-  brandStore.fetchMyBrands();
+  brandStore.index();
 }, 300);
 </script>
 

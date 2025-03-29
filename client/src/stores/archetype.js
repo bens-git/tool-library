@@ -29,58 +29,64 @@ export const useArchetypeStore = defineStore("archetype", {
     userArchetypes: [],
     resource: "TOOL",
 
-    myArchetypesListPage: 1,
-    myArchetypesListItemsPerPage: 10,
-    myArchetypesListSortBy: [{ key: "name", order: "asc" }],
-    myArchetypesListFilters: {
+    archetypesListPage: 1,
+    archetypesListItemsPerPage: 10,
+    archetypesListSortBy: [{ key: "name", order: "asc" }],
+    archetypesListFilters: {
       usage: null,
       category: null,
       search: null,
       resource: null,
     },
-    myArchetypesListArchetypes: [],
-    myArchetypesListTotalArchetypes: 0,
-    myArchetypesListSelectedArchetype: null,
+    archetypesListArchetypes: [],
+    archetypesListTotalArchetypes: 0,
+    archetypesListSelectedArchetype: null,
   }),
   actions: {
     resetFilters() {
-      this.search = "";
-      this.selectedCategoryId = null;
-      this.selectedUsageId = null;
-      // Default start date with 9 AM
-      // Default end date with 5 PM
-      this.dateRange = [
-        new Date(new Date().setHours(9, 0, 0, 0)),
-        new Date(new Date().setHours(17, 0, 0, 0)),
-      ];
+      this.archetypesListFilters.search = "";
+      this.archetypesListFilters.category = null;
+      this.archetypesListFilters.usage = null;
 
-      this.fetchArchetypesWithItems();
+      this.index();
     },
 
-    setLocation(location) {
-      this.location = location;
-    },
-    setAddress(address) {
-      this.address = address;
-    },
-    updateArchetypesWithItemsOptions({ page, itemsPerPage, sortBy }) {
-      this.page = page;
-      this.itemsPerPage = itemsPerPage;
-      this.sortBy = sortBy;
-
-      this.fetchArchetypesWithItems();
+    async destroy(archetypeId) {
+      const { sendRequest } = useApi();
+      const data = await sendRequest(`archetypes/${archetypeId}`, "delete");
+      await this.index();
+      return data;
     },
 
-    updateMyArchetypesListOptions({ page, itemsPerPage, sortBy, resource }) {
-      this.myArchetypesListPage = page;
-      this.myArchetypesListItemsPerPage = itemsPerPage;
-      this.myArchetypesListSortBy = sortBy;
-      this.myArchetypesListFilters.resource = resource;
+    async index() {
+      const { fetchRequest } = useApi();
+      const data = await fetchRequest("archetypes", {
+        page: this.archetypesListPage,
+        itemsPerPage: this.archetypesListItemsPerPage,
+        sortBy: this.archetypesListSortBy,
+        search: this.archetypesListFilters.search,
+        categoryId: this.archetypesListFilters.category?.id,
+        usageId: this.archetypesListFilters.usage?.id,
+        resource: this.archetypesListFilters.resource,
+      });
+      this.archetypesListArchetypes = data?.data?.map((userArchetypes) => {
+        return {
+          ...userArchetypes,
+          category_ids: userArchetypes.category_ids
+            ? userArchetypes.category_ids
+                .split(",")
+                .map((id) => Number(id.trim()))
+            : [],
+          usage_ids: userArchetypes.usage_ids
+            ? userArchetypes.usage_ids.split(",").map((id) => Number(id.trim()))
+            : [],
+        };
+      });
 
-      this.fetchMyArchetypes();
+      this.archetypesListTotalArchetypes = data.total;
     },
 
-    async fetchAutocompleteArchetypes(search, resource = null) {
+    async indexForAutocomplete(search, resource = null) {
       const { fetchRequest } = useApi();
 
       const archetypes = await fetchRequest(
@@ -100,172 +106,53 @@ export const useArchetypeStore = defineStore("archetype", {
       return archetypes.data;
     },
 
-    async fetchAutocompleteSelectCategories(search) {
-      const { fetchRequest } = useApi();
-
-      const categories = await fetchRequest(
-        "categories", // API endpoint
-        {
-          itemsPerPage: 1000,
-          sortBy: null,
-          search: search,
-          categoryId: null,
-          usageId: null,
-          brandId: null,
-          archetypeId: null,
-          startDate: null,
-          endDate: null,
-          location: null,
-          radius: null,
-          resource: null,
-        }
-      );
-
-      return categories.data;
-    },
-
-    async fetchAutocompleteSelectUsages(search) {
-      const { fetchRequest } = useApi();
-
-      const usages = await fetchRequest(
-        "usages", // API endpoint
-        {
-          itemsPerPage: 1000,
-          sortBy: null,
-          search: search,
-          categoryId: null,
-          usageId: null,
-          brandId: null,
-          archetypeId: null,
-          startDate: null,
-          endDate: null,
-          location: null,
-          radius: null,
-          resource: null,
-        }
-      );
-
-      return usages.data;
-    },
-
-    async fetchArchetypesWithItems() {
-      const { fetchRequest } = useApi();
-      const data = await fetchRequest(
-        "archetypes-with-items", // API endpoint
-        {
-          page: this.page,
-          itemsPerPage: this.itemsPerPage,
-          sortBy: this.sortBy,
-          order: this.order,
-          search: this.search,
-          categoryId: this.selectedCategoryId,
-          usageId: this.selectedUsageId,
-          brandId: this.selectedBrandId,
-          archetypeId: this.selectedArchetypeId,
-          startDate: this.dateRange[0].toISOString(),
-          endDate: this.dateRange[this.dateRange.length - 1].toISOString(),
-          location: this.location,
-          radius: this.radius,
-          resource: this.resource,
-        }
-      );
-
-      this.archetypesWithItems = data.data;
-      this.totalArchetypesWithItems = data.total;
-    },
-
-    async fetchArchetypes() {
+    async indexResources(resource) {
       const { fetchRequest } = useApi();
 
       const data = await fetchRequest(
-        "archetypes", // API endpoint
-        {
-          sortBy: this.sortBy,
-          itemsPerPage: 1000,
-        }
+        "resources" // API endpoint
       );
 
-      this.archetypes = data.data;
-      this.totalArchetypes = data.total;
+      return data.data;
     },
 
-    async fetchMaterialResources() {
+    async show(id) {
       const { fetchRequest } = useApi();
-
-      const data = await fetchRequest(
-        "archetypes", // API endpoint
-        {
-          sortBy: this.sortBy,
-          itemsPerPage: 1000,
-          resource: "material",
-        }
-      );
-
-      return data;
+      const data = await fetchRequest(`archetypes/${id}`);
+      return data?.data;
     },
 
-    async fetchMyArchetypes() {
-      const { fetchRequest } = useApi();
-      const data = await fetchRequest(
-        "me/archetypes", // API endpoint
-        {
-          page: this.myArchetypesListPage,
-          itemsPerPage: this.myArchetypesListItemsPerPage,
-          sortBy: this.myArchetypesListSortBy,
-          search: this.myArchetypesListFilters.search,
-          categoryId: this.myArchetypesListFilters.category?.id,
-          usageId: this.myArchetypesListFilters.usage?.id,
-          resource: this.myArchetypesListFilters.resource,
-        }
-      );
-      this.myArchetypesListArchetypes = data?.data?.map((userArchetypes) => {
-        return {
-          ...userArchetypes,
-          category_ids: userArchetypes.category_ids
-            ? userArchetypes.category_ids
-                .split(",")
-                .map((id) => Number(id.trim()))
-            : [],
-          usage_ids: userArchetypes.usage_ids
-            ? userArchetypes.usage_ids.split(",").map((id) => Number(id.trim()))
-            : [],
-        };
-      });
-
-      this.myArchetypesListTotalArchetypes = data.total;
-    },
-
-    async postArchetype(archetypeData) {
+    async store(data) {
       const { sendRequest } = useApi();
 
-      const data = await sendRequest("archetypes", "post", archetypeData);
+      const response = await sendRequest("archetypes", "post", data);
 
-      await this.fetchMyArchetypes();
+      await this.index();
 
-      return data;
+      return response;
     },
 
-    async saveMyArchetype(archetype) {
+    async update(archetype) {
       const { sendRequest } = useApi();
 
       const data = await sendRequest(
-        `archetypes/${archetype.id}`, // API endpoint
-        "put", // HTTP method
-        archetype // Payload
+        `archetypes/${archetype.id}`,
+        "put",
+        archetype
       );
 
-      await this.fetchMyArchetypes();
+      await this.index();
 
       return data;
     },
 
-    async deleteArchetype(archetypeId) {
-      const { sendRequest } = useApi();
-      await sendRequest(
-        `archetypes/${archetypeId}`, // API endpoint
-        "delete" // HTTP method
-      );
-      await this.fetchMyArchetypes();
+    updateArchetypesListOptions({ page, itemsPerPage, sortBy, resource }) {
+      this.archetypesListPage = page;
+      this.archetypesListItemsPerPage = itemsPerPage;
+      this.archetypesListSortBy = sortBy;
+      this.archetypesListFilters.resource = resource;
+
+      this.index();
     },
   },
 });
