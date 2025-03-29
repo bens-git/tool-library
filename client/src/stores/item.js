@@ -11,8 +11,10 @@ export const useItemStore = defineStore("item", {
     itemListItemsPerPage: 10,
     itemListSortBy: [{ key: "archetypes.name", order: "asc" }],
     itemListFilters: {
-      archetypeId: null,
-      brandId: null,
+      archetype: null,
+      category: null,
+      usage: null,
+      brand: null,
       search: null,
       radius: 10,
       location: null,
@@ -46,13 +48,13 @@ export const useItemStore = defineStore("item", {
         sortBy: this.itemListSortBy,
         categoryId: this.itemListFilters.category?.id,
         usageId: this.itemListFilters.usage?.id,
-        archetypeId: this.itemListFilters.archetypeId,
-        brandId: this.itemListFilters.brandId,
+        archetypeId: this.itemListFilters.archetype?.id,
+        brandId: this.itemListFilters.brand?.id,
         resource: this.itemListFilters.resource,
         search: this.itemListFilters.search,
         userId: this.itemListFilters.userId,
         location: this.itemListFilters.location,
-        radius: this.itemListFilters.radius
+        radius: this.itemListFilters.radius,
       });
       this.itemListItems = data.data;
       this.itemListTotalItems = data.total;
@@ -154,6 +156,12 @@ export const useItemStore = defineStore("item", {
         startDate: formattedStartDate,
         endDate: formattedEndDate,
       });
+    },
+
+    async show(id) {
+      const { fetchRequest } = useApi();
+      const data = await fetchRequest(`items/${id}`);
+      return data?.data;
     },
 
     resetFilters() {

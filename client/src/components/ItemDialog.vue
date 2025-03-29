@@ -141,7 +141,7 @@
         </div>
 
         <v-file-input
-        v-if="aim!='view'"
+          v-if="aim != 'view'"
           density="compact"
           @change="handleFileChange"
           label="Upload Image"
@@ -219,12 +219,22 @@ watch(dialog, (newVal) => {
   }
 });
 
+const refreshLocalItem = async () => {
+  localItem.value = await itemStore.show(props.item.id);
+};
+
 // Function to initialize
 const initialize = () => {
-  localItem.value = {
-    ...props.item,
-    created_at: props.item?.created_at || new Date().toISOString(),
-  };
+  if (props.aim == "edit" && props.item) {
+    refreshLocalItem();
+  } else {
+    localItem.value = {
+      archetype: itemStore.itemListFilters.archetype
+        ? itemStore.itemListFilters.archetype
+        : null,
+      created_at: props.item?.created_at || new Date().toISOString(),
+    };
+  }
 };
 
 const onOpen = async () => {
@@ -257,7 +267,7 @@ const saveItem = async () => {
   //add new images
   if (data?.success) {
     for (const image of newImages.value) {
-    //console.log(image)
+      //console.log(image)
       await itemStore.addMyItemImage(localItem.value.id, image);
     }
     await itemStore.index();

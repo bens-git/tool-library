@@ -352,8 +352,8 @@ class ItemController extends Controller
      */
     public function show($id)
     {
-        // Find the item by its ID
-        $item = Item::query()
+        // Find the item by its I
+        $item = Item::with('archetype', 'brand')
             ->join('users', 'items.owned_by', '=', 'users.id')
             ->join('archetypes', 'items.archetype_id', '=', 'archetypes.id')
             ->where('items.id', $id)
@@ -393,11 +393,14 @@ class ItemController extends Controller
             'images' => 'nullable|array', // Validate manufactured_at as a nullable date
             'images.*.id' => 'required|integer',
             'images.*.path' => 'required|string',
+            'brand.id' => 'nullable|numeric|exists:brands,id', // Adjust according to your needs
         ]);
 
-
+      
 
         $item = DB::transaction(function () use ($request, $id) {
+
+          
 
             // Decode the validated JSON
             $archetype = Archetype::findOrFail($request->archetype['id']);

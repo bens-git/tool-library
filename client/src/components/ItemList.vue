@@ -12,7 +12,7 @@
               <v-col cols="12">
                 <v-autocomplete
                   density="compact"
-                  v-model="itemStore.itemListFilters.archetypeId"
+                  v-model="itemStore.itemListFilters.archetype"
                   :items="autocompleteArchetypes"
                   label="Search"
                   item-title="name"
@@ -59,7 +59,7 @@
               <v-col cols="12" md="4">
                 <v-autocomplete
                   density="compact"
-                  v-model="itemStore.itemListFilters.brandId"
+                  v-model="itemStore.itemListFilters.brand"
                   :items="autocompleteBrands"
                   label="Brand"
                   item-title="name"
