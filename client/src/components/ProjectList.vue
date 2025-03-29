@@ -166,6 +166,13 @@ const onProjectDialogOpen = () => {
 };
 
 const headers = [
+{
+    title: "Project",
+    align: "start",
+    sortable: true,
+    key: "name",
+    
+  },
   {
     title: "Image",
     align: "start",
@@ -178,12 +185,7 @@ const headers = [
     sortable: false,
     key: "actions",
   },
-  {
-    title: "Project",
-    align: "start",
-    sortable: true,
-    key: "name",
-  },
+  
 ];
 
 const autocompleteArchetypes = ref([]);
