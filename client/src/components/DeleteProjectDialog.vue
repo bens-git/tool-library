@@ -10,6 +10,8 @@
             variant="tonal"
             v-bind="activatorProps"
             block
+            size="small"
+
           ></v-btn>
         </template>
         <v-card

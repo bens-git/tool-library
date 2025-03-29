@@ -8,6 +8,8 @@
         :color="isEdit ? 'primary' : 'success'"
         block
         v-bind="activatorProps"
+        size="small"
+
       ></v-btn>
     </template>
     <v-card
@@ -55,6 +57,12 @@
               :error-messages="responseStore.response?.errors?.['base.id']"
               :disabled="Boolean(base)"
             ></v-autocomplete>
+            <ArchetypeDialog
+              aim="edit"
+              resource="MATERIAL"
+              :archetype="localJob.base"
+              @saved="[refreshMaterials(), refreshJob()]"
+            />
           </v-col>
 
           <v-col cols="12" md="4" sm="6">

@@ -10,6 +10,7 @@
           block
           :color="isEdit ? 'primary' : 'success'"
           v-bind="activatorProps"
+          size="small"
         ></v-btn>
       </template>
       <v-card
@@ -55,6 +56,8 @@
                 variant="tonal"
                 block
                 @click="addJob()"
+                size="small"
+
               ></v-btn>
 
               <!-- create job dialog -->
@@ -92,7 +95,7 @@
                     {{ job.product.name }}</v-list-item-subtitle
                   >
 
-                  <template v-slot:prepend="{}">
+                  <template v-slot:append="{}">
                     <v-list-item-action class="flex-column align-end">
                       <v-btn
                         v-if="job.id == finalJob.id"
@@ -102,6 +105,8 @@
                         variant="tonal"
                         block
                         @click="removeFinalJob"
+                        size="small"
+
                       ></v-btn>
                       <JobDialog :job="job" :isEdit="true" @saved="refreshProject" />
                       <SubdivideJobDialog :job="job" />

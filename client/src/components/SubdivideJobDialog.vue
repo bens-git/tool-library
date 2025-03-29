@@ -8,6 +8,8 @@
         color="primary"
         block
         v-bind="activatorProps"
+        size="small"
+
       ></v-btn>
     </template>
     <v-card
