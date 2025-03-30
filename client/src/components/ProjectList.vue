@@ -173,17 +173,18 @@ const headers = [
     key: "name",
     
   },
-  {
-    title: "Image",
-    align: "start",
-    sortable: false,
-    key: "image",
-  },
+ 
   {
     title: "Actions",
     align: "start",
     sortable: false,
     key: "actions",
+  },
+  {
+    title: "Image",
+    align: "start",
+    sortable: false,
+    key: "image",
   },
   
 ];

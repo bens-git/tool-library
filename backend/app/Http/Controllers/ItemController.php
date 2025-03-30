@@ -368,7 +368,7 @@ class ItemController extends Controller
     public function show($id)
     {
         // Find the item by its I
-        $item = Item::with('archetype', 'brand')
+        $item = Item::with('archetype', 'brand', 'images')
             ->join('users', 'items.owned_by', '=', 'users.id')
             ->join('archetypes', 'items.archetype_id', '=', 'archetypes.id')
             ->where('items.id', $id)
@@ -376,11 +376,9 @@ class ItemController extends Controller
             ->first();
 
 
-        // Check if the item was found
-        if (!$item) {
-            abort(500, 'Item not found');
+        foreach($item->images AS $image){
+            $image->path='/storage/' . $image->path;
         }
-
 
         $response['data'] = $item;
 

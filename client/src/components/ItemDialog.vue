@@ -247,6 +247,7 @@ const initialize = () => {
 
 const onOpen = async () => {
   initialize();
+  newImages.value=[]
   responseStore.$reset();
   autocompleteArchetypes.value = await archetypeStore.indexForAutocomplete();
   autocompleteBrands.value = await brandStore.indexForAutocomplete();

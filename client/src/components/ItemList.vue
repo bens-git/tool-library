@@ -56,9 +56,10 @@
                 ></v-checkbox>
               </v-col>
 
-              <v-col cols="12" md="4">
+              <v-col cols="12" md="4"    v-if="!mobile">
                 <v-autocomplete
                   density="compact"
+               
                   v-model="itemStore.itemListFilters.brand"
                   :items="autocompleteBrands"
                   label="Brand"
@@ -74,8 +75,9 @@
                 ></v-autocomplete>
               </v-col>
 
-              <v-col cols="12" md="4">
+              <v-col cols="12" md="4" v-if="!mobile">
                 <v-select
+                
                   density="compact"
                   v-model="itemStore.itemListFilters.resource"
                   :items="resources"
@@ -91,7 +93,7 @@
                 ></v-select>
               </v-col>
 
-              <v-col cols="12" md="4">
+              <v-col cols="12" md="4"    v-if="!mobile">
                 <v-autocomplete
                   density="compact"
                   v-model="itemStore.itemListFilters.category"
@@ -109,9 +111,10 @@
                 ></v-autocomplete>
               </v-col>
 
-              <v-col cols="12" md="4">
+              <v-col cols="12" md="4" v-if="!mobile">
                 <v-autocomplete
                   density="compact"
+                  
                   v-model="itemStore.itemListFilters.usage"
                   :items="autocompleteUsages"
                   label="Usage"
@@ -202,6 +205,9 @@ import DeleteItemDialog from "./DeleteItemDialog.vue";
 import ItemDialog from "./ItemDialog.vue";
 import AvailabilityDialog from "./AvailabilityDialog.vue";
 import LocationDialog from "./LocationDialog.vue";
+import { useDisplay } from "vuetify";
+
+const { mobile } = useDisplay();
 
 const advancedSearch = ref(false);
 
