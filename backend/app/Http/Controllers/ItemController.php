@@ -320,9 +320,9 @@ class ItemController extends Controller
     public function storeImage(Request $request, $id)
     {
         $validated = $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:6999', // Image validation rules
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:12000', // Image validation rules
         ], [
-            'image.max' => 'The uploaded file size must not exceed 7 MB.',
+            'image.max' => 'The uploaded file size must not exceed 12 MB.',
             'image.image' => 'The uploaded file must be an image.',
 
         ]);

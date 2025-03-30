@@ -57,7 +57,6 @@
                 block
                 @click="addJob()"
                 size="small"
-
               ></v-btn>
 
               <!-- create job dialog -->
@@ -69,54 +68,45 @@
               />
             </v-col>
           </v-row>
-          <v-row>
-            <v-col>
-              <v-alert
+          <v-alert
                 color="error"
                 v-if="responseStore.response?.errors?.jobs"
                 >{{ responseStore.response?.errors?.jobs[0] }}</v-alert
               >
-              <v-list>
-                <v-list-item
-                  v-if="localProject.jobs"
-                  v-for="job in localProject.jobs"
-                  :key="job.id"
-                >
-                  <v-list-item-title
-                    >{{ job.pivot?.order ?? job.order }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle
-                    class="mb-1 text-high-emphasis opacity-100"
-                    >{{ job.name }}
-                  </v-list-item-subtitle>
+          <v-row>
+           
+            <v-col>
+              <v-row v-if="localProject.jobs" v-for="job in localProject.jobs">
+                <v-col>
+                  <v-row>
+                    {{ job.pivot?.order ?? job.order }}. {{ job.name }}
+                  </v-row>
 
-                  <v-list-item-subtitle class="text-high-emphasis"
-                    >{{ job.base.name }} <v-icon>mdi-arrow-right</v-icon>
-                    {{ job.product.name }}</v-list-item-subtitle
-                  >
+                  <v-row><DisplayJob :job="job" /></v-row>
+                  <v-row>
+                    <v-btn
+                      v-if="job.id == finalJob.id"
+                      prepend-icon="mdi-delete"
+                      color="error"
+                      text="Remove"
+                      variant="tonal"
+                      block
+                      @click="removeFinalJob"
+                      size="small"
+                    ></v-btn>
+                    <JobDialog
+                      :job="job"
+                      :isEdit="true"
+                      @saved="refreshProject"
+                    />
+                    <SubdivideJobDialog :job="job" />
 
-                  <template v-slot:append="{}">
-                    <v-list-item-action class="flex-column align-end">
-                      <v-btn
-                        v-if="job.id == finalJob.id"
-                        prepend-icon="mdi-delete"
-                        color="error"
-                        text="Remove"
-                        variant="tonal"
-                        block
-                        @click="removeFinalJob"
-                        size="small"
-
-                      ></v-btn>
-                      <JobDialog :job="job" :isEdit="true" @saved="refreshProject" />
-                      <SubdivideJobDialog :job="job" />
-
-                      <v-spacer></v-spacer>
-                    </v-list-item-action>
-                  </template>
-                </v-list-item>
-              </v-list>
+                    <v-spacer></v-spacer>
+                  </v-row>
+                </v-col>
+              </v-row>
             </v-col>
+            <v-col></v-col>
           </v-row>
         </v-card-text>
         <v-divider></v-divider>
@@ -153,6 +143,7 @@ import { useJobStore } from "@/stores/job";
 import { useResponseStore } from "@/stores/response";
 import JobDialog from "./JobDialog.vue";
 import SubdivideJobDialog from "./SubdivideJobDialog.vue";
+import DisplayJob from "./DisplayJob.vue";
 
 const dialog = shallowRef(false);
 
@@ -221,14 +212,14 @@ const onOpen = async () => {
 const onClose = () => {};
 
 const save = async () => {
-  await projectStore.putProject(localProject.value);
+  await projectStore.update(localProject.value);
   if (responseStore.response.success) {
     dialog.value = false;
   }
 };
 
 const create = async () => {
-  await projectStore.postProject(localProject.value);
+  await projectStore.store(localProject.value);
   if (responseStore.response.success) {
     dialog.value = false;
   }
