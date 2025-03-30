@@ -70,10 +70,11 @@
               text="Refresh"
               variant="tonal"
               @click="jobStore.resetFilters"
+              size="small"
             ></v-btn>
 
             <!-- create job dialog -->
-            <JobDialog :isEdit="false" v-if="userStore.user" />
+           <div> <JobDialog :isEdit="false" v-if="userStore.user" /></div>
 
 
           </v-col>

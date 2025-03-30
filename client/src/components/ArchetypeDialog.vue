@@ -229,7 +229,7 @@ const save = async () => {
 };
 
 const create = async () => {
-  const data = await archetypeStore.postArchetype(localArchetype.value);
+  const data = await archetypeStore.store(localArchetype.value);
   if (data?.success) {
     emit("created");
     dialog.value = false;
