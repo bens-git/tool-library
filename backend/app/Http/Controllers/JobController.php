@@ -237,8 +237,23 @@ class JobController extends Controller
 
             // If projects are provided, attach them to the job
             if (!empty($validated['projects'])) {
-                $projectIds = collect($validated['projects'])->pluck('id'); // Extract project IDs
-                $job->projects()->attach($projectIds); // Attach projects to the job
+                $projects = collect($validated['projects']);
+
+                $attachments = $projects->mapWithKeys(function ($project) use ($job) {
+                    // Get the highest order for this project in the pivot table
+                    $maxOrder = DB::table('project_job')
+                        ->where('project_id', $project['id'])
+                        ->max('order') ?? 0; // Default to 0 if no order exists
+
+                    return [
+                        $project['id'] => [
+                            'order' => $project['order'] ?? ($maxOrder + 1) // Use provided order or increment maxOrder
+                        ]
+                    ];
+                });
+
+
+                $job->projects()->attach($attachments);
             }
 
 
