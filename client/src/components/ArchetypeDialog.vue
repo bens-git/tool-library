@@ -237,7 +237,7 @@ const create = async () => {
 };
 
 const myItems = () => {
-  itemStore.itemListFilters.archetypeId = localArchetype.value.id;
+  itemStore.itemListFilters.archetype = localArchetype.value;
   itemStore.itemListFilters.userId = userStore.user?.id;
   itemStore.index()
   router.push({ path: "/item-list" });
