@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class UpdateAvailabilityRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true; // Adjust authorization logic if needed
+    }
+
+    public function rules(): array
+    {
+
+
+        return [
+            'make_item_unavailable' => 'required|boolean',
+            'itemId' => 'required|integer|exists:items,id'
+        ];
+    }
+}

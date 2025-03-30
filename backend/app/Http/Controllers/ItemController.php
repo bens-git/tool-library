@@ -86,8 +86,8 @@ class ItemController extends Controller
             $query->where('archetype_category.category_id', '=', $categoryId);
         }
 
-         // Apply usage filter
-         if (!empty($usageId)) {
+        // Apply usage filter
+        if (!empty($usageId)) {
             $query->where('archetype_usage.usage_id', '=', $usageId);
         }
 
@@ -235,6 +235,21 @@ class ItemController extends Controller
     }
 
 
+
+
+    public function patchMakeItemUnavailable(Request $request, Item $item)
+    {
+
+        $item->update([
+            'make_item_unavailable' => $request->input('make_item_unavailable'),
+        ]);
+
+
+        return response()->json([
+            'message' => 'Item availability updated successfully',
+            'item'    => $item,
+        ]);
+    }
 
 
     /**
@@ -390,17 +405,18 @@ class ItemController extends Controller
             'serial' => 'nullable|string',
             'purchased_at' => 'required|date', // Validate created_at as a nullable date
             'manufactured_at' => 'nullable|date', // Validate manufactured_at as a nullable date
+            'make_item_unavailable' => 'boolean', // Validate manufactured_at as a nullable date
             'images' => 'nullable|array', // Validate manufactured_at as a nullable date
             'images.*.id' => 'required|integer',
             'images.*.path' => 'required|string',
             'brand.id' => 'nullable|numeric|exists:brands,id', // Adjust according to your needs
         ]);
 
-      
+
 
         $item = DB::transaction(function () use ($request, $id) {
 
-          
+
 
             // Decode the validated JSON
             $archetype = Archetype::findOrFail($request->archetype['id']);
@@ -415,6 +431,7 @@ class ItemController extends Controller
             $item->description = $request->description;
             $item->serial = $request->serial;
             $item->purchase_value = $request->purchase_value;
+            $item->make_item_unavailable = $request->make_item_unavailable;
             $item->purchased_at = Carbon::parse($request->purchased_at)->format('Y-m-d H:i:s');
             $item->manufactured_at = $request->manufactured_at ? Carbon::parse($request->manufactured_at)->format('Y-m-d H:i:s') : null;
             $item->save();

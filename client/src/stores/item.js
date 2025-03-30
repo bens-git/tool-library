@@ -278,12 +278,15 @@ export const useItemStore = defineStore("item", {
       );
     },
 
-    async updateItemAvailability(itemId, itemUnavailableDates) {
+    async updateItemAvailability(
+      itemId,
+      itemUnavailableDates,
+      makeItemUnavailable
+    ) {
       const { sendRequest } = useApi();
 
       var params = { unavailableDates: [] };
       itemUnavailableDates.forEach((date) => {
-        console.log(date);
         const dateObject = new Date(date);
         // Format the date as yyyy-mm-dd
         const year = dateObject.getFullYear();
@@ -297,20 +300,17 @@ export const useItemStore = defineStore("item", {
 
       params.itemId = itemId;
 
-      const data = await sendRequest(
-        `items/${itemId}/availability`,
+      await sendRequest(`items/${itemId}/availability`, "PATCH", params);
+
+      const response = await sendRequest(
+        `items/${itemId}/make-item-unavailable`,
         "PATCH",
-        params
+        { make_item_unavailable: makeItemUnavailable }
       );
 
-      if (data?.data) {
-        const updatedItemIndex = this.items.findIndex(
-          (item) => item.id === data.data.id
-        );
-        if (updatedItemIndex !== -1) {
-          this.myItemsListItems[updatedItemIndex] = data.data;
-        }
-      }
+      await this.index();
+
+      return response;
     },
 
     updateItemListOptions({ page, itemsPerPage, sortBy }) {

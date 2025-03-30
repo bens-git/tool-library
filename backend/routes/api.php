@@ -76,6 +76,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/resources', [ArchetypeController::class, 'getResources']);
 
     Route::patch('/items/{id}/availability', [ItemController::class, 'updateItemAvailability']);
+    Route::patch('/items/{item}/make-item-unavailable', [ItemController::class, 'patchMakeItemUnavailable']);
     Route::patch('/rentals/{id}', [RentalController::class, 'update']);
 
     Route::post('/archetypes', [ArchetypeController::class, 'store']);

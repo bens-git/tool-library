@@ -79,6 +79,14 @@
           placeholder="e.g., this soldering iron is like no other in the collection. Its handle is worn smooth from years of use, and faint scorch marks trace stories of intricate repairs and ambitious builds. It’s storied and irreplaceable."
         ></v-textarea>
 
+        <v-checkbox
+          v-model="localItem.make_item_unavailable"
+          label="Make item unavailable"
+          density="compact"
+          :true-value="1"
+          :false-value="0"
+        ></v-checkbox>
+
         <v-text-field
           density="compact"
           v-model="localItem.serial"
