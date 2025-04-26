@@ -92,6 +92,7 @@ const onOpen = async () => {
 const onClose = () => {};
 
 const rent = async () => {
+  console.log(localItem)
   await itemStore.bookRental(
     localItem.value.id,
     archetypeStore.dateRange[0],

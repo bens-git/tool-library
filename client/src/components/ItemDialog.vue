@@ -82,6 +82,7 @@
         <v-checkbox
           v-model="localItem.make_item_unavailable"
           label="Make item unavailable"
+          v-if="aim == 'edit'"
           density="compact"
           :true-value="1"
           :false-value="0"
@@ -180,6 +181,7 @@
           variant="tonal"
           @click="createItem"
         ></v-btn>
+
         <RentalDatesDialog :item="localItem" v-if="aim == 'view'" />
       </v-card-actions>
     </v-card>
@@ -233,7 +235,7 @@ const refreshLocalItem = async () => {
 
 // Function to initialize
 const initialize = () => {
-  if (props.aim == "edit" && props.item) {
+  if ((props.aim == "edit" || props.aim == "view") && props.item) {
     refreshLocalItem();
   } else {
     localItem.value = {

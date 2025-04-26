@@ -40,7 +40,6 @@
           <v-spacer></v-spacer>
 
           <v-btn text="Cancel" variant="plain" @click="dialog = false"></v-btn>
-
           <ConfirmRentalDialog :item="localItem" />
         </v-card-actions>
       </v-card>

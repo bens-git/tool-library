@@ -135,11 +135,9 @@ router.beforeEach((to, from, next) => {
     to.matched.some((record) => record.meta.requiresGuest) &&
     userStore.user
   ) {
-    console.log('user')
   // Redirect to home page if user is already logged in
     return next({ name: "item-list" });
   }
-  console.log('test')
 
   if (requiresAuth && !isAuthenticated) {
     // Redirect to login if route requires authentication and user is not logged in
