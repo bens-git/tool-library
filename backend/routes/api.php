@@ -49,6 +49,7 @@ Route::get('/jobs/{id}', [JobController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/usages', [ArchetypeController::class, 'getUsages']);
 Route::get('/brands', [BrandController::class, 'getUsages']);
+Route::get('/resources', [ArchetypeController::class, 'getResources']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
@@ -73,7 +74,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/rentals', [RentalController::class, 'getUserRentals']);
     Route::get('/me/archetypes', [ArchetypeController::class, 'index'])->name('user.archetypes');
     Route::get('/me/usages', [UsageController::class, 'getMyUsages'])->name('user.usages');
-    Route::get('/resources', [ArchetypeController::class, 'getResources']);
 
     Route::patch('/items/{id}/availability', [ItemController::class, 'updateItemAvailability']);
     Route::patch('/items/{item}/make-item-unavailable', [ItemController::class, 'patchMakeItemUnavailable']);

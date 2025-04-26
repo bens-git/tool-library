@@ -23,7 +23,7 @@ export const useUsageStore = defineStore("usage", {
 
     async index() {
       const { fetchRequest } = useApi();
-      const data = await fetchRequest("me/usages", {
+      const data = await fetchRequest("usages", {
         page: this.usageListPage,
         itemsPerPage: this.usageListItemsPerPage,
         sortBy: this.usageListSortBy,

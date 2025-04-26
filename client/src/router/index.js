@@ -18,40 +18,47 @@ const routes = [
     path: "/archetype-list",
     name: "archetype-list",
     component: ArchetypeList,
+    meta: { requiresAuth: true },
   },
 
   {
     path: "/item-list",
     name: "item-list",
     component: ItemList,
+    meta: { requiresAuth: true },
   },
 
   {
     path: "/project-list",
     name: "project-list",
     component: ProjectList,
+    meta: { requiresAuth: true },
   },
 
   {
     path: "/job-list",
     name: "job-list",
     component: JobList,
+    meta: { requiresAuth: true },
   },
 
   {
     path: "/route-to-discord-link",
     name: "route-to-discord-link",
     component: LinkWithDiscordForm,
+    meta: { requiresAuth: true },
   },
 
   {
     path: "/discord-response",
     name: "discord-response",
     component: DiscordResponse,
+    meta: { requiresAuth: true },
   },
 
   {
     path: "/login-form",
+    name:"login-form",
     component: () => import("@/components/LoginForm.vue"),
     meta: { requiresGuest: true }, // Only accessible if not logged in
   },
@@ -71,21 +78,21 @@ const routes = [
     path: "/category-list",
     name: "category-list",
     component: CategoryList,
-    meta: { requiresDiscord: true },
+    meta: { requiresDiscord: true,  requiresAuth: true  },
   },
 
   {
     path: "/usage-list",
     name: "usage-list",
     component: UsageList,
-    meta: { requiresDiscord: true },
+    meta: { requiresDiscord: true,  requiresAuth: true  },
   },
 
   {
     path: "/brand-list",
     name: "brand-list",
     component: BrandList,
-    meta: { requiresDiscord: true },
+    meta: { requiresDiscord: true,  requiresAuth: true  },
   },
 
   {
@@ -128,9 +135,11 @@ router.beforeEach((to, from, next) => {
     to.matched.some((record) => record.meta.requiresGuest) &&
     userStore.user
   ) {
-    // Redirect to home page if user is already logged in
+    console.log('user')
+  // Redirect to home page if user is already logged in
     return next({ name: "item-list" });
   }
+  console.log('test')
 
   if (requiresAuth && !isAuthenticated) {
     // Redirect to login if route requires authentication and user is not logged in

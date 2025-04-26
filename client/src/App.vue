@@ -92,6 +92,7 @@ html, body, #app {
 
 .v-container {
   height: 100%;
+  
 }
 
 .v-card {

@@ -27,7 +27,6 @@
           <v-list-item-title>My Loans</v-list-item-title>
         </v-list-item>
 
-
         <v-list-item>
           <EditProfileDialog />
         </v-list-item>
@@ -40,7 +39,7 @@
 
     <!-- Additional Links on Larger Screens -->
     <template v-if="!mobile">
-      <LoginDialog v-if="!userStore.user" />
+      <LoginDialog v-if="!userStore.user && !isActiveRoute('/login-form')" />
       <RegistrationDialog v-if="!userStore.user" />
       <v-btn v-if="!userStore.user" to="request-password-reset-form" text>
         Forgot Password
@@ -70,7 +69,7 @@
   <!-- Navigation Drawer for Mobile -->
   <v-navigation-drawer v-model="drawer" temporary>
     <v-list>
-      <LoginDialog v-if="!userStore.user" />
+      <LoginDialog v-if="!userStore.user && !isActiveRoute('/login-form')" />
 
       <RegistrationDialog v-if="!userStore.user" />
       <v-list-item
@@ -90,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useDisplay } from "vuetify";
 import { useUserStore } from "@/stores/user";
 import { useRouter, useRoute } from "vue-router";
@@ -106,20 +105,43 @@ const { mobile } = useDisplay();
 const drawer = ref(false);
 const userStore = useUserStore();
 
-const links = [
-  { text: "Items", route: "item-list" },
-  { text: "Projects", route: "project-list" },
-];
+const links = ref([]);
+const drawerLinks = ref([]);
 
-const drawerLinks = [
-  { text: "Items", route: "item-list" },
-  { text: "Projects", route: "project-list" },
-  { text: "Jobs", route: "job-list" },
-  { text: "Archetypes", route: "archetype-list" },
-  { text: "Categories", route: "category-list" },
-  { text: "Usages", route: "usage-list" },
-  { text: "Brands", route: "brand-list" },
-];
+onMounted(async () => {
+  setupLinks();
+});
+
+const setupLinks = () => {
+  if (userStore.user) {
+    links.value = [
+      { text: "Items", route: "item-list" },
+      { text: "Projects", route: "project-list" },
+    ];
+
+    drawerLinks.value = [
+      { text: "Items", route: "item-list" },
+      { text: "Projects", route: "project-list" },
+      { text: "Jobs", route: "job-list" },
+      { text: "Archetypes", route: "archetype-list" },
+      { text: "Categories", route: "category-list" },
+      { text: "Usages", route: "usage-list" },
+      { text: "Brands", route: "brand-list" },
+    ];
+  } else {
+    links.value = [];
+    drawerLinks.value = [];
+  }
+};
+
+// Watch for changes in the responseStore to display the appropriate snackbar
+watch(
+  () => userStore.user,
+  (newUser) => {
+    setupLinks();
+  },
+  { deep: true }
+);
 
 // Safeguard to handle undefined or null paths
 const normalizePath = (path) => {
@@ -129,7 +151,6 @@ const normalizePath = (path) => {
 const isActiveRoute = (linkRoute) => {
   return normalizePath(route.path) === normalizePath(linkRoute);
 };
-
 
 const myRentals = () => {
   router.push({ path: "/my-rentals" });

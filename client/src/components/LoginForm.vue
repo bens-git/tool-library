@@ -1,5 +1,12 @@
 <template>
-  <v-card v-if="!userStore.user" prepend-icon="mdi-login" title="Login">
+   <v-container
+    fluid
+    class="fill-height d-flex justify-center align-center"
+  >
+  <v-card v-if="!userStore.user" prepend-icon="mdi-login" title="Login"   class="pa-4"
+  max-width="1200px"
+  width="100%"
+  height="80vh">
     <v-card-text>
       <v-text-field
         v-model="email"
@@ -35,6 +42,7 @@
       ></v-btn>
     </v-card-actions>
   </v-card>
+</v-container>
 </template>
 <script setup>
 import { shallowRef, ref } from "vue";

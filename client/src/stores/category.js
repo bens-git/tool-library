@@ -24,7 +24,7 @@ export const useCategoryStore = defineStore("category", {
     async index() {
       const { fetchRequest } = useApi();
       const data = await fetchRequest(
-        "me/categories", // API endpoint
+        "categories", // API endpoint
         {
           page: this.categoryListPage,
           itemsPerPage: this.categoryListItemsPerPage,

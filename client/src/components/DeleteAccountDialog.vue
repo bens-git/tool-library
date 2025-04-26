@@ -85,7 +85,7 @@ const deleteUser = async () => {
 
   if (data?.success) {
     dialog.value = false;
-    router.push("/item-list");
+    router.push("/login-form");
   }
 };
 </script>

@@ -68,6 +68,6 @@ const onClose = () => {};
 const logout = async () => {
   dialog.value = false;
   await userStore.logout();
-  router.push({ path: "/item-list" });
+  router.push({ path: "/login-form" });
 };
 </script>

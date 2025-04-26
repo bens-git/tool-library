@@ -146,7 +146,7 @@ const register = async () => {
 
   if(data?.success){
     dialog.value=false
-    router.push({ path: "/item-list" });
+    router.push({ path: "/login-form" });
 
   }
 };
