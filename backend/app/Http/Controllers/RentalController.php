@@ -112,7 +112,7 @@ class RentalController extends Controller
             'status' => 'booked', // or any other initial status
         ]);
 
-        $rental->load('renter:id,discord_username');
+        $rental->load('renter:id,discord_username,name,email');
 
 
         // Find the item by ID
