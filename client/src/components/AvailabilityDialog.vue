@@ -58,6 +58,7 @@
             </v-col>
           </v-row>
         </div>
+
       </v-card-text>
       <v-divider></v-divider>
 

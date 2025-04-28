@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\Rental;
 use App\Models\Item;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +14,8 @@ use App\Mail\ConfirmRentalEmail;
 use App\Mail\ConfirmRentalDeletionEmail;
 use App\Mail\ConfirmLoanEmail;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 
 class RentalController extends Controller
 {
@@ -44,9 +45,8 @@ class RentalController extends Controller
         return response()->json(['data' => $rentedDates]);
     }
 
-    public function getItemRentedDates(Request $request)
+    public function getItemRentedDates($itemId)
     {
-        $itemId = $request->query('itemId');
 
         // Fetch rentals for the specified archetypeId
         $rentals = Rental::where('item_id', '=', $itemId)->get(['starts_at', 'ends_at']); // Adjust the columns as needed
@@ -59,7 +59,17 @@ class RentalController extends Controller
             ];
         });
 
-        return response()->json(['data' => $rentedDates]);
+        $dates = [];
+        foreach($rentedDates AS $dateRange){
+            $period = CarbonPeriod::create($dateRange['start'], $dateRange['end']);
+
+            foreach ($period as $date) {
+                $dates[] = $date->toDateString(); // Or ->format('Y-m-d') if you prefer
+            }
+        
+        }
+
+        return response()->json(['data' => $dates]);
     }
 
 

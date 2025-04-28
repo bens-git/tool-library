@@ -33,6 +33,50 @@
               ></v-date-input>
             </v-col>
           </v-row>
+
+
+
+        <v-alert color="error" v-if="localItem.make_item_unavailable"
+          >Unavailable</v-alert
+        >
+        <div
+          v-if="
+            unavailableDates &&
+            unavailableDates.length 
+          "
+        >
+          <v-row>
+            <v-col
+              v-for="(date, index) in unavailableDates"
+              :key="index"
+              cols="4"
+            >
+              <v-chip class="ma-2" color="red lighten-2">
+                {{ new Date(date).toLocaleDateString() }}
+              </v-chip>
+            </v-col>
+          </v-row>
+        </div>
+
+        <div
+          v-if="
+            rentedDates &&
+            rentedDates.length 
+          "
+        >
+          <v-row>
+            <v-col
+              v-for="(date, index) in rentedDates"
+              :key="index"
+              cols="4"
+            >
+              <v-chip class="ma-2" color="red lighten-2">
+                {{ new Date(date).toLocaleDateString() }}
+              </v-chip>
+            </v-col>
+          </v-row>
+        </div>
+
         </v-card-text>
         <v-divider></v-divider>
 
@@ -61,6 +105,7 @@ const responseStore = useResponseStore();
 
 const localItem = ref(null);
 const rentedDates = ref([]);
+const unavailableDates = ref([]);
 
 // Computed properties for date constraints
 const today = new Date();
@@ -86,8 +131,8 @@ const initialize = async () => {
     ...props.item,
   };
 
-  await itemStore.indexItemRentedDates(localItem.value);
-  rentedDates.value = itemStore.rentedDates; // Assuming rentedDates are stored in itemStore
+  rentedDates.value = await itemStore.indexItemRentedDates(localItem.value.id);
+  unavailableDates.value = await itemStore.indexItemUnavailableDates(localItem.value.id);
 };
 
 // const emit = defineEmits(["update:modelValue", "close"]);

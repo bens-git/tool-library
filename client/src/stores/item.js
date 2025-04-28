@@ -108,6 +108,7 @@ export const useItemStore = defineStore("item", {
 
         return utcDate;
       };
+      
       const sortDatesAscending = (dates) => {
         return dates.sort((a, b) => {
           return a - b; // Sort in ascending order
