@@ -176,7 +176,26 @@ class ItemController extends Controller
             'archetypes.resource',
             DB::raw('  CONCAT_WS(" ", COALESCE(locations.city, ""), COALESCE(locations.state, ""), COALESCE(locations.country, "")) as location')
         )->with(['archetype', 'brand'])
-            ->groupBy('items.id', 'users.name', 'archetypes.name', 'brands.name');
+            ->groupBy(
+                'archetypes.name',
+                'archetypes.resource',
+                'brands.name',
+                'items.archetype_id',
+                'items.brand_id',
+                'items.code',
+                'items.created_at',
+                'items.description',
+                'items.id',
+                'items.owned_by',
+                'manufactured_at',
+                'purchase_value',
+                'purchased_at',
+                'serial',
+                'users.name',
+                'locations.city',
+                'locations.state',
+                'locations.country'
+            );
 
         // Apply sorting
         if ($sortBy) {
@@ -376,8 +395,8 @@ class ItemController extends Controller
             ->first();
 
 
-        foreach($item->images AS $image){
-            $image->path='/storage/' . $image->path;
+        foreach ($item->images as $image) {
+            $image->path = '/storage/' . $image->path;
         }
 
         $response['data'] = $item;

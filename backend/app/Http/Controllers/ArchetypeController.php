@@ -269,7 +269,15 @@ class ArchetypeController extends Controller
 
             );
 
-        $query->groupBy('archetypes.id');
+        $query->groupBy(
+            'archetypes.id',
+            'archetypes.name',
+            'archetypes.created_by',
+            'archetypes.description',
+            'archetypes.notes',
+            'archetypes.code',
+            'archetypes.resource'
+        );
 
 
         // Apply search filter if needed
