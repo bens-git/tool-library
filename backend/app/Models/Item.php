@@ -19,7 +19,11 @@ class Item extends Model
         'manufactured_at',
         'brand_id',
         'make_item_unavailable'
-    ]; 
+    ];
+
+    protected $casts = [
+        'make_item_unavailable' => 'boolean', // or 'integer' if you prefer
+    ];
 
     public function location()
     {
