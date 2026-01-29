@@ -156,7 +156,7 @@ class AuthController extends Controller
         // Make the request
         $response = $client->request('GET', $url, [
             'headers' => [
-                'User-Agent' => 'YourAppName/1.0 (your-email@example.com)'
+                'User-Agent' => 'tool-library.bensmall.ca (admin@bensmall.ca)'
             ]
         ]);
 
