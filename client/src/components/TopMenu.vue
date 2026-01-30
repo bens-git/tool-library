@@ -116,13 +116,10 @@ const setupLinks = () => {
   if (userStore.user) {
     links.value = [
       { text: "Items", route: "item-list" },
-      { text: "Projects", route: "project-list" },
     ];
 
     drawerLinks.value = [
       { text: "Items", route: "item-list" },
-      { text: "Projects", route: "project-list" },
-      { text: "Jobs", route: "job-list" },
       { text: "Archetypes", route: "archetype-list" },
       { text: "Categories", route: "category-list" },
       { text: "Usages", route: "usage-list" },
