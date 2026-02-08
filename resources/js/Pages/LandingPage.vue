@@ -68,11 +68,11 @@
 <script setup>
 import { Head } from '@inertiajs/vue3'
 import PageLayout from '@/Layouts/PageLayout.vue'
-import { useUserStore } from '@/Stores/user'
-import { router } from '@inertiajs/vue3'
+import { router,usePage } from '@inertiajs/vue3'
 
-const userStore = useUserStore()
-const user = userStore.user || null
+const page = usePage()
+const user = page.props.auth.user
+
 
 // App title from env
 const appTitle = import.meta.env.VITE_APP_NAME || 'Community Tool Library'
@@ -80,7 +80,7 @@ const appTitle = import.meta.env.VITE_APP_NAME || 'Community Tool Library'
 // Navigate based on login state
 function goNext() {
   if (user) {
-    router.visit('/item-list') // go to library
+    router.visit('/library-catalog') // go to library
   } else {
     router.visit('/login') // go to login
   }

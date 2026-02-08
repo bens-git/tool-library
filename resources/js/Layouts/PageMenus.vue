@@ -11,13 +11,13 @@
         <v-spacer />
 
         <!-- Always Show User Menu -->
-        <v-menu v-if="userStore.user">
+        <v-menu v-if="user">
             <template #activator="{ props }">
                 <v-btn color="primary" v-bind="props" size="small">
                     {{
-                        userStore.user.discord_username
-                            ? userStore.user.discord_username
-                            : userStore.user.name
+                        user.discord_username
+                            ? user.discord_username
+                            : user.name
                     }}
                     <v-icon right>mdi-menu-down</v-icon>
                 </v-btn>
@@ -32,7 +32,7 @@
 
                 <v-list-item>
                     <v-btn
-                        v-if="userStore.user"
+                        v-if="user"
                         :class="{ 'v-btn--active': isActive('/logout-page') }"
                         variant="tonal"
                         block
@@ -48,17 +48,19 @@
         <!-- Additional Links on Larger Screens -->
         <template v-if="!mobile">
             <v-btn
-                v-if="!userStore.user"
+                v-if="!user"
                 :class="{ 'v-btn--active': isActive('/login') }"
-                variant="tonal"
+                variant="flat"
                 color="success"
                 prepend-icon="mdi-login"
                 text="Login"
                 @click="goToLogin"
             ></v-btn>
 
+            
+
             <v-btn
-                v-if="!userStore.user"
+                v-if="!user"
                 :class="{ 'v-btn--active': isActive('/register') }"
                 variant="tonal"
                 color="secondary"
@@ -67,7 +69,7 @@
                 @click="goToRegister"
             ></v-btn>
 
-            <v-btn v-if="!userStore.user" to="request-password-reset-form" text>
+            <v-btn v-if="!user" to="request-password-reset-form" text>
                 Forgot Password
             </v-btn>
         </template>
@@ -129,7 +131,7 @@
 
         <div class="drawer-btns">
             <v-btn
-                v-if="!userStore.user"
+                v-if="!user"
                 :class="{ 'v-btn--active': isActive('/login') }"
                 variant="tonal"
                 color="secondary"
@@ -139,7 +141,7 @@
             ></v-btn>
 
             <v-btn
-                v-if="!userStore.user"
+                v-if="!user"
                 :class="{ 'v-btn--active': isActive('/register') }"
                 variant="tonal"
                 color="secondary"
@@ -149,7 +151,7 @@
             ></v-btn>
 
             <v-btn
-                v-if="!userStore.user"
+                v-if="!user"
                 :class="{ 'v-btn--active': isActive('/register') }"
                 variant="tonal"
                 color="secondary"
@@ -159,7 +161,7 @@
             ></v-btn>
 
             <v-btn
-                v-if="userStore.user"
+                v-if="user"
                 :class="{ 'v-btn--active': isActive('/logout-page') }"
                 variant="tonal"
                 color="error"
@@ -174,13 +176,14 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useDisplay } from 'vuetify';
-import { useUserStore } from '@/Stores/user';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
+const page = usePage()
+
 
 const { mobile } = useDisplay();
 const drawer = ref(false);
-const userStore = useUserStore();
 const appTitle = import.meta.env.VITE_APP_NAME;
+const user = page.props.auth.user
 
 const links = ref([]);
 const drawerLinks = ref([]);
@@ -192,11 +195,11 @@ onMounted(async () => {
 });
 
 const setupLinks = () => {
-    if (userStore.user) {
-        links.value = [{ text: 'Items', route: 'item-list' }];
+    if (user) {
+        links.value = [{ text: 'Items', route: 'library-catalog' }];
 
         drawerLinks.value = [
-            { text: 'Items', route: 'item-list' },
+            { text: 'Items', route: 'library-catalog' },
             { text: 'Archetypes', route: 'archetype-list' },
             { text: 'Categories', route: 'category-list' },
             { text: 'Usages', route: 'usage-list' },
@@ -210,7 +213,7 @@ const setupLinks = () => {
 
 // Watch for changes in the responseStore to display the appropriate snackbar
 watch(
-    () => userStore.user,
+    () => user,
     () => {
         setupLinks();
     },
