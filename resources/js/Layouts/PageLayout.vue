@@ -4,8 +4,15 @@
             <!-- Page Menus (Top navigation) -->
             <PageMenus />
 
+            <v-progress-linear
+                v-show="loadingStore.isLoading"
+                indeterminate
+                height="3"
+                style="position: fixed; top: 0; z-index: 9999"
+            />
+
             <!-- Inertia page slot -->
-                <slot />
+            <slot />
 
             <!-- Snackbar for error messages -->
             <v-snackbar v-model="showError" color="error" multi-line :timeout="5000">
@@ -22,18 +29,13 @@
                     <v-btn variant="text" @click="showSuccess = false">Close</v-btn>
                 </template>
             </v-snackbar>
-
-            <!-- Loading Spinner -->
-            <v-overlay :model-value="isLoading" class="align-center justify-center">
-                <v-progress-circular color="primary" size="64" indeterminate />
-            </v-overlay>
         </v-main>
     </v-app>
 </template>
 
 <script setup>
 import PageMenus from '@/Layouts/PageMenus.vue';
-import { ref, watch, computed } from 'vue';
+import { ref, watch } from 'vue';
 import { useLoadingStore } from '@/Stores/loading';
 import { useResponseStore } from '@/Stores/response';
 
@@ -62,7 +64,6 @@ watch(
 );
 
 // Computed property for loading state
-const isLoading = computed(() => (loadingStore?.loadingProcesses?.length || 0) > 0);
 </script>
 
 <style scoped>
@@ -102,7 +103,4 @@ body,
     display: flex;
     flex-direction: column;
 }
-
-
-
 </style>

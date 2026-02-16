@@ -64,6 +64,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('items', ItemController::class);
 });
 
+
+Route::middleware('auth')->group(function () {
+    Route::resource('rentals', RentalController::class);
+});
+
 Route::middleware('auth')->group(function () {
     Route::resource('usages', UsageController::class);
 });

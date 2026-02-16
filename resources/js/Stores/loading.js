@@ -1,22 +1,20 @@
-import { defineStore } from "pinia";
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
 
-export const useLoadingStore = defineStore("loading", {
-  state: () => ({
-    loadingProcesses: [],
-  }),
-  actions: {
-    startLoading(process) {
-      if (!this.loadingProcesses.includes(process)) {
-        this.loadingProcesses.push(process);
-      }
-    },
-    stopLoading(process) {
-      this.loadingProcesses = this.loadingProcesses.filter(
-        (p) => p !== process,
-      );
-    },
-    isLoading(process) {
-      return this.loadingProcesses.includes(process);
-    },
-  },
-});
+export const useLoadingStore = defineStore('loading', () => {
+  const pendingRequests = ref(0)
+
+  const isLoading = computed(() => pendingRequests.value > 0)
+
+  function start() {
+    pendingRequests.value++
+  }
+
+  function finish() {
+    if (pendingRequests.value > 0) {
+      pendingRequests.value--
+    }
+  }
+
+  return { isLoading, start, finish }
+})

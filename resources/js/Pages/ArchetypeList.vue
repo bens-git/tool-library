@@ -5,11 +5,8 @@ import debounce from 'lodash/debounce';
 import ArchetypeDialog from './ArchetypeDialog.vue';
 import PageLayout from '@/Layouts/PageLayout.vue';
 import axios from 'axios';
-import { usePage } from '@inertiajs/vue3';
 import { Head } from '@inertiajs/vue3';
 
-const page = usePage();
-const user = page.props.auth.user;
 
 const autocompleteCategories = ref([]);
 const autocompleteUsages = ref([]);
@@ -32,54 +29,8 @@ const selectedCategoryId = ref(null);
 const selectedUsageId = ref(null);
 const selectedResourceId = ref(null);
 const selectedBrandId = ref(null);
-const apiHost = import.meta.env.VITE_APP_URL;
 
-const fullImageUrl = (imagePath) => `${apiHost}/${imagePath}`;
 
-const headers = [
-    {
-        title: 'Image',
-        align: 'start',
-        sortable: false,
-        key: 'image',
-    },
-    {
-        title: 'Actions',
-        align: 'start',
-        sortable: false,
-        key: 'actions',
-    },
-    {
-        title: 'Archetype',
-        align: 'start',
-        sortable: true,
-        key: 'name',
-    },
-    {
-        title: 'Description',
-        align: 'start',
-        sortable: false,
-        key: 'description',
-    },
-    {
-        title: 'Categories',
-        align: 'start',
-        sortable: false,
-        key: 'categories',
-    },
-    {
-        title: 'Usages',
-        align: 'start',
-        sortable: false,
-        key: 'usages',
-    },
-    {
-        title: 'Brands',
-        align: 'start',
-        sortable: false,
-        key: 'brand_names',
-    },
-];
 
 const refreshAutocompleteBrands = async (query) => {
     const response = await axios.get(route('brands.index'), {

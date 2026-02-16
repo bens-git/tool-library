@@ -22,29 +22,6 @@
                 <v-list-item>
                     <v-btn
                         v-if="user"
-                        :class="{ 'v-btn--active': isActive('/my-rentals') }"
-                        block
-                        :color="route().current('my-rentals') ? 'primary' : undefined"
-                        :variant="route().current('my-rentals') ? 'flat' : 'text'"
-                        text="My Rentals"
-                        @click="myRentals"
-                    ></v-btn>
-                </v-list-item>
-                <v-list-item>
-                    <v-btn
-                        v-if="user"
-                        :class="{ 'v-btn--active': isActive('/my-loans') }"
-                        block
-                        :color="route().current('my-loans') ? 'primary' : undefined"
-                        :variant="route().current('my-loans') ? 'flat' : 'text'"
-                        text="My Loans"
-                        @click="myLoans"
-                    ></v-btn>
-                </v-list-item>
-
-                <v-list-item>
-                    <v-btn
-                        v-if="user"
                         :class="{ 'v-btn--active': isActive('/logout-page') }"
                         variant="tonal"
                         block
@@ -52,6 +29,21 @@
                         prepend-icon="mdi-logout"
                         text="Logout"
                         @click="goToLogout"
+                    ></v-btn>
+                </v-list-item>
+
+            
+                
+
+                <v-list-item v-for="link in drawerLinks" :key="link">
+                    <v-btn
+                        :class="{ 'v-btn--active': route().current(link.route) }"
+                        :color="route().current(link.route) ? 'primary' : undefined"
+                        :variant="route().current(link.route) ? 'flat' : 'text'"
+                        :prepend-icon="link.icon"
+                        :text="link.text"
+                        block
+                        @click="router.visit(link.route)"
                     ></v-btn>
                 </v-list-item>
             </v-list>
@@ -98,17 +90,6 @@
             @click="router.visit('library-catalog')"
         ></v-btn>
         <v-spacer />
-
-        <v-btn
-            v-for="link in drawerLinks"
-            :key="link"
-            :class="{ 'v-btn--active': route().current(link.route) }"
-            :color="route().current(link.route) ? 'primary' : undefined"
-            :variant="route().current(link.route) ? 'flat' : 'text'"
-            :prepend-icon="link.icon"
-            :text="link.text"
-            @click="router.visit(link.route)"
-        ></v-btn>
 
         <v-spacer />
     </v-app-bar>
@@ -225,10 +206,12 @@ onMounted(async () => {
 const setupLinks = () => {
     if (user) {
         drawerLinks.value = [
-            { text: 'Types', route: 'archetype-list' },
-            { text: 'Categories', route: 'category-list' },
-            { text: 'Usages', route: 'usage-list' },
-            { text: 'Brands', route: 'brand-list' },
+            { text: 'My Loans', route: 'my-loans' },
+            { text: 'My Rentals', route: 'my-rentals' },
+            { text: 'My Types', route: 'archetype-list' },
+            { text: 'My Categories', route: 'category-list' },
+            { text: 'My Usages', route: 'usage-list' },
+            { text: 'My Brands', route: 'brand-list' },
         ];
     } else {
         drawerLinks.value = [];
@@ -244,13 +227,7 @@ watch(
     { deep: true }
 );
 
-const myRentals = () => {
-    router.visit('/my-rentals');
-};
 
-const myLoans = () => {
-    router.visit('/my-loans');
-};
 
 const goToRegister = () => {
     router.visit('/register');

@@ -7,10 +7,11 @@ import DeleteItemDialog from '@/Pages/DeleteItemDialog.vue';
 import LocationDialog from '@/Pages/LocationDialog.vue';
 import { ref, onMounted, watch } from 'vue';
 import _ from 'lodash';
-import useApi from '@/Stores/api';
-import axios from 'axios';
+import api from '@/services/api'
 import { usePage } from '@inertiajs/vue3';
+import { useLoadingStore } from '@/Stores/loading';
 
+const loadingStore = useLoadingStore();
 const page = usePage();
 const user = page.props.auth.user;
 const items = ref([]);
@@ -29,8 +30,6 @@ const pageNumber = ref(1);
 const itemsPerPage = ref(10);
 const sortBy = ref([]);
 const advancedSearch = ref(false);
-
-const { fullImageUrl } = useApi();
 
 const toggleAdvancedSearch = () => (advancedSearch.value = !advancedSearch.value);
 
@@ -70,13 +69,13 @@ const refreshItems = async () => {
     };
 
     if (filters.value.user_id) {
-        const response = await axios.get(route('me.items.index'), {
+        const response = await api.get(route('me.items.index'), {
             params: { query },
         });
         items.value = response.data.data;
         totalItems.value = response.data.total;
     } else {
-        const response = await axios.get(route('items.index'), {
+        const response = await api.get(route('items.index'), {
             params: query,
         });
         items.value = response.data.data;
@@ -86,7 +85,7 @@ const refreshItems = async () => {
 
 const refreshAutocompleteArchetypes = async (query) => {
     if (query) {
-        const response = await axios.get(route('archetypes.index'), {
+        const response = await api.get(route('archetypes.index'), {
             params: { query },
         });
         autocompleteArchetypes.value = response.data.data;
@@ -94,21 +93,21 @@ const refreshAutocompleteArchetypes = async (query) => {
 };
 
 const refreshAutocompleteBrands = async (query) => {
-    const response = await axios.get(route('brands.index'), {
+    const response = await api.get(route('brands.index'), {
         params: { query },
     });
     autocompleteBrands.value = response.data.data;
 };
 
 const refreshAutocompleteCategories = async (query) => {
-    const response = await axios.get(route('categories.index'), {
+    const response = await api.get(route('categories.index'), {
         params: { query },
     });
     autocompleteCategories.value = response.data.data;
 };
 
 const refreshAutocompleteUsages = async (query) => {
-    const response = await axios.get(route('usages.index'), {
+    const response = await api.get(route('usages.index'), {
         params: { query },
     });
     autocompleteUsages.value = response.data.data;
@@ -140,7 +139,7 @@ const updateItemListOptions = (options) => {
     itemsPerPage.value = options.itemsPerPage;
     sortBy.value = options.sortBy;
 
-    refreshAutocompleteArchetypes();
+    refreshItems();
 };
 </script>
 
@@ -149,7 +148,8 @@ const updateItemListOptions = (options) => {
         <Head title="Catalog" />
 
         <v-container fluid class="d-flex align-center justify-center pa-4">
-            <div style="width: 100%; max-width: 420px">
+            <div style="width: 100%">
+
                 <!-- Header -->
                 <div class="d-flex justify-space-between align-center mb-4">
                     <div class="text-h5 font-weight-bold">Items</div>
@@ -242,13 +242,14 @@ const updateItemListOptions = (options) => {
                         </div>
                     </div>
                 </v-expand-transition>
-
                 <!-- Items table -->
+               
                 <v-data-table-server
                     v-if="totalItems"
                     v-model:items-per-page="itemsPerPage"
                     :items-length="totalItems"
                     :headers="headers"
+                    :loading="loadingStore.isLoading"
                     :items="items"
                     item-value="name"
                     fixed-header
@@ -258,7 +259,7 @@ const updateItemListOptions = (options) => {
                     <template #[`item.image`]="{ item }">
                         <v-img
                             v-if="item.images?.length > 0"
-                            :src="fullImageUrl(item.images[0].path)"
+                            :src="item.images[0].url"
                             max-height="200"
                             max-width="200"
                             min-height="200"

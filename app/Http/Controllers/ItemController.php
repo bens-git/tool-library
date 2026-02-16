@@ -223,7 +223,7 @@ class ItemController extends Controller
                 $itemId => $imageGroup->map(function ($image) {
                     return [
                         'id' => $image->id,
-                        'path' => '/storage/' . $image->path
+                        'url' => '/storage/' . $image->path
                     ];
                 })
             ];
