@@ -1,9 +1,5 @@
 <script setup>
 import PageLayout from '@/Layouts/PageLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 
 defineProps({
@@ -25,44 +21,49 @@ const submit = () => {
     <PageLayout>
         <Head title="Forgot Password" />
 
-        <div class="mb-4 text-sm text-gray-600">
-            Forgot your password? No problem. Just let us know your email
-            address and we will email you a password reset link that will allow
-            you to choose a new one.
-        </div>
+        <v-container fluid class="d-flex align-center justify-center pa-4">
+            <div style="width: 100%; max-width: 420px;">
+                <div class="text-center mb-6">
+                    <v-icon size="72" color="primary" class="mb-2">
+                        mdi-lock-reset
+                    </v-icon>
+                    <div class="text-h4 font-weight-bold">Forgot Password</div>
+                </div>
 
-        <div
-            v-if="status"
-            class="mb-4 text-sm font-medium text-green-600"
-        >
-            {{ status }}
-        </div>
+                <div class="mb-4 text-body-2">
+                    Forgot your password? No problem. Just enter your email
+                    address and we will email you a password reset link to choose a new one.
+                </div>
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
+                <div v-if="status" class="mb-4 text-body-2 font-medium" style="color: #16a34a;">
+                    {{ status }}
+                </div>
 
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
-                    autocomplete="username"
-                />
+                <v-form @submit.prevent="submit">
+                    <v-text-field
+                        v-model="form.email"
+                        label="Email"
+                        type="email"
+                        required
+                        autofocus
+                        autocomplete="username"
+                        :error-messages="form.errors.email"
+                        color="primary"
+                        variant="outlined"
+                        class="mb-4"
+                    />
 
-                <InputError class="mt-2" :message="form.errors.email" />
+                    <div class="d-flex justify-end">
+                        <v-btn
+                            color="primary"
+                            type="submit"
+                            :loading="form.processing"
+                        >
+                            Email Password Reset Link
+                        </v-btn>
+                    </div>
+                </v-form>
             </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Email Password Reset Link
-                </PrimaryButton>
-            </div>
-        </form>
+        </v-container>
     </PageLayout>
 </template>

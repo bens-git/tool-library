@@ -4,8 +4,9 @@ import './bootstrap';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
-import { createPinia } from 'pinia'
+import { createPinia } from 'pinia';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
+import { VDateInput } from 'vuetify/labs/VDateInput';
 
 // Vuetify imports
 import 'vuetify/styles'; // global CSS
@@ -16,7 +17,10 @@ import * as directives from 'vuetify/directives';
 import { aliases, mdi } from 'vuetify/iconsets/mdi';
 
 const vuetify = createVuetify({
-    components,
+    components: {
+        ...components,
+        VDateInput,
+    },
     directives,
     icons: {
         defaultSet: 'mdi',
@@ -60,11 +64,9 @@ const vuetify = createVuetify({
             },
         },
     },
-
-   
 });
 
-const pinia = createPinia()   // <-- initialize Pinia
+const pinia = createPinia(); // <-- initialize Pinia
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -76,8 +78,8 @@ createInertiaApp({
         return createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
-            .use(vuetify) 
-            .use(pinia)  
+            .use(vuetify)
+            .use(pinia)
             .mount(el);
     },
     progress: {

@@ -1,211 +1,40 @@
-<template>
-    <PageLayout>
-        <Head title="Catalog" />
-        <v-container class="d-flex justify-center fill-height">
-            <v-card class="d-flex flex-column flex-grow-1" flat>
-                <template #title>
-                    <div class="d-flex justify-space-between align-center">Items</div>
-                </template>
-
-                <v-card-text class="d-flex flex-column flex-grow-1 overflow-hidden">
-                    <v-row class="justify-center align-center">
-                        <v-col cols="12" md="8">
-                            <v-row>
-                                <v-col cols="12">
-                                    <v-autocomplete
-                                        v-model="itemStore.itemListFilters.archetype"
-                                        density="compact"
-                                        :items="autocompleteArchetypes"
-                                        label="Search"
-                                        item-title="name"
-                                        item-value="id"
-                                        hide-no-data
-                                        hide-details
-                                        return-object
-                                        clearable
-                                        @update:model-value="debounceSearch()"
-                                        @update:search="debouncedAutocompleteArchetypeSearch"
-                                    ></v-autocomplete>
-                                </v-col>
-                                <v-col cols="6" md="6">
-                                    <v-btn
-                                        size="small"
-                                        variant="outlined"
-                                        @click="toggleAdvancedSearch"
-                                    >
-                                        {{ advancedSearch ? 'Hide Advanced' : 'Advanced Search' }}
-                                    </v-btn>
-                                </v-col>
-                                <v-col v-if="userStore.user" cols="6" md="6">
-                                    <ItemDialog aim="create" />
-                                </v-col>
-                            </v-row>
-                        </v-col>
-                    </v-row>
-                    <v-expand-transition class="mt-2">
-                        <div v-if="advancedSearch">
-                            <v-row>
-                                <v-col cols="12" md="4">
-                                    <v-checkbox
-                                        v-if="userStore.user"
-                                        v-model="itemStore.itemListFilters.userId"
-                                        :true-value="userStore.user?.id"
-                                        :false-value="null"
-                                        label="Show only my items"
-                                        hide-details
-                                        density="compact"
-                                        @update:model-value="debounceSearch()"
-                                    ></v-checkbox>
-                                </v-col>
-
-                                <v-col v-if="!mobile" cols="12" md="4">
-                                    <v-autocomplete
-                                        v-model="itemStore.itemListFilters.brand"
-                                        density="compact"
-                                        :items="autocompleteBrands"
-                                        label="Brand"
-                                        item-title="name"
-                                        item-value="id"
-                                        hide-no-data
-                                        hide-details
-                                        return-object
-                                        variant="outlined"
-                                        clearable
-                                        @update:model-value="debounceSearch()"
-                                        @update:search="debouncedAutocompleteBrandSearch"
-                                    ></v-autocomplete>
-                                </v-col>
-
-                                <v-col v-if="!mobile" cols="12" md="4">
-                                    <v-autocomplete
-                                        v-model="itemStore.itemListFilters.category"
-                                        density="compact"
-                                        :items="autocompleteCategories"
-                                        label="Category"
-                                        item-title="name"
-                                        item-value="id"
-                                        hide-no-data
-                                        hide-details
-                                        return-object
-                                        variant="outlined"
-                                        clearable
-                                        @update:model-value="debounceSearch()"
-                                        @update:search="debouncedAutocompleteCategorySearch"
-                                    ></v-autocomplete>
-                                </v-col>
-
-                                <v-col v-if="!mobile" cols="12" md="4">
-                                    <v-autocomplete
-                                        v-model="itemStore.itemListFilters.usage"
-                                        density="compact"
-                                        :items="autocompleteUsages"
-                                        label="Usage"
-                                        item-title="name"
-                                        item-value="id"
-                                        hide-no-data
-                                        hide-details
-                                        return-object
-                                        variant="outlined"
-                                        clearable
-                                        @update:model-value="debounceSearch()"
-                                        @update:search-value="debouncedAutocompleteUsageSearch"
-                                    ></v-autocomplete>
-                                </v-col>
-
-                                <v-col v-if="!itemStore.itemListFilters.userId" cols="12" md="4">
-                                    <LocationDialog @set-location="handleSetLocation" />
-                                </v-col>
-                            </v-row>
-                        </div>
-                    </v-expand-transition>
-
-                    <!-- table top  fields-->
-
-                    <v-data-table-server
-                        v-if="itemStore.itemListTotalItems"
-                        v-model:items-per-page="itemStore.itemListItemsPerPage"
-                        :items-length="itemStore.itemListTotalItems"
-                        :headers="headers"
-                        :items="itemStore.itemListItems"
-                        item-value="name"
-                        fixed-header
-                        class="flex-grow-1 overflow-auto"
-                        @update:options="itemStore.updateItemListOptions"
-                    >
-                        <template #[`item.image`]="{ item }">
-                            <v-img
-                                v-if="item.images?.length > 0"
-                                :src="fullImageUrl(item.images[0].path)"
-                                max-height="200"
-                                max-width="200"
-                                min-height="200"
-                                min-width="200"
-                                alt="Archetype Image"
-                            ></v-img>
-                            <v-icon v-else>mdi-image-off</v-icon>
-                        </template>
-                        <template #[`item.actions`]="{ item }">
-                            <AvailabilityDialog
-                                v-if="userStore.user && item.owned_by === userStore.user.id"
-                                :item="item"
-                            />
-
-                            <ItemDialog
-                                v-if="userStore.user && item.owned_by === userStore.user.id"
-                                :item="item"
-                                aim="edit"
-                            />
-
-                            <ItemDialog
-                                v-if="item.owned_by !== userStore.user.id"
-                                :item="item"
-                                aim="view"
-                            />
-
-                            <DeleteItemDialog
-                                v-if="userStore.user && item.owned_by === userStore.user.id"
-                                :item="item"
-                            />
-                        </template>
-                    </v-data-table-server>
-                </v-card-text>
-            </v-card>
-        </v-container>
-    </PageLayout>
-</template>
-
 <script setup>
+import PageLayout from '@/Layouts/PageLayout.vue';
+import { Head } from '@inertiajs/vue3';
+import ItemDialog from '@/Pages/ItemDialog.vue';
+import AvailabilityDialog from '@/Pages/AvailabilityDialog.vue';
+import DeleteItemDialog from '@/Pages/DeleteItemDialog.vue';
+import LocationDialog from '@/Pages/LocationDialog.vue';
 import { ref, onMounted, watch } from 'vue';
-import { useItemStore } from '@/Stores/item';
-import { useArchetypeStore } from '@/Stores/archetype';
-import { useCategoryStore } from '@/Stores/category';
-import { useBrandStore } from '@/Stores/brand';
-import { useUsageStore } from '@/Stores/usage';
-import { useUserStore } from '@/Stores/user';
 import _ from 'lodash';
 import useApi from '@/Stores/api';
-import DeleteItemDialog from './DeleteItemDialog.vue';
-import ItemDialog from './ItemDialog.vue';
-import AvailabilityDialog from './AvailabilityDialog.vue';
-import LocationDialog from './LocationDialog.vue';
-import { useDisplay } from 'vuetify';
-import { Head } from '@inertiajs/vue3'
+import axios from 'axios';
+import { usePage } from '@inertiajs/vue3';
 
-const { mobile } = useDisplay();
-
+const page = usePage();
+const user = page.props.auth.user;
+const items = ref([]);
+const totalItems = ref(0);
+const filters = ref({
+    archetype: null,
+    category: null,
+    usage: null,
+    brand: null,
+    search: null,
+    radius: 10,
+    location: null,
+    user_id: null,
+});
+const pageNumber = ref(1);
+const itemsPerPage = ref(10);
+const sortBy = ref([]);
 const advancedSearch = ref(false);
 
-const itemStore = useItemStore();
-const archetypeStore = useArchetypeStore();
-const categoryStore = useCategoryStore();
-const usageStore = useUsageStore();
-const brandStore = useBrandStore();
-const userStore = useUserStore();
-
 const { fullImageUrl } = useApi();
-const toggleAdvancedSearch = () => {
-    advancedSearch.value = !advancedSearch.value;
-};
+
+const toggleAdvancedSearch = () => (advancedSearch.value = !advancedSearch.value);
+
+// Table headers
 const headers = [
     { title: 'Actions', value: 'actions', sortable: false },
     { title: 'Code', value: 'code' },
@@ -214,67 +43,247 @@ const headers = [
     { title: 'Brand', value: 'brand.name' },
 ];
 
+// Autocomplete arrays
 const autocompleteArchetypes = ref([]);
 const autocompleteBrands = ref([]);
 const autocompleteCategories = ref([]);
 const autocompleteUsages = ref([]);
 
+const debounceSearch = _.debounce(() => {
+    pageNumber.value = 1;
+    refreshItems();
+}, 300);
+
+const handleSetLocation = (location, address, radius) => {
+    filters.value.location = location;
+    filters.value.radius = radius;
+    refreshItems();
+};
+
+const refreshItems = async () => {
+    const query = {
+        page: pageNumber.value,
+        brand_id: filters.value.brand?.id,
+        archetype_id: filters.value?.archetype?.id,
+        usage_id: filters.value?.usage?.id,
+        category_id: filters.value?.category?.id,
+    };
+
+    if (filters.value.user_id) {
+        const response = await axios.get(route('me.items.index'), {
+            params: { query },
+        });
+        items.value = response.data.data;
+        totalItems.value = response.data.total;
+    } else {
+        const response = await axios.get(route('items.index'), {
+            params: query,
+        });
+        items.value = response.data.data;
+        totalItems.value = response.data.total;
+    }
+};
+
+const refreshAutocompleteArchetypes = async (query) => {
+    if (query) {
+        const response = await axios.get(route('archetypes.index'), {
+            params: { query },
+        });
+        autocompleteArchetypes.value = response.data.data;
+    }
+};
+
+const refreshAutocompleteBrands = async (query) => {
+    const response = await axios.get(route('brands.index'), {
+        params: { query },
+    });
+    autocompleteBrands.value = response.data.data;
+};
+
+const refreshAutocompleteCategories = async (query) => {
+    const response = await axios.get(route('categories.index'), {
+        params: { query },
+    });
+    autocompleteCategories.value = response.data.data;
+};
+
+const refreshAutocompleteUsages = async (query) => {
+    const response = await axios.get(route('usages.index'), {
+        params: { query },
+    });
+    autocompleteUsages.value = response.data.data;
+};
+
+const debouncedAutocompleteArchetypeSearch = _.debounce(refreshAutocompleteArchetypes, 300);
+const debouncedAutocompleteBrandSearch = _.debounce(refreshAutocompleteBrands, 300);
+const debouncedAutocompleteCategorySearch = _.debounce(refreshAutocompleteCategories, 300);
+const debouncedAutocompleteUsageSearch = _.debounce(refreshAutocompleteUsages, 300);
+
+// Load initial autocomplete values
 onMounted(async () => {
-    autocompleteArchetypes.value = await archetypeStore.indexForAutocomplete();
+    refreshAutocompleteArchetypes();
 
     watch(
         () => advancedSearch.value,
-        async (newAdvancedSearch) => {
-            console.log(newAdvancedSearch);
-            if (newAdvancedSearch) {
-                onAutocompleteBrandSearch();
-                onAutocompleteCategorySearch();
-                onAutocompleteUsageSearch();
+        async (isAdvanced) => {
+            if (isAdvanced) {
+                refreshAutocompleteBrands();
+                refreshAutocompleteCategories();
+                refreshAutocompleteUsages();
             }
         }
     );
 });
 
-// Autocomplete Archetype Search handler
-const onAutocompleteArchetypeSearch = async (query) => {
-    autocompleteArchetypes.value = await archetypeStore.indexForAutocomplete(query);
-};
+const updateItemListOptions = (options) => {
+    pageNumber.value = options.page;
+    itemsPerPage.value = options.itemsPerPage;
+    sortBy.value = options.sortBy;
 
-// Autocomplete brand Search handler
-const onAutocompleteBrandSearch = async (query) => {
-    autocompleteBrands.value = await brandStore.indexForAutocomplete(query);
-};
-
-// Autocomplete category Search handler
-const onAutocompleteCategorySearch = async (query) => {
-    autocompleteCategories.value = await categoryStore.indexForAutocomplete(query);
-};
-// Autocomplete usage Search handler
-const onAutocompleteUsageSearch = async (query) => {
-    autocompleteUsages.value = await usageStore.indexForAutocomplete(query);
-};
-
-// Debounced search function
-const debouncedAutocompleteArchetypeSearch = _.debounce(onAutocompleteArchetypeSearch, 300);
-const debouncedAutocompleteBrandSearch = _.debounce(onAutocompleteBrandSearch, 300);
-
-const debouncedAutocompleteCategorySearch = _.debounce(onAutocompleteCategorySearch, 300);
-
-const debouncedAutocompleteUsageSearch = _.debounce(onAutocompleteUsageSearch, 300);
-
-const debounceSearch = _.debounce(() => {
-    itemStore.page = 1;
-    itemStore.index();
-}, 300);
-
-const handleSetLocation = (location, address, radius) => {
-    console.log(location, radius);
-    itemStore.itemListFilters.location = location;
-    itemStore.itemListFilters.radius = radius;
-    itemStore.index();
+    refreshAutocompleteArchetypes();
 };
 </script>
 
+<template>
+    <PageLayout>
+        <Head title="Catalog" />
+
+        <v-container fluid class="d-flex align-center justify-center pa-4">
+            <div style="width: 100%; max-width: 420px">
+                <!-- Header -->
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <div class="text-h5 font-weight-bold">Items</div>
+                    <div>
+                        <v-btn size="small" variant="outlined" @click="toggleAdvancedSearch">
+                            {{ advancedSearch ? 'Hide Advanced' : 'Advanced Search' }}
+                        </v-btn>
+                        <ItemDialog v-if="user" aim="create" class="ml-2" />
+                    </div>
+                </div>
+
+                <!-- Main search -->
+                <v-autocomplete
+                    v-model="filters.archetype"
+                    density="compact"
+                    :items="autocompleteArchetypes"
+                    label="Search"
+                    item-title="name"
+                    item-value="id"
+                    hide-no-data
+                    hide-details
+                    return-object
+                    clearable
+                    @update:model-value="debounceSearch"
+                    @update:search="debouncedAutocompleteArchetypeSearch"
+                />
+
+                <!-- Advanced filters -->
+                <v-expand-transition>
+                    <div v-if="advancedSearch" class="mb-2">
+                        <div v-if="user">
+                            <v-checkbox
+                                v-model="filters.user_id"
+                                :true-value="user?.id"
+                                :false-value="null"
+                                label="Show only my items"
+                                hide-details
+                                density="compact"
+                                @update:model-value="debounceSearch"
+                            />
+                        </div>
+
+                        <v-autocomplete
+                            v-model="filters.brand"
+                            density="compact"
+                            :items="autocompleteBrands"
+                            label="Brand"
+                            item-title="name"
+                            item-value="id"
+                            hide-no-data
+                            hide-details
+                            return-object
+                            clearable
+                            @update:model-value="debounceSearch"
+                            @update:search="debouncedAutocompleteBrandSearch"
+                        />
+
+                        <v-autocomplete
+                            v-model="filters.category"
+                            density="compact"
+                            :items="autocompleteCategories"
+                            label="Category"
+                            item-title="name"
+                            item-value="id"
+                            hide-no-data
+                            hide-details
+                            return-object
+                            clearable
+                            @update:model-value="debounceSearch"
+                            @update:search="debouncedAutocompleteCategorySearch"
+                        />
+
+                        <v-autocomplete
+                            v-model="filters.usage"
+                            density="compact"
+                            :items="autocompleteUsages"
+                            label="Usage"
+                            item-title="name"
+                            item-value="id"
+                            hide-no-data
+                            hide-details
+                            return-object
+                            clearable
+                            @update:model-value="debounceSearch"
+                            @update:search="debouncedAutocompleteUsageSearch"
+                        />
+
+                        <div v-if="!filters.user_id" class="mt-3">
+                            <LocationDialog @set-location="handleSetLocation" />
+                        </div>
+                    </div>
+                </v-expand-transition>
+
+                <!-- Items table -->
+                <v-data-table-server
+                    v-if="totalItems"
+                    v-model:items-per-page="itemsPerPage"
+                    :items-length="totalItems"
+                    :headers="headers"
+                    :items="items"
+                    item-value="name"
+                    fixed-header
+                    class="mt-4 overflow-auto"
+                    @update:options="updateItemListOptions"
+                >
+                    <template #[`item.image`]="{ item }">
+                        <v-img
+                            v-if="item.images?.length > 0"
+                            :src="fullImageUrl(item.images[0].path)"
+                            max-height="200"
+                            max-width="200"
+                            min-height="200"
+                            min-width="200"
+                            alt="Archetype Image"
+                        />
+                        <v-icon v-else>mdi-image-off</v-icon>
+                    </template>
+
+                    <template #[`item.actions`]="{ item }">
+                        <AvailabilityDialog v-if="user && item.owned_by === user.id" :item="item" />
+                        <ItemDialog
+                            v-if="user && item.owned_by === user.id"
+                            :item="item"
+                            aim="edit"
+                        />
+                        <ItemDialog v-if="item.owned_by !== user.id" :item="item" aim="view" />
+                        <DeleteItemDialog v-if="user && item.owned_by === user.id" :item="item" />
+                    </template>
+                </v-data-table-server>
+            </div>
+        </v-container>
+    </PageLayout>
+</template>
+
 <style scoped>
-/* Add your scoped styles here */
+/* Minimal spacing / centered container already handled inline */
 </style>

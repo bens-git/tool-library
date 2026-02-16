@@ -14,20 +14,32 @@
         <v-menu v-if="user">
             <template #activator="{ props }">
                 <v-btn color="primary" v-bind="props" size="small">
-                    {{
-                        user.discord_username
-                            ? user.discord_username
-                            : user.name
-                    }}
+                    {{ user.discord_username ? user.discord_username : user.name }}
                     <v-icon right>mdi-menu-down</v-icon>
                 </v-btn>
             </template>
             <v-list>
-                <v-list-item @click="myRentals">
-                    <v-list-item-title>My Rentals</v-list-item-title>
+                <v-list-item>
+                    <v-btn
+                        v-if="user"
+                        :class="{ 'v-btn--active': isActive('/my-rentals') }"
+                        block
+                        :color="route().current('my-rentals') ? 'primary' : undefined"
+                        :variant="route().current('my-rentals') ? 'flat' : 'text'"
+                        text="My Rentals"
+                        @click="myRentals"
+                    ></v-btn>
                 </v-list-item>
-                <v-list-item @click="myLoans">
-                    <v-list-item-title>My Loans</v-list-item-title>
+                <v-list-item>
+                    <v-btn
+                        v-if="user"
+                        :class="{ 'v-btn--active': isActive('/my-loans') }"
+                        block
+                        :color="route().current('my-loans') ? 'primary' : undefined"
+                        :variant="route().current('my-loans') ? 'flat' : 'text'"
+                        text="My Loans"
+                        @click="myLoans"
+                    ></v-btn>
                 </v-list-item>
 
                 <v-list-item>
@@ -49,47 +61,54 @@
         <template v-if="!mobile">
             <v-btn
                 v-if="!user"
-                :class="{ 'v-btn--active': isActive('/login') }"
-                variant="flat"
-                color="success"
+                :color="route().current('login') ? 'primary' : undefined"
+                :variant="route().current('login') ? 'flat' : 'text'"
                 prepend-icon="mdi-login"
-                text="Login"
                 @click="goToLogin"
-            ></v-btn>
-
-            
+                >Login</v-btn
+            >
 
             <v-btn
                 v-if="!user"
-                :class="{ 'v-btn--active': isActive('/register') }"
-                variant="tonal"
-                color="secondary"
+                :color="route().current('register') ? 'primary' : undefined"
+                :variant="route().current('register') ? 'flat' : 'text'"
                 prepend-icon="mdi-account-plus"
                 text="Register"
                 @click="goToRegister"
             ></v-btn>
 
-            <v-btn v-if="!user" to="request-password-reset-form" text>
-                Forgot Password
-            </v-btn>
+            <v-btn
+                v-if="!user"
+                :color="route().current('password.request') ? 'primary' : undefined"
+                :variant="route().current('password.request') ? 'flat' : 'text'"
+                prepend-icon="mdi-lock-reset"
+                text="Forgot Password"
+                @click="goToForgotPassword"
+            ></v-btn>
         </template>
 
         <v-spacer />
 
-        <div v-for="link in links" :key="link.text">
-            <v-btn
-                v-if="link.route"
-                size="small"
-                :to="link.route"
-                text
-                :class="{ active: isActiveRoute(link.route) }"
-            >
-                {{ link.text }}
-            </v-btn>
-            <v-btn v-else :href="link.url" text>
-                {{ link.text }}
-            </v-btn>
-        </div>
+        <v-btn
+            :class="{ 'v-btn--active': route().current('library-catalog') }"
+            :color="route().current('library-catalog') ? 'primary' : undefined"
+            :variant="route().current('library-catalog') ? 'flat' : 'text'"
+            prepend-icon="mdi-book"
+            text="Catalog"
+            @click="router.visit('library-catalog')"
+        ></v-btn>
+        <v-spacer />
+
+        <v-btn
+            v-for="link in drawerLinks"
+            :key="link"
+            :class="{ 'v-btn--active': route().current(link.route) }"
+            :color="route().current(link.route) ? 'primary' : undefined"
+            :variant="route().current(link.route) ? 'flat' : 'text'"
+            :prepend-icon="link.icon"
+            :text="link.text"
+            @click="router.visit(link.route)"
+        ></v-btn>
 
         <v-spacer />
     </v-app-bar>
@@ -101,8 +120,9 @@
         <!-- App Title -->
         <div class="drawer-btns drawer-header">
             <v-btn
-                :class="{ 'v-btn--active': isActive('/landing-page') }"
-                variant="flat"
+                :class="{ 'v-btn--active': route().current('landing-page') }"
+                :color="route().current('landing-page') ? 'primary' : undefined"
+                :variant="route().current('landing-page') ? 'flat' : 'text'"
                 block
                 @click="router.visit('/')"
             >
@@ -117,24 +137,35 @@
 
         <div class="drawer-btns">
             <v-btn
+                :class="{ 'v-btn--active': route().current('library-catalog') }"
+                :color="route().current('library-catalog') ? 'primary' : undefined"
+                :variant="route().current('library-catalog') ? 'flat' : 'text'"
+                prepend-icon="mdi-book"
+                text="Catalog"
+                @click="router.visit('library-catalog')"
+            ></v-btn>
+        </div>
+        <v-divider />
+
+        <div class="drawer-btns">
+            <v-btn
                 v-for="link in drawerLinks"
                 :key="link"
-                :class="{ 'v-btn--active': isActive('/' + link.route) }"
-                variant="tonal"
-                color="primary"
+                :class="{ 'v-btn--active': route().current(link.route) }"
+                :color="route().current(link.route) ? 'primary' : undefined"
+                :variant="route().current(link.route) ? 'flat' : 'text'"
                 :prepend-icon="link.icon"
                 :text="link.text"
                 @click="router.visit(link.route)"
             ></v-btn>
         </div>
-        <v-spacer />
+        <v-divider />
 
         <div class="drawer-btns">
             <v-btn
                 v-if="!user"
-                :class="{ 'v-btn--active': isActive('/login') }"
-                variant="tonal"
-                color="secondary"
+                :color="route().current('login') ? 'primary' : undefined"
+                :variant="route().current('login') ? 'flat' : 'text'"
                 prepend-icon="mdi-login"
                 text="Login"
                 @click="goToLogin"
@@ -142,9 +173,8 @@
 
             <v-btn
                 v-if="!user"
-                :class="{ 'v-btn--active': isActive('/register') }"
-                variant="tonal"
-                color="secondary"
+                :color="route().current('register') ? 'primary' : undefined"
+                :variant="route().current('register') ? 'flat' : 'text'"
                 prepend-icon="mdi-account-plus"
                 text="Register"
                 @click="goToRegister"
@@ -152,9 +182,8 @@
 
             <v-btn
                 v-if="!user"
-                :class="{ 'v-btn--active': isActive('/register') }"
-                variant="tonal"
-                color="secondary"
+                :color="route().current('password.request') ? 'primary' : undefined"
+                :variant="route().current('password.request') ? 'flat' : 'text'"
                 prepend-icon="mdi-lock-reset"
                 text="Forgot Password"
                 @click="goToForgotPassword"
@@ -177,15 +206,14 @@
 import { ref, onMounted, watch } from 'vue';
 import { useDisplay } from 'vuetify';
 import { router, usePage } from '@inertiajs/vue3';
-const page = usePage()
 
+const page = usePage();
 
 const { mobile } = useDisplay();
 const drawer = ref(false);
 const appTitle = import.meta.env.VITE_APP_NAME;
-const user = page.props.auth.user
+const user = page.props.auth.user;
 
-const links = ref([]);
 const drawerLinks = ref([]);
 
 const isActive = (path) => route.path === path;
@@ -196,17 +224,13 @@ onMounted(async () => {
 
 const setupLinks = () => {
     if (user) {
-        links.value = [{ text: 'Items', route: 'library-catalog' }];
-
         drawerLinks.value = [
-            { text: 'Items', route: 'library-catalog' },
-            { text: 'Archetypes', route: 'archetype-list' },
+            { text: 'Types', route: 'archetype-list' },
             { text: 'Categories', route: 'category-list' },
             { text: 'Usages', route: 'usage-list' },
             { text: 'Brands', route: 'brand-list' },
         ];
     } else {
-        links.value = [];
         drawerLinks.value = [];
     }
 };
@@ -220,21 +244,12 @@ watch(
     { deep: true }
 );
 
-// Safeguard to handle undefined or null paths
-const normalizePath = (path) => {
-    return path ? path.replace(/\/+$/, '').trim() : '';
-};
-
-const isActiveRoute = (linkRoute) => {
-    return normalizePath(route.path) === normalizePath(linkRoute);
-};
-
 const myRentals = () => {
-    router.visit({ path: '/my-rentals' });
+    router.visit('/my-rentals');
 };
 
 const myLoans = () => {
-    router.visit({ path: '/my-loans' });
+    router.visit('/my-loans');
 };
 
 const goToRegister = () => {
@@ -254,12 +269,6 @@ const goToLogout = () => {
 </script>
 
 <style>
-.active {
-    color: #1976d2;
-    font-weight: bold;
-    background-color: rgba(25, 118, 210, 0.1);
-}
-
 /* Ensure buttons take full width and stack vertically */
 .drawer-btns {
     display: flex;

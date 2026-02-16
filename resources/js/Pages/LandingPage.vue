@@ -58,7 +58,7 @@
           color="primary"
           @click="goNext"
         >
-          {{ user ? 'Go to Library' : 'Login to Get Started' }}
+          {{ user ? 'Go to Catalog' : 'Login to Get Started' }}
         </v-btn>
       </div>
     </v-container>

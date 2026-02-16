@@ -19,6 +19,7 @@
             :title="aim == 'edit' ? 'Edit Item' : aim == 'view' ? 'View Item' : 'Create Item'"
             :subtitle="localItem?.code"
         >
+
             <v-card-text>
                 <v-autocomplete
                     v-model="localItem.archetype"
@@ -35,11 +36,11 @@
                 ></v-autocomplete>
 
                 <ArchetypeDialog
-                    v-if="localItem.archetype?.created_by == userStore.user.id"
+                    v-if="localItem.archetype?.created_by == user.id"
                     aim="edit"
                     :archetype="localItem.archetype"
                 />
-                <br v-if="localItem.archetype?.created_by == userStore.user.id" />
+                <br v-if="localItem.archetype?.created_by == user.id" />
 
                 <v-autocomplete
                     v-model="localItem.brand"
@@ -171,21 +172,23 @@ import { useItemStore } from '@/Stores/item';
 import { useArchetypeStore } from '@/Stores/archetype';
 import { useBrandStore } from '@/Stores/brand';
 import { useResponseStore } from '@/Stores/response';
-import { useUserStore } from '@/Stores/user';
 import _ from 'lodash';
 import useApi from '@/Stores/api';
 import ArchetypeDialog from './ArchetypeDialog.vue';
 import RentalDatesDialog from './RentalDatesDialog.vue';
+import axios from 'axios';
+import { usePage } from '@inertiajs/vue3';
 
 const { fullImageUrl } = useApi();
 
 const dialog = shallowRef(false);
+const page = usePage();
 
 const itemStore = useItemStore();
 const archetypeStore = useArchetypeStore();
 const brandStore = useBrandStore();
 const responseStore = useResponseStore();
-const userStore = useUserStore();
+const user = page.props.auth.user;
 
 const localItem = ref(null);
 const autocompleteArchetypes = ref([]);
@@ -194,7 +197,8 @@ const newImages = ref([]);
 const removedImages = ref([]);
 
 const props = defineProps({
-    item: { type: Object, required: true },
+    item: { type: Object, default: null },
+    arthetype: { type: Object, default: null },
     aim: { type: String, required: true },
 });
 
@@ -208,7 +212,9 @@ watch(dialog, (newVal) => {
 });
 
 const refreshLocalItem = async () => {
-    localItem.value = await itemStore.show(props.item.id);
+    const response = await axios.get(route('items.show', props.item.id));
+
+    localItem.value = response.data;
 };
 
 // Function to initialize
@@ -217,9 +223,7 @@ const initialize = () => {
         refreshLocalItem();
     } else {
         localItem.value = {
-            archetype: itemStore.itemListFilters.archetype
-                ? itemStore.itemListFilters.archetype
-                : null,
+            archetype: props.archetype ?? null,
             created_at: props.item?.created_at || new Date().toISOString(),
         };
     }
@@ -229,8 +233,26 @@ const onOpen = async () => {
     initialize();
     newImages.value = [];
     responseStore.$reset();
-    autocompleteArchetypes.value = await archetypeStore.indexForAutocomplete();
-    autocompleteBrands.value = await brandStore.indexForAutocomplete();
+    refreshAutocompleteArchetypes();
+    refreshAutocompleteBrands();
+};
+
+const refreshAutocompleteArchetypes = async (query) => {
+    if (query) {
+        const response = await axios.get(route('archetypes.index'), {
+            params: { query },
+        });
+        autocompleteArchetypes.value = response.data.data;
+    }
+};
+
+const refreshAutocompleteBrands = async (query) => {
+    if (query) {
+        const response = await axios.get(route('brands.index'), {
+            params: { query },
+        });
+        autocompleteBrands.value = response.data.data;
+    }
 };
 
 const onClose = () => {};

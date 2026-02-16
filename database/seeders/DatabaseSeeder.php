@@ -2,24 +2,56 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
-    public function run(): void
+    public function run()
     {
-        // User::factory(10)->create();
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $tables = DB::select('SHOW TABLES');
+
+        $database = config('database.connections.mysql.database');
+
+        $key = "Tables_in_{$database}";
+
+        foreach ($tables as $table) {
+            DB::table($table->$key)->truncate();
+        }
+
+
+        // 2️⃣ Automatically seed all JSON files
+        $jsonPath = database_path('seeders/data');
+        $files = File::files($jsonPath);
+
+        foreach ($files as $file) {
+            $fileName = $file->getFilename();
+            $tableName = pathinfo($fileName, PATHINFO_FILENAME); // file name without .json
+
+            $this->command->info("Seeding table: $tableName from $fileName");
+
+            $json = File::get($file->getRealPath());
+            $data = json_decode($json, true);
+
+            if (!$data) {
+                $this->command->warn("No data found in $fileName, skipping.");
+                continue;
+            }
+
+            DB::table($tableName)->insert(array_map(function ($row) {
+                // Automatically add timestamps if missing
+                if (!isset($row['created_at'])) $row['created_at'] = now();
+                if (!isset($row['updated_at'])) $row['updated_at'] = now();
+                return $row;
+            }, $data));
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+
+        $this->command->info('All JSON seeders finished.');
     }
 }
