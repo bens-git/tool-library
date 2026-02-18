@@ -71,16 +71,10 @@
 </template>
 <script setup>
 import { shallowRef, ref, computed, watch } from 'vue';
-import { useItemStore } from '@/Stores/item';
-import { useArchetypeStore } from '@/Stores/archetype';
-import { useResponseStore } from '@/Stores/response';
 import ConfirmRentalDialog from './ConfirmRentalDialog.vue';
+import api from '@/services/api';
 
 const dialog = shallowRef(false);
-
-const itemStore = useItemStore();
-const archetypeStore = useArchetypeStore();
-const responseStore = useResponseStore();
 
 const localItem = ref(null);
 const rentedDates = ref([]);
@@ -110,15 +104,12 @@ const initialize = async () => {
         ...props.item,
     };
 
-    rentedDates.value = await itemStore.indexItemRentedDates(localItem.value.id);
-    unavailableDates.value = await itemStore.indexItemUnavailableDates(localItem.value.id);
+    rentedDates.value = api.get(route('item.index-rented-dates', localItem.value.id));
+    unavailableDates.value = api.get(route('item.index-unavailable-dates', localItem.value.id));
 };
-
-// const emit = defineEmits(["update:modelValue", "close"]);
 
 const onOpen = async () => {
     initialize();
-    responseStore.$reset();
 };
 
 const onClose = () => {};

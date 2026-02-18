@@ -2,26 +2,31 @@
     <v-dialog v-model="dialog" @open="onOpen">
         <template #activator="{ props: activatorProps }">
             <v-btn
-                :color="aim == 'edit' || aim == 'view' ? 'primary' : 'success'"
+                :color="aim === 'edit' || aim === 'view' ? 'primary' : 'success'"
                 :prepend-icon="
-                    aim == 'edit' ? 'mdi-pencil' : aim == 'view' ? 'mdi-eye' : 'mdi-plus'
+                    aim === 'edit' ? 'mdi-pencil' : aim === 'view' ? 'mdi-eye' : 'mdi-plus'
                 "
-                :text="aim == 'edit' ? 'Edit Item' : aim == 'view' ? 'View Item' : 'Create Item'"
+                :text="aim === 'edit' ? 'Edit Item' : aim === 'view' ? 'View Item' : 'Create Item'"
                 variant="tonal"
                 block
                 v-bind="activatorProps"
                 size="small"
             ></v-btn>
         </template>
-        <v-card
-            v-if="localItem"
-            :prepend-icon="aim == 'edit' ? 'mdi-pencil' : aim == 'view' ? 'mdi-eye' : 'mdi-plus'"
-            :title="aim == 'edit' ? 'Edit Item' : aim == 'view' ? 'View Item' : 'Create Item'"
-            :subtitle="localItem?.code"
-        >
+
+        <v-card v-if="localItem">
+            <v-card-title>
+                <v-icon left>
+                    {{ aim === 'edit' ? 'mdi-pencil' : aim === 'view' ? 'mdi-eye' : 'mdi-plus' }}
+                </v-icon>
+                {{ aim === 'edit' ? 'Edit Item' : aim === 'view' ? 'View Item' : 'Create Item' }}
+            </v-card-title>
+            <v-card-subtitle v-if="localItem.code">{{ localItem.code }}</v-card-subtitle>
 
             <v-card-text>
+                <!-- Archetype -->
                 <v-autocomplete
+                    v-if="aim !== 'view' || localItem.archetype"
                     v-model="localItem.archetype"
                     density="compact"
                     :items="autocompleteArchetypes"
@@ -30,19 +35,21 @@
                     item-value="id"
                     hide-no-data
                     :return-object="true"
-                    :readonly="aim == 'view'"
+                    :readonly="aim === 'view'"
                     :error-messages="responseStore.response?.errors?.['archetype.id']"
                     @update:search="debouncedAutocompleteArchetypeSearch"
                 ></v-autocomplete>
 
                 <ArchetypeDialog
-                    v-if="localItem.archetype?.created_by == user.id"
+                    v-if="localItem.archetype?.created_by === user.id"
                     aim="edit"
                     :archetype="localItem.archetype"
                 />
-                <br v-if="localItem.archetype?.created_by == user.id" />
+                <br v-if="localItem.archetype?.created_by === user.id" />
 
+                <!-- Brand -->
                 <v-autocomplete
+                    v-if="aim !== 'view' || localItem.brand"
                     v-model="localItem.brand"
                     density="compact"
                     :items="autocompleteBrands"
@@ -53,21 +60,24 @@
                     hide-no-data
                     hide-details
                     :return-object="true"
-                    :readonly="aim == 'view'"
+                    :readonly="aim === 'view'"
                     @update:search="debouncedAutocompleteBrandSearch"
                 ></v-autocomplete>
-                <br />
+                <br v-if="localItem.brand" />
 
+                <!-- Description -->
                 <v-textarea
+                    v-if="aim !== 'view' || localItem.description"
                     v-model="localItem.description"
                     density="compact"
-                    :readonly="aim == 'view'"
+                    :readonly="aim === 'view'"
                     label="Description"
-                    placeholder="e.g., this soldering iron is like no other in the collection. Its handle is worn smooth from years of use, and faint scorch marks trace stories of intricate repairs and ambitious builds. It’s storied and irreplaceable."
+                    placeholder="Add a description"
                 ></v-textarea>
 
+                <!-- Unavailable checkbox (edit only) -->
                 <v-checkbox
-                    v-if="aim == 'edit'"
+                    v-if="aim === 'edit'"
                     v-model="localItem.make_item_unavailable"
                     label="Make item unavailable"
                     density="compact"
@@ -75,47 +85,54 @@
                     :false-value="0"
                 ></v-checkbox>
 
+                <!-- Serial -->
                 <v-text-field
+                    v-if="aim !== 'view' || localItem.serial"
                     v-model="localItem.serial"
                     density="compact"
                     label="Serial"
-                    :readonly="aim == 'view'"
+                    :readonly="aim === 'view'"
                 ></v-text-field>
 
+                <!-- Purchase Value -->
                 <v-text-field
+                    v-if="aim !== 'view' || localItem.purchase_value"
                     v-model="localItem.purchase_value"
                     density="compact"
                     label="Purchase Value"
                     type="number"
-                    :readonly="aim == 'view'"
+                    :readonly="aim === 'view'"
                     :error-messages="responseStore.response?.errors?.purchase_value"
                 ></v-text-field>
 
+                <!-- Dates -->
                 <v-date-input
+                    v-if="aim !== 'view' || localItem.created_at"
                     v-model="localItem.created_at"
                     density="compact"
-                    :disabled="true"
-                    :readonly="aim == 'view'"
                     label="Created At"
-                    prepend-icon=""
+                    :disabled="true"
+                    :readonly="aim === 'view'"
                     persistent-placeholder
                     :error-messages="responseStore.response?.errors?.purchased_at"
                 ></v-date-input>
 
                 <v-date-input
+                    v-if="aim !== 'view' || localItem.manufactured_at"
                     v-model="localItem.manufactured_at"
                     density="compact"
                     label="Manufactured At"
-                    prepend-icon=""
+                    :readonly="aim === 'view'"
                     persistent-placeholder
-                    :readonly="aim == 'view'"
                 ></v-date-input>
-                <div v-if="localItem.images && localItem.images.length">
+
+                <!-- Images -->
+                <div v-if="localItem.images?.length">
                     <v-row>
                         <v-col v-for="(image, index) in localItem.images" :key="index" cols="4">
                             <v-img :src="fullImageUrl(image.path)" class="mb-2" aspect-ratio="1">
                                 <v-btn
-                                    v-if="aim != 'view'"
+                                    v-if="aim !== 'view'"
                                     icon
                                     color="red"
                                     class="mt-2"
@@ -128,8 +145,9 @@
                     </v-row>
                 </div>
 
+                <!-- File upload (edit/create only) -->
                 <v-file-input
-                    v-if="aim != 'view'"
+                    v-if="aim !== 'view'"
                     density="compact"
                     label="Upload Image"
                     prepend-icon="mdi-camera"
@@ -138,15 +156,14 @@
                     @change="handleFileChange"
                 ></v-file-input>
             </v-card-text>
-            <v-divider></v-divider>
 
+            <v-divider></v-divider>
             <v-card-actions>
                 <v-spacer></v-spacer>
-
                 <v-btn text="Cancel" variant="plain" @click="dialog = false"></v-btn>
 
                 <v-btn
-                    v-if="aim == 'edit'"
+                    v-if="aim === 'edit'"
                     color="success"
                     text="Save"
                     variant="tonal"
@@ -154,40 +171,30 @@
                 ></v-btn>
 
                 <v-btn
-                    v-if="aim == 'create'"
+                    v-if="aim === 'create'"
                     color="success"
                     text="Create"
                     variant="tonal"
                     @click="createItem"
                 ></v-btn>
 
-                <RentalDatesDialog v-if="aim == 'view'" :item="localItem" />
+                <RentalDatesDialog v-if="aim === 'view'" :item="localItem" />
             </v-card-actions>
         </v-card>
     </v-dialog>
 </template>
+
 <script setup>
 import { shallowRef, ref, watch } from 'vue';
-import { useItemStore } from '@/Stores/item';
-import { useArchetypeStore } from '@/Stores/archetype';
-import { useBrandStore } from '@/Stores/brand';
-import { useResponseStore } from '@/Stores/response';
 import _ from 'lodash';
-import useApi from '@/Stores/api';
 import ArchetypeDialog from './ArchetypeDialog.vue';
 import RentalDatesDialog from './RentalDatesDialog.vue';
-import axios from 'axios';
 import { usePage } from '@inertiajs/vue3';
-
-const { fullImageUrl } = useApi();
+import api from '@/services/api';
 
 const dialog = shallowRef(false);
 const page = usePage();
 
-const itemStore = useItemStore();
-const archetypeStore = useArchetypeStore();
-const brandStore = useBrandStore();
-const responseStore = useResponseStore();
 const user = page.props.auth.user;
 
 const localItem = ref(null);
@@ -201,6 +208,7 @@ const props = defineProps({
     arthetype: { type: Object, default: null },
     aim: { type: String, required: true },
 });
+const emit = defineEmits(['stored', 'updated']);
 
 // Watch the dialog's state
 watch(dialog, (newVal) => {
@@ -212,9 +220,9 @@ watch(dialog, (newVal) => {
 });
 
 const refreshLocalItem = async () => {
-    const response = await axios.get(route('items.show', props.item.id));
+    const response = await api.get(route('items.show', props.item.id));
 
-    localItem.value = response.data;
+    localItem.value = response.data.data;
 };
 
 // Function to initialize
@@ -232,14 +240,44 @@ const initialize = () => {
 const onOpen = async () => {
     initialize();
     newImages.value = [];
-    responseStore.$reset();
     refreshAutocompleteArchetypes();
     refreshAutocompleteBrands();
 };
 
+const onClose = () => {};
+
+const createItem = async () => {
+    const response = await api.post(route('items.store'), localItem.value);
+    if (response?.success && response.data.id) {
+        localItem.value = response.data;
+
+        //add new images
+        for (const image of newImages.value) {
+            await api.post(route('item-images.store'), image);
+        }
+        emit('stored');
+        dialog.value = false;
+    }
+};
+
+const saveItem = async () => {
+    const response = await api.put(route('items.update'), localItem.value);
+
+    //add new images
+    if (response?.success) {
+        for (const image of newImages.value) {
+            //console.log(image)
+            await api.post(route('item-images.store'), image);
+        }
+
+        emit('updated');
+        dialog.value = false;
+    }
+};
+
 const refreshAutocompleteArchetypes = async (query) => {
     if (query) {
-        const response = await axios.get(route('archetypes.index'), {
+        const response = await api.get(route('archetypes.index'), {
             params: { query },
         });
         autocompleteArchetypes.value = response.data.data;
@@ -247,59 +285,15 @@ const refreshAutocompleteArchetypes = async (query) => {
 };
 
 const refreshAutocompleteBrands = async (query) => {
-    if (query) {
-        const response = await axios.get(route('brands.index'), {
-            params: { query },
-        });
-        autocompleteBrands.value = response.data.data;
-    }
-};
-
-const onClose = () => {};
-
-const createItem = async () => {
-    const data = await itemStore.store(localItem.value);
-    if (data?.success && data.data.id) {
-        localItem.value = data.data;
-
-        //add new images
-        for (const image of newImages.value) {
-            await itemStore.addMyItemImage(localItem.value.id, image);
-        }
-        await itemStore.index();
-
-        dialog.value = false;
-    }
-};
-
-const saveItem = async () => {
-    const data = await itemStore.update(localItem.value);
-
-    //add new images
-    if (data?.success) {
-        for (const image of newImages.value) {
-            //console.log(image)
-            await itemStore.addMyItemImage(localItem.value.id, image);
-        }
-        await itemStore.index();
-
-        dialog.value = false;
-    }
-};
-
-// Autocomplete Archetype Search handler
-const onAutocompleteArchetypeSearch = async (query) => {
-    autocompleteArchetypes.value = await archetypeStore.indexForAutocomplete(query);
-};
-
-// Autocomplete brand Search handler
-const onAutocompleteBrandSearch = async (query) => {
-    autocompleteBrands.value = await brandStore.indexForAutocomplete(query);
+    const response = await api.get(route('brands.index'), {
+        params: { query },
+    });
+    autocompleteBrands.value = response.data.data;
 };
 
 // Debounced search function
-const debouncedAutocompleteArchetypeSearch = _.debounce(onAutocompleteArchetypeSearch, 300);
-const debouncedAutocompleteBrandSearch = _.debounce(onAutocompleteBrandSearch, 300);
+const debouncedAutocompleteArchetypeSearch = _.debounce(refreshAutocompleteArchetypes, 300);
+const debouncedAutocompleteBrandSearch = _.debounce(refreshAutocompleteBrands, 300);
 
 const handleFileChange = (event) => {
     const files = event.target.files;

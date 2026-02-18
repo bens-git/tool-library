@@ -45,20 +45,14 @@
 </template>
 <script setup>
 import { shallowRef, ref, watch } from 'vue';
-import { useItemStore } from '@/Stores/item';
-import { useArchetypeStore } from '@/Stores/archetype';
-import { useResponseStore } from '@/Stores/response';
 import { router } from '@inertiajs/vue3';
+import api from '@/services/api';
 
 const dialog = shallowRef(false);
 
-const itemStore = useItemStore();
-const archetypeStore = useArchetypeStore();
-const responseStore = useResponseStore();
-
 const localItem = ref(null);
 const rentedDates = ref([]);
-
+const dateRange = ref([]);
 const props = defineProps({
     item: { type: Object, required: true },
 });
@@ -78,26 +72,23 @@ const initialize = async () => {
         ...props.item,
     };
 
-    await itemStore.indexItemRentedDates(localItem.value);
-    rentedDates.value = itemStore.rentedDates; // Assuming rentedDates are stored in itemStore
+    rentedDates.value = api.get(route('item.index-rented-dates', localItem.value.id));
 };
 
 // const emit = defineEmits(["update:modelValue", "close"]);
 
 const onOpen = async () => {
     initialize();
-    responseStore.$reset();
 };
 
 const onClose = () => {};
 
 const rent = async () => {
-    console.log(localItem);
-    await itemStore.bookRental(
-        localItem.value.id,
-        archetypeStore.dateRange[0],
-        archetypeStore.dateRange[archetypeStore.dateRange.length - 1]
-    );
+    await api.post(route('rentals.store'), {
+        item: localItem.value,
+        dateRange: dateRange.value,
+    });
+
     dialog.value = false;
     router.visit('/my-rentals');
 };

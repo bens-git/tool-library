@@ -71,13 +71,9 @@
 </template>
 <script setup>
 import { shallowRef, ref, watch } from 'vue';
-import { useItemStore } from '@/Stores/item';
-import { useResponseStore } from '@/Stores/response';
+import api from '@/services/api';
 
 const dialog = shallowRef(false);
-
-const itemStore = useItemStore();
-const responseStore = useResponseStore();
 
 const localItem = ref(null);
 
@@ -95,7 +91,7 @@ watch(dialog, (newVal) => {
 });
 
 const refreshLocalItem = async () => {
-    localItem.value = await itemStore.show(props.item.id);
+    localItem.value = await api.get(route('items.index', props.item.id));
 };
 
 // Function to initialize
@@ -104,7 +100,8 @@ const initialize = async () => {
 
     if (localItem.value.id) {
         try {
-            const dates = await itemStore.indexItemUnavailableDates(localItem.value.id);
+            const dates = await api.get(route('item.index-unavailable-dates', localItem.value.id));
+
             localItem.value.unavailableDates = dates;
         } catch (error) {
             console.error('Failed to fetch unavailable dates:', error);
@@ -116,19 +113,14 @@ const initialize = async () => {
 
 const onOpen = async () => {
     initialize();
-    responseStore.$reset();
 };
 
 const onClose = () => {};
 
 const saveItem = async () => {
-    await itemStore.updateItemAvailability(
-        localItem.value.id,
-        localItem.value.unavailableDates,
-        localItem.value.make_item_unavailable
-    );
+    const response = await api.get(route('items.update', localItem.value));
 
-    if (responseStore.response.success) {
+    if (response.success) {
         dialog.value = false;
     }
 };

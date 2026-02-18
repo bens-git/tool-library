@@ -132,30 +132,16 @@
 </template>
 <script setup>
 import { shallowRef, ref, watch } from 'vue';
-import { useArchetypeStore } from '@/Stores/archetype';
-import { useItemStore } from '@/Stores/item';
-import { useCategoryStore } from '@/Stores/category';
-import { useUsageStore } from '@/Stores/usage';
-import { useResponseStore } from '@/Stores/response';
-import { useUserStore } from '@/Stores/user';
 import { useDisplay } from 'vuetify';
-
+import api from '@/services/api';
+import _ from 'lodash';
 const { mobile } = useDisplay();
 
 const dialog = shallowRef(false);
 
-const archetypeStore = useArchetypeStore();
-const itemStore = useItemStore();
-const categoryStore = useCategoryStore();
-const usageStore = useUsageStore();
-const responseStore = useResponseStore();
-const userStore = useUserStore();
-
 const localArchetype = ref(null);
 const autocompleteCategories = ref([]);
 const autocompleteUsages = ref([]);
-import debounce from 'lodash/debounce';
-import { router } from '@inertiajs/vue3'
 
 const props = defineProps({
     aim: { type: String, default: 'Create' },
@@ -173,8 +159,11 @@ watch(dialog, (newVal) => {
 });
 
 const refreshLocalArchetype = async () => {
-    localArchetype.value = await archetypeStore.show(props.archetype.id);
+    const response = await api.get(route('archetypes.show', props.archetype.id));
+
+    localArchetype.value = response.data.data;
 };
+
 // Function to initialize
 const initializeLocalArchetype = () => {
     if (props.aim == 'edit' && props.archetype) {
@@ -191,57 +180,51 @@ const initializeLocalArchetype = () => {
     }
 };
 
-const emit = defineEmits(['created', 'saved']);
+const emit = defineEmits(['stored', 'updated']);
+
+const refreshAutocompleteCategories = async (query) => {
+    const response = await api.get(route('categories.index'), {
+        params: { query },
+    });
+    autocompleteCategories.value = response.data.data;
+};
+
+const refreshAutocompleteUsages = async (query) => {
+    const response = await api.get(route('usages.index'), {
+        params: { query },
+    });
+    autocompleteUsages.value = response.data.data;
+};
 
 const onOpen = async () => {
-    await categoryStore.index();
-    await usageStore.index();
-    autocompleteCategories.value = await categoryStore.indexForAutocomplete();
-    autocompleteUsages.value = await usageStore.indexForAutocomplete();
-
+    refreshAutocompleteCategories();
+    refreshAutocompleteUsages();
     initializeLocalArchetype();
-    responseStore.$reset();
 };
 
-// Autocomplete category Search handler
-const onAutocompleteCategorySearch = async (query) => {
-    autocompleteCategories.value = await categoryStore.indexForAutocomplete(query);
-};
-// Autocomplete usage Search handler
-const onAutocompleteUsageSearch = async (query) => {
-    autocompleteUsages.value = await usageStore.indexForAutocomplete(query);
-};
-
-const debouncedAutocompleteCategorySearch = debounce(onAutocompleteCategorySearch, 300);
-
-const debouncedAutocompleteUsageSearch = debounce(onAutocompleteUsageSearch, 300);
+const debouncedAutocompleteCategorySearch = _.debounce(refreshAutocompleteCategories, 300);
+const debouncedAutocompleteUsageSearch = _.debounce(refreshAutocompleteUsages, 300);
 
 const onClose = () => {
     console.log('Dialog closed');
 };
 
 const save = async () => {
-    const data = await archetypeStore.update(localArchetype.value);
+    const response = await api.put(route('archetypes.update'), localArchetype.value);
 
-    if (data.success) {
-        emit('saved');
+    if (response.success) {
+        emit('updated');
         dialog.value = false;
     }
 };
 
 const create = async () => {
-    const data = await archetypeStore.store(localArchetype.value);
-    if (data?.success) {
-        emit('created');
+    const response = await api.post(route('archetypes.store'), localArchetype.value);
+    if (response?.success) {
+        emit('stored');
         dialog.value = false;
     }
 };
 
-const myItems = () => {
-    itemStore.itemListFilters.archetype = localArchetype.value;
-    itemStore.itemListFilters.userId = userStore.user?.id;
-    itemStore.index();
-    router.visit({ path: '/item-list' });
-    dialog.value = false;
-};
+
 </script>

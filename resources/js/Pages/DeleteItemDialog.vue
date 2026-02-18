@@ -32,12 +32,11 @@
 </template>
 <script setup>
 import { shallowRef, ref, watch } from 'vue';
-import { useItemStore } from '@/Stores/item';
 import { useResponseStore } from '@/Stores/response';
+import api from '@/services/api'
 
 const dialog = shallowRef(false);
 
-const itemStore = useItemStore();
 const responseStore = useResponseStore();
 
 const localItem = ref(null);
@@ -71,8 +70,9 @@ const onOpen = async () => {
 
 const onClose = () => {};
 
-const deleteItem = () => {
-    itemStore.destroy(localItem.value.id);
+const deleteItem = async() => {
+    await api.delete(route('item.destroy', localItem.value.id));
+
     dialog.value = false;
 };
 </script>

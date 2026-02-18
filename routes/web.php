@@ -20,6 +20,8 @@ Route::get('/', function () {
     ]);
 });
 
+Route::get('/items/featured', [ItemController::class, 'featured'])->name('items.featured');
+
 Route::get('landing-page', function () {
     return Inertia::render('LandingPage', [
         'canLogin' => Route::has('login'),

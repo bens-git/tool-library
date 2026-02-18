@@ -7,7 +7,7 @@ import DeleteItemDialog from '@/Pages/DeleteItemDialog.vue';
 import LocationDialog from '@/Pages/LocationDialog.vue';
 import { ref, onMounted, watch } from 'vue';
 import _ from 'lodash';
-import api from '@/services/api'
+import api from '@/services/api';
 import { usePage } from '@inertiajs/vue3';
 import { useLoadingStore } from '@/Stores/loading';
 
@@ -42,11 +42,11 @@ const headers = [
     { title: 'Brand', value: 'brand.name' },
 ];
 
-// Autocomplete arrays
 const autocompleteArchetypes = ref([]);
 const autocompleteBrands = ref([]);
 const autocompleteCategories = ref([]);
 const autocompleteUsages = ref([]);
+const featuredItems = ref([])
 
 const debounceSearch = _.debounce(() => {
     pageNumber.value = 1;
@@ -120,6 +120,7 @@ const debouncedAutocompleteUsageSearch = _.debounce(refreshAutocompleteUsages, 3
 
 // Load initial autocomplete values
 onMounted(async () => {
+    refreshFeaturedItems();
     refreshAutocompleteArchetypes();
 
     watch(
@@ -141,6 +142,11 @@ const updateItemListOptions = (options) => {
 
     refreshItems();
 };
+
+const refreshFeaturedItems = async () => {
+    const response = await api.get(route('items.featured'));
+    featuredItems.value = response.data.data;
+};
 </script>
 
 <template>
@@ -149,7 +155,6 @@ const updateItemListOptions = (options) => {
 
         <v-container fluid class="d-flex align-center justify-center pa-4">
             <div style="width: 100%">
-
                 <!-- Header -->
                 <div class="d-flex justify-space-between align-center mb-4">
                     <div class="text-h5 font-weight-bold">Items</div>
@@ -242,8 +247,40 @@ const updateItemListOptions = (options) => {
                         </div>
                     </div>
                 </v-expand-transition>
+
+                <!-- Featured Tools -->
+                <div v-if="featuredItems.length" class="mt-6">
+                    <div class="text-h6 font-weight-bold mb-3">Featured Tools</div>
+
+                    <v-row>
+                        <v-col v-for="item in featuredItems" :key="item.id" cols="12" sm="6" md="4">
+                            <v-card class="pa-2" elevation="2">
+                                <v-img
+                                    v-if="item.images?.length"
+                                    :src="item.images[0].url"
+                                    height="180"
+                                    cover
+                                />
+                                <v-icon v-else size="80" class="ma-4">mdi-image-off</v-icon>
+
+                                <v-card-title class="text-subtitle-1">
+                                    {{ item.archetype?.name }}
+                                </v-card-title>
+
+                                <v-card-subtitle>
+                                    {{ item.brand?.name }}
+                                </v-card-subtitle>
+
+                                <v-card-actions>
+                                    <ItemDialog :item="item" aim="view" />
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </div>
+
                 <!-- Items table -->
-               
+
                 <v-data-table-server
                     v-if="totalItems"
                     v-model:items-per-page="itemsPerPage"

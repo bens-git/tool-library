@@ -372,12 +372,12 @@ class ArchetypeController extends Controller
         // Merge in the item images where archetype images are missing
         foreach ($itemImages as $archetypeId => $image) {
             if (!isset($combinedImages[$archetypeId])) {
-                $combinedImages[$archetypeId] = [
+                $combinedImages[$archetypeId] = collect([
                     [
                         'id' => $image->id,
                         'path' => '/storage/' . $image->path
                     ]
-                ];
+                ]);
             }
         }
 
@@ -401,7 +401,7 @@ class ArchetypeController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
@@ -424,7 +424,7 @@ class ArchetypeController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
@@ -482,7 +482,7 @@ class ArchetypeController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, $id)
     {
@@ -554,7 +554,7 @@ class ArchetypeController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
@@ -570,15 +570,6 @@ class ArchetypeController extends Controller
             return response()->json(['message' => 'There are ' . $items->count() . ' items associated with this archetype. You must delete them first.'], 404);
         }
 
-        $archetypeImages = $archetype->images;
-
-        // Delete the image files from storage
-        foreach ($archetypeImages as $image) {
-            Storage::disk('public')->delete($image->path);
-        }
-
-        // Delete the records from the item_images table
-        $archetype->images()->delete();
 
         // Delete the item itself
         $archetype->delete();

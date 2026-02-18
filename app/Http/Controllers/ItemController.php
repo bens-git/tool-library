@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ItemResource;
 use App\Models\Item;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +42,7 @@ class ItemController extends Controller
         $userId = $request->query('user_id');
         $categoryId = $request->query('category_id');
         $usageId = $request->query('usage_id');
-        
+
 
         // show nothing until search
         if (
@@ -61,7 +62,7 @@ class ItemController extends Controller
                 'total' => 0,
             ]);
         }
-        
+
 
         // Build the query
         $query = Item::with('archetype', 'archetype.categories', 'archetype.usages', 'brand')
@@ -517,6 +518,23 @@ class ItemController extends Controller
             $item->delete();
         });
         return response()->json(['message' => 'Item and associated images deleted successfully']);
+    }
+
+
+    /**
+     * get fetured items
+     *
+     * @return Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function featured()
+    {
+        return ItemResource::collection(
+            Item::whereHas('images') // must have at least 1 image
+                ->with(['images', 'brand', 'archetype'])
+                ->inRandomOrder()
+                ->limit(6)
+                ->get()
+        );
     }
 
     public function getItemUnavailableDates($itemId)
