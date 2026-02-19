@@ -11,7 +11,7 @@ class Archetype extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description', 'created_by', 'notes', 'code', 'resource'];
+    protected $fillable = ['id','name', 'description', 'created_by', 'notes', 'code', 'resource'];
 
     public function categories(): BelongsToMany
     {
@@ -21,6 +21,11 @@ class Archetype extends Model
     public function usages(): BelongsToMany
     {
         return $this->belongsToMany(Usage::class);
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(Item::class);
     }
 
    

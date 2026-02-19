@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\ItemResource;
 use App\Models\Item;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,62 +21,38 @@ class ItemController extends Controller
 {
     /**
      * Display a listing of the items.
-     *
-     * @return \Illuminate\Http\Response
      */
     public function index(Request $request)
     {
-
-
         // Get request parameters
         $brandId = $request->query('brand_id');
-        $endDate = $request->query('endDate');
-        $itemsPerPage = $request->query('itemsPerPage', 10);
-        $latitude = $request->query('location.lat');
-        $longitude = $request->query('location.lng');
-        $page = $request->query('page', 1);
-        $radius = $request->query('radius');
-        $search = $request->query('search', '');
-        $sortBy = $request->query('sortBy');
-        $startDate = $request->query('startDate');
         $archetypeId = $request->query('archetype_id');
         $userId = $request->query('user_id');
         $categoryId = $request->query('category_id');
         $usageId = $request->query('usage_id');
+        $search = $request->query('search', '');
+        $itemsPerPage = $request->query('itemsPerPage', 9);
+        $page = $request->query('page', 1);
 
+        // Check if any search filter is active
+        $hasFilters = $brandId || $archetypeId || $userId || $categoryId || $usageId || $search;
 
-        // show nothing until search
-        if (
-            !$latitude &&
-            !$longitude &&
-            !$brandId &&
-            !$endDate &&
-            !$search &&
-            !$startDate &&
-            !$archetypeId &&
-            !$userId &&
-            !$categoryId &&
-            !$usageId
-        ) {
+        // If no filters, return empty response
+        if (!$hasFilters) {
             return response()->json([
                 'data' => [],
                 'total' => 0,
             ]);
         }
 
+        // Build the query with eager loading
+        $query = Item::with(['archetype', 'brand', 'images', 'archetype.categories', 'archetype.usages']);
 
-        // Build the query
-        $query = Item::with('archetype', 'archetype.categories', 'archetype.usages', 'brand')
-            ->join('users', 'items.owned_by', '=', 'users.id')
-            ->join('locations', 'users.location_id', '=', 'locations.id')
-            ->join('archetypes', 'items.archetype_id', '=', 'archetypes.id')
-            ->leftJoin('archetype_category', 'items.archetype_id', '=', 'archetype_category.archetype_id')
-            ->leftJoin('archetype_usage', 'items.archetype_id', '=', 'archetype_usage.archetype_id')
-            ->leftJoin('brands', 'items.brand_id', '=', 'brands.id');
-
+        // Apply archetype filter
         if (!empty($archetypeId)) {
-            $query->where('items.archetype_id', '=', $archetypeId);
+            $query->where('archetype_id', '=', $archetypeId);
         }
+
         // Apply brand filter
         if (!empty($brandId)) {
             $query->where('brand_id', '=', $brandId);
@@ -83,165 +60,40 @@ class ItemController extends Controller
 
         // Apply category filter
         if (!empty($categoryId)) {
-            $query->where('archetype_category.category_id', '=', $categoryId);
+            $query->whereHas('archetype.categories', function ($q) use ($categoryId) {
+                $q->where('categories.id', '=', $categoryId);
+            });
         }
 
         // Apply usage filter
         if (!empty($usageId)) {
-            $query->where('archetype_usage.usage_id', '=', $usageId);
+            $query->whereHas('archetype.usages', function ($q) use ($usageId) {
+                $q->where('usages.id', '=', $usageId);
+            });
         }
-
-
 
         // Apply user filter
         if (!empty($userId)) {
-            $user = Auth::user();
-            $query->where('owned_by', $user->id);
+            $query->where('owned_by', '=', $userId);
         }
 
-
-
+        // Apply search filter
         if (!empty($search)) {
-            $query->where(function ($query) use ($search) {
-                $query->where('items.code', 'like', '%' . $search . '%');
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', '%' . $search . '%')
+                    ->orWhereHas('archetype', function ($q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%');
+                    });
             });
         }
 
-        // Apply date range filter for availability
-        if (!empty($startDate) && !empty($endDate)) {
-            $query->leftJoin('rentals', function ($join) use ($startDate, $endDate) {
-                $join->on('items.id', '=', 'rentals.item_id')
-                    ->where(function ($query) use ($startDate, $endDate) {
-                        $query->whereBetween('rentals.starts_at', [$startDate, $endDate])
-                            ->orWhereBetween('rentals.ends_at', [$startDate, $endDate])
-                            ->orWhere(function ($query) use ($startDate, $endDate) {
-                                $query->where('rentals.starts_at', '<=', $startDate)
-                                    ->where('rentals.ends_at', '>=', $endDate);
-                            });
-                    });
-            })
-                ->whereNull('rentals.id'); // Exclude items that are rented during the date range
+        // Paginate results
+        $items = $query->paginate($itemsPerPage, ['*'], 'page', $page);
 
-
-            // Apply date range filter for unavailable dates
-            $query->leftJoin('item_unavailable_dates', function ($join) use ($startDate, $endDate) {
-                $join->on('items.id', '=', 'item_unavailable_dates.item_id')
-                    ->where(function ($query) use ($startDate, $endDate) {
-                        $query->whereBetween('item_unavailable_dates.unavailable_date', [$startDate, $endDate]);
-                    });
-            })
-                ->whereNull('item_unavailable_dates.id'); // Exclude items that are unavailable during the date range
-
-
-        }
-
-
-        // Apply distance filter for items within the radius
-        if (!empty($latitude) && !empty($longitude) && !empty($radius)) {
-            $distance = $radius * 1000;
-
-            // Apply the distance filtering in the WHERE clause
-            $query->where(function ($q) use ($longitude, $latitude, $distance) {
-                $q->whereRaw('ST_Distance_Sphere(
-            point(locations.longitude, locations.latitude), 
-            point(?, ?)
-        ) <= ?', [$longitude, $latitude, $distance]);
-            });
-        }
-
-
-
-        // Select items with their images as an array
-        $query->select(
-            'items.code',
-            'items.owned_by',
-            'items.archetype_id',
-            'items.created_at',
-            'items.description',
-            'items.id',
-            'manufactured_at',
-            'users.name as owner_name',
-            'purchase_value',
-            'purchased_at',
-            'serial',
-            'brands.name AS brand_name',
-            'items.brand_id',
-            DB::raw('  CONCAT_WS(" ", COALESCE(locations.city, ""), COALESCE(locations.state, ""), COALESCE(locations.country, "")) as location')
-        )->with(['archetype', 'brand'])
-            ->groupBy(
-                'archetypes.name',
-                'brands.name',
-                'items.archetype_id',
-                'items.brand_id',
-                'items.code',
-                'items.created_at',
-                'items.description',
-                'items.id',
-                'items.owned_by',
-                'manufactured_at',
-                'purchase_value',
-                'purchased_at',
-                'serial',
-                'users.name',
-                'locations.city',
-                'locations.state',
-                'locations.country'
-            );
-
-        // Apply sorting
-        if ($sortBy) {
-            foreach ($sortBy as $sort) {
-                $key = $sort['key'] ?? 'id';
-                $order = strtolower($sort['order'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
-
-                $query->orderBy($key, $order);
-            }
-        }
-
-
-        //paginate or not depending on items per page
-        if ($request->itemsPerPage == -1) {
-            $itemsArray = $query->get()->toArray();
-            $totalCount = count($itemsArray);
-        } else {
-            $items = $query->paginate($itemsPerPage, ['*'], 'page', $page);
-            $itemsArray = $items->items();
-            $totalCount = $items->total();
-        }
-
-        $itemIds = array_column($itemsArray, 'id');
-        $images = DB::table('item_images')
-            ->select('item_id', 'id', 'path')
-            ->whereIn('item_id', $itemIds)
-            ->get()
-            ->groupBy('item_id');
-
-
-
-        // Process image data to structure it as needed
-        $processedImages = $images->mapWithKeys(function ($imageGroup, $itemId) {
-            return [
-                $itemId => $imageGroup->map(function ($image) {
-                    return [
-                        'id' => $image->id,
-                        'url' => '/storage/' . $image->path
-                    ];
-                })
-            ];
-        });
-
-        // return response()->json($itemsArray);
-
-        //  return response()->json($itemsArray);
-        // Combine items with their images
-        foreach ($itemsArray as &$item) {
-            $item['images'] = count($processedImages) ? $processedImages->get($item['id'], []) : [];
-        }
-
-
+        // Return using ItemResource
         return response()->json([
-            'data' => $itemsArray,
-            'total' => $totalCount,
+            'data' => ItemResource::collection($items)->resolve(),
+            'total' => $items->total(),
         ]);
     }
 
@@ -265,20 +117,16 @@ class ItemController extends Controller
 
     /**
      * Store a newly created item in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
 
         $validated = $request->validate([
-            'purchase_value' => 'required|numeric|min:0', // Adjust according to your needs
             'description' => 'nullable|string',
             'serial' => 'nullable|string',
             'purchase_value' => 'nullable|numeric',
             'manufactured_at' => 'nullable|date',
-            'archetype.id' => 'required|numeric|exists:archetypes,id', // Adjust according to your needs
+            'archetype.id' => 'required|numeric|exists:archetypes,id',
         ]);
 
 
@@ -286,6 +134,8 @@ class ItemController extends Controller
 
         // Decode the validated JSON
         $archetype = Archetype::findOrFail($request->archetype['id']);
+        /** @var Brand|null $brand */
+        $brand = null;
         if ($request->brand) {
             $brand = Brand::findOrFail($request->brand['id']);
         }
@@ -324,9 +174,6 @@ class ItemController extends Controller
 
     /**
      * Store a newly created image in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
     public function storeImage(Request $request, $id)
     {
@@ -372,9 +219,6 @@ class ItemController extends Controller
 
     /**
      * Display the specified item.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function show($id)
     {
@@ -386,9 +230,10 @@ class ItemController extends Controller
             ->select('items.*', 'users.name as owner_name', 'archetypes.name AS archetype_name') // Select relevant columns
             ->first();
 
-
+        // Add url to each image
         foreach ($item->images as $image) {
-            $image->path = '/storage/' . $image->path;
+            /** @var ItemImage $image */
+            $image->url = $image->url; // This uses the getUrlAttribute accessor
         }
 
         $response['data'] = $item;
@@ -401,10 +246,6 @@ class ItemController extends Controller
 
     /**
      * Update the specified item in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
     {
@@ -429,11 +270,14 @@ class ItemController extends Controller
 
             // Decode the validated JSON
             $archetype = Archetype::findOrFail($request->archetype['id']);
+            /** @var Brand|null $brand */
+            $brand = null;
             if ($request->brand) {
                 $brand = Brand::findOrFail($request->brand['id']);
             }
 
 
+            /** @var Item $item */
             $item = Item::findOrFail($id);
             $item->archetype_id = $archetype->id;
             $item->brand_id = $brand->id ?? null;       // Optional: Store other fields from the JSON
@@ -467,6 +311,7 @@ class ItemController extends Controller
                 // Check if the image exists
                 if ($image) {
                     // Delete the image file from storage
+                    /** @var ItemImage $image */
                     Storage::disk('public')->delete($image->path);
 
                     // Delete the image record from the database
@@ -480,9 +325,6 @@ class ItemController extends Controller
     }
     /**
      * Remove the specified item from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function destroy($id)
     {
@@ -496,7 +338,7 @@ class ItemController extends Controller
             }
 
             //check if there are any active rentals
-            $hasActiveRental = $item && $item->rentals->contains('status', 'active');
+            $hasActiveRental = $item->rentals->contains('status', 'active');
             if ($hasActiveRental) {
                 abort(404, "Item can not be deleted because it is currently rented");
             }
@@ -505,6 +347,7 @@ class ItemController extends Controller
 
             // Delete the image files from storage
             foreach ($itemImages as $image) {
+                /** @var ItemImage $image */
                 Storage::disk('public')->delete($image->path);
             }
 
@@ -522,11 +365,9 @@ class ItemController extends Controller
 
 
     /**
-     * get fetured items
-     *
-     * @return Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * get featured items
      */
-    public function featured()
+    public function featured(): AnonymousResourceCollection
     {
         return ItemResource::collection(
             Item::whereHas('images') // must have at least 1 image
@@ -539,8 +380,6 @@ class ItemController extends Controller
 
     public function getItemUnavailableDates($itemId)
     {
-        $itemId;
-
         // Fetch unavailable dates for the specified itemId
         $unavailableDates = ItemUnavailableDate::where('item_id', $itemId)
             ->get(['unavailable_date']);

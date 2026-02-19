@@ -9,9 +9,7 @@ import { ref, onMounted, watch } from 'vue';
 import _ from 'lodash';
 import api from '@/services/api';
 import { usePage } from '@inertiajs/vue3';
-import { useLoadingStore } from '@/Stores/loading';
 
-const loadingStore = useLoadingStore();
 const page = usePage();
 const user = page.props.auth.user;
 const items = ref([]);
@@ -27,21 +25,13 @@ const filters = ref({
     user_id: null,
 });
 const pageNumber = ref(1);
-const itemsPerPage = ref(10);
-const sortBy = ref([]);
+const itemsPerPage = ref(9);
 const advancedSearch = ref(false);
+const hasSearchResults = ref(false);
 
 const toggleAdvancedSearch = () => (advancedSearch.value = !advancedSearch.value);
 
-// Table headers
-const headers = [
-    { title: 'Actions', value: 'actions', sortable: false },
-    { title: 'Code', value: 'code' },
-    { title: 'Image', value: 'image' },
-    { title: 'Archetype', value: 'archetype.name' },
-    { title: 'Brand', value: 'brand.name' },
-];
-
+// Autocomplete data
 const autocompleteArchetypes = ref([]);
 const autocompleteBrands = ref([]);
 const autocompleteCategories = ref([]);
@@ -62,11 +52,20 @@ const handleSetLocation = (location, address, radius) => {
 const refreshItems = async () => {
     const query = {
         page: pageNumber.value,
+        itemsPerPage: itemsPerPage.value,
         brand_id: filters.value.brand?.id,
         archetype_id: filters.value?.archetype?.id,
         usage_id: filters.value?.usage?.id,
         category_id: filters.value?.category?.id,
+        search: filters.value?.search,
+        radius: filters.value?.radius,
+        location_id: filters.value?.location?.id,
+        user_id: filters.value?.user_id,
     };
+
+    // Check if any search filter is active
+    hasSearchResults.value = !!(query.brand_id || query.archetype_id || query.usage_id || 
+        query.category_id || query.search || query.location_id || query.user_id);
 
     if (filters.value.user_id) {
         const response = await api.get(route('me.items.index'), {
@@ -134,14 +133,6 @@ onMounted(async () => {
         }
     );
 });
-
-const updateItemListOptions = (options) => {
-    pageNumber.value = options.page;
-    itemsPerPage.value = options.itemsPerPage;
-    sortBy.value = options.sortBy;
-
-    refreshItems();
-};
 
 const refreshFeaturedItems = async () => {
     const response = await api.get(route('items.featured'));
@@ -249,7 +240,7 @@ const refreshFeaturedItems = async () => {
                 </v-expand-transition>
 
                 <!-- Featured Tools -->
-                <div v-if="featuredItems.length" class="mt-6">
+                <div v-if="featuredItems.length && !hasSearchResults" class="mt-6">
                     <div class="text-h6 font-weight-bold mb-3">Featured Tools</div>
 
                     <v-row>
@@ -279,44 +270,59 @@ const refreshFeaturedItems = async () => {
                     </v-row>
                 </div>
 
-                <!-- Items table -->
+                <!-- Search Results as Card Grid -->
+                <div v-if="hasSearchResults && items.length" class="mt-6">
+                    <div class="text-h6 font-weight-bold mb-3">Search Results</div>
 
-                <v-data-table-server
-                    v-if="totalItems"
-                    v-model:items-per-page="itemsPerPage"
-                    :items-length="totalItems"
-                    :headers="headers"
-                    :loading="loadingStore.isLoading"
-                    :items="items"
-                    item-value="name"
-                    fixed-header
-                    class="mt-4 overflow-auto"
-                    @update:options="updateItemListOptions"
-                >
-                    <template #[`item.image`]="{ item }">
-                        <v-img
-                            v-if="item.images?.length > 0"
-                            :src="item.images[0].url"
-                            max-height="200"
-                            max-width="200"
-                            min-height="200"
-                            min-width="200"
-                            alt="Archetype Image"
-                        />
-                        <v-icon v-else>mdi-image-off</v-icon>
-                    </template>
+                    <v-row>
+                        <v-col v-for="item in items" :key="item.id" cols="12" sm="6" md="4">
+                            <v-card class="pa-2" elevation="2">
+                                <v-img
+                                    v-if="item.images?.length"
+                                    :src="item.images[0].url"
+                                    height="180"
+                                    cover
+                                />
+                                <v-icon v-else size="80" class="ma-4">mdi-image-off</v-icon>
 
-                    <template #[`item.actions`]="{ item }">
-                        <AvailabilityDialog v-if="user && item.owned_by === user.id" :item="item" />
-                        <ItemDialog
-                            v-if="user && item.owned_by === user.id"
-                            :item="item"
-                            aim="edit"
+                                <v-card-title class="text-subtitle-1">
+                                    {{ item.archetype?.name }}
+                                </v-card-title>
+
+                                <v-card-subtitle>
+                                    {{ item.brand?.name }}
+                                </v-card-subtitle>
+
+                                <v-card-actions>
+                                    <AvailabilityDialog v-if="user && item.owned_by === user.id" :item="item" />
+                                    <ItemDialog
+                                        v-if="user && item.owned_by === user.id"
+                                        :item="item"
+                                        aim="edit"
+                                    />
+                                    <ItemDialog v-if="item.owned_by !== user.id" :item="item" aim="view" />
+                                    <DeleteItemDialog v-if="user && item.owned_by === user.id" :item="item" />
+                                </v-card-actions>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-center mt-4">
+                        <v-pagination
+                            v-model="pageNumber"
+                            :length="Math.ceil(totalItems / itemsPerPage)"
+                            :total-visible="5"
+                            @update:model-value="refreshItems"
                         />
-                        <ItemDialog v-if="item.owned_by !== user.id" :item="item" aim="view" />
-                        <DeleteItemDialog v-if="user && item.owned_by === user.id" :item="item" />
-                    </template>
-                </v-data-table-server>
+                    </div>
+                </div>
+
+                <!-- No Results Message -->
+                <div v-if="hasSearchResults && !items.length" class="mt-6 text-center">
+                    <v-icon size="64" color="grey">mdi-magnify</v-icon>
+                    <div class="text-h6 mt-2">No items found</div>
+                </div>
             </div>
         </v-container>
     </PageLayout>

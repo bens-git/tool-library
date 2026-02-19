@@ -6,13 +6,32 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Item Model
+ *
+ * @property int $id
+ * @property string|null $code
+ * @property int|null $archetype_id
+ * @property string|null $name
+ * @property string|null $description
+ * @property int $owned_by
+ * @property float|null $purchase_value
+ * @property int|null $location_id
+ * @property string|null $serial
+ * @property string|null $purchased_at
+ * @property string|null $manufactured_at
+ * @property int|null $brand_id
+ * @property bool $make_item_unavailable
+ * @property string $created_at
+ * @property string $updated_at
+ */
 class Item extends Model
 {
     protected $table = 'items'; // Specify the table name if it's not following Laravel conventions
     protected $fillable = [
+        'archetype_id',
         'name',
         'description',
-        'archetype_id',
         'owned_by',
         'purchase_value',
         'location_id',
@@ -75,6 +94,26 @@ class Item extends Model
     public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);
+    }
+
+    /**
+     * category
+     *
+     * @return BelongsTo
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * usage
+     *
+     * @return BelongsTo
+     */
+    public function usage(): BelongsTo
+    {
+        return $this->belongsTo(Usage::class);
     }
 
 

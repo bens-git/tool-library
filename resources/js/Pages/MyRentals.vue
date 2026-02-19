@@ -16,35 +16,40 @@
                 }}
               </v-list-item-title>
               <v-list-item-subtitle>
-                <div>Status: {{ rental.status }}</div>
-                <div>
+                <div class="mb-2">
+                  <v-chip 
+                    :color="getStatusColor(rental.status)" 
+                    size="small"
+                    class="mr-2"
+                  >
+                    {{ rental.status }}
+                  </v-chip>
+                </div>
+                <div v-if="rental.location">
                   Pickup Location:
                   {{ rental.location.city }},
                   {{ rental.location.state }},
                   {{ rental.location.country }}
                 </div>
-                <div>Pickup Time: {{ formatDate(rental.starts_at) }}</div>
-                <div>Return Time: {{ formatDate(rental.ends_at) }}</div>
 
                 <v-btn
                   v-if="rental.status === 'booked'"
                   color="red"
                   small
+                  class="mt-2"
                   @click="confirmCancel(rental.id)"
                 >
                   Cancel Rental
                 </v-btn>
 
                 <v-btn
-                  v-if="
-                    rental.status === 'booked' &&
-                    new Date() >= new Date(rental.starts_at)
-                  "
+                  v-if="rental.status === 'booked'"
                   color="green"
                   small
+                  class="mt-2 ml-2"
                   @click="confirmRentalActive(rental.id)"
                 >
-                  Confirm Rental Active
+                  Mark as Active
                 </v-btn>
               </v-list-item-subtitle>
             </v-list-item>
@@ -83,23 +88,24 @@ const items = ref({});
 const showCancelDialog = ref(false);
 const rentalToCancel = ref(null);
 
+const getStatusColor = (status) => {
+  const colors = {
+    'booked': 'blue',
+    'active': 'green',
+    'completed': 'grey',
+    'cancelled': 'red',
+    'holding': 'orange',
+  };
+  return colors[status] || 'grey';
+};
+
 const refreshRentals = async () => {
   try {
     const response = await axios.get(route('me.rentals.index'));
-    rentals.value = response.data;
+    rentals.value = response.data.data || [];
   } catch (e) {
     console.error(e);
   }
-};
-
-const formatDate = (date) => {
-  return new Date(date).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 };
 
 const confirmCancel = (rentalId) => {
@@ -117,11 +123,19 @@ const handleConfirmCancel = async () => {
   }
 };
 
-const confirmRentalActive = (rentalId) => {
-  console.log('Confirm rental active for', rentalId);
+const confirmRentalActive = async (rentalId) => {
+  try {
+    await axios.patch(route('rentals.update', rentalId), {
+      status: 'active'
+    });
+    refreshRentals();
+  } catch (e) {
+    console.error(e);
+  }
 };
 
 onMounted(() => {
   refreshRentals();
 });
 </script>
+

@@ -66,6 +66,14 @@ Route::middleware('auth')->group(function () {
     Route::resource('items', ItemController::class);
 });
 
+// Custom item routes
+Route::middleware('auth')->group(function () {
+    Route::get('/items/{itemId}/is-rented', [RentalController::class, 'isItemRented'])
+        ->name('item.is-rented');
+    Route::get('/items/{itemId}/unavailable-dates', [ItemController::class, 'getItemUnavailableDates'])
+        ->name('item.index-unavailable-dates');
+});
+
 
 Route::middleware('auth')->group(function () {
     Route::resource('rentals', RentalController::class);

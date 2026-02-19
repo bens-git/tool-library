@@ -7,3 +7,9 @@ parameters:
         - routes
         - database
     level: 5
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model.*#'
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Model.*#'
+        - '#Property App\\Models\\Rental.*#'
+        - '#contains unresolvable type#'

@@ -14,8 +14,6 @@ class Rental extends Model
         'rented_by',
         'item_id',
         'rented_at',
-        'starts_at',
-        'ends_at',
         'status',
         'renter_punctuality',
         'owner_punctuality',
@@ -49,5 +47,15 @@ class Rental extends Model
     public function renter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'rented_by');
+    }
+
+    /**
+     * Get the location through the item relationship.
+     *
+     * @return \App\Models\Location|null
+     */
+    public function getLocationAttribute(): ?\App\Models\Location
+    {
+        return $this->item?->location;
     }
 }

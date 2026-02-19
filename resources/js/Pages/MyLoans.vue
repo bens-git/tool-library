@@ -22,26 +22,36 @@
                                 }}
                             </v-list-item-title>
                             <v-list-item-subtitle>
-                                <div>Status: {{ rental.status }}</div>
-                                <div>
+                                <div class="mb-2">
+                                    <v-chip 
+                                        :color="getStatusColor(rental.status)" 
+                                        size="small"
+                                        class="mr-2"
+                                    >
+                                        {{ rental.status }}
+                                    </v-chip>
+                                </div>
+                                <div v-if="rental.location">
                                     Pickup Location: {{ rental.location.city }},
                                     {{ rental.location.state }},
                                     {{ rental.location.country }}
                                 </div>
-                                <div>Pickup Time: {{ formatDate(rental.starts_at) }}</div>
-                                <div>Return Time: {{ formatDate(rental.ends_at) }}</div>
 
                                 <v-btn
-                                    v-if="rental.status === 'active' || rental.status === 'overdue'"
+                                    v-if="rental.status === 'active'"
                                     color="green"
+                                    size="small"
+                                    class="mt-2"
                                     @click="confirmLoanCompleted(rental.id)"
                                 >
                                     Confirm Returned
                                 </v-btn>
 
                                 <v-btn
-                                    v-if="rental.status === 'active' || rental.status === 'overdue'"
-                                    color="green"
+                                    v-if="rental.status === 'booked'"
+                                    color="orange"
+                                    size="small"
+                                    class="mt-2 ml-2"
                                     @click="confirmLoanHolding(rental.id)"
                                 >
                                     Allow Holding
@@ -49,6 +59,8 @@
 
                                 <v-btn
                                     v-if="rental.status === 'booked'"
+                                    size="small"
+                                    class="mt-2 ml-2"
                                     @click="confirmCancel(rental.id)"
                                 >
                                     Cancel Loan
@@ -97,6 +109,17 @@ const sortBy = ref([]);
 const totalRentals = ref(0);
 const user = page.props.auth.user;
 
+const getStatusColor = (status) => {
+  const colors = {
+    'booked': 'blue',
+    'active': 'green',
+    'completed': 'grey',
+    'cancelled': 'red',
+    'holding': 'orange',
+  };
+  return colors[status] || 'grey';
+};
+
 const refreshRentals = async () => {
     const query = {
         page: pageNumber.value,
@@ -113,17 +136,6 @@ const refreshRentals = async () => {
     totalRentals.value = response.total;
 };
 
-const formatDate = (dateString) => {
-    const options = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-};
-
 const confirmCancel = (loanId) => {
     loanToCancel.value = loanId;
     showCancelDialog.value = true;
@@ -138,7 +150,30 @@ const handleConfirmCancel = async () => {
     }
 };
 
+const confirmLoanCompleted = async (rentalId) => {
+    try {
+        await api.patch(route('rentals.update', rentalId), {
+            status: 'completed'
+        });
+        refreshRentals();
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+const confirmLoanHolding = async (rentalId) => {
+    try {
+        await api.patch(route('rentals.update', rentalId), {
+            status: 'holding'
+        });
+        refreshRentals();
+    } catch (e) {
+        console.error(e);
+    }
+};
+
 onMounted(() => {
     refreshRentals();
 });
 </script>
+

@@ -15,93 +15,48 @@ use App\Mail\ConfirmRentalDeletionEmail;
 use App\Mail\ConfirmLoanEmail;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use Carbon\CarbonPeriod;
-use RentalDeletedNotification;
+use App\Notifications\RentalDeletedNotification;
 
 class RentalController extends Controller
 {
     /**
-     * Get rented dates for a specific item archetype.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * Check if an item has active rentals.
      */
-    public function getRentedDates(Request $request)
+    public function isItemRented($itemId)
     {
-        $archetypeId = $request->query('archetypeId');
+        $hasActiveRental = Rental::where('item_id', $itemId)
+            ->where('status', '!=', 'completed')
+            ->where('status', '!=', 'cancelled')
+            ->exists();
 
-        // Fetch rentals for the specified archetypeId
-        $rentals = Rental::whereHas('item', function ($query) use ($archetypeId) {
-            $query->where('archetype_id', $archetypeId); // Assuming 'archetype_id' exists in items table
-        })->get(['starts_at', 'ends_at']); // Adjust the columns as needed
-
-        // Format dates if needed
-        $rentedDates = $rentals->map(function ($rental) {
-            return [
-                'start' => Carbon::parse($rental->starts_at)->format('Y-m-d'),
-                'end' => Carbon::parse($rental->ends_at)->format('Y-m-d'),
-            ];
-        });
-
-        return response()->json(['data' => $rentedDates]);
+        return response()->json(['data' => $hasActiveRental]);
     }
 
-    public function getItemRentedDates($itemId)
-    {
-
-        // Fetch rentals for the specified archetypeId
-        $rentals = Rental::where('item_id', '=', $itemId)->get(['starts_at', 'ends_at']); // Adjust the columns as needed
-
-        // Format dates if needed
-        $rentedDates = $rentals->map(function ($rental) {
-            return [
-                'start' => Carbon::parse($rental->starts_at)->format('Y-m-d'),
-                'end' => Carbon::parse($rental->ends_at)->format('Y-m-d'),
-            ];
-        });
-
-        $dates = [];
-        foreach ($rentedDates as $dateRange) {
-            $period = CarbonPeriod::create($dateRange['start'], $dateRange['end']);
-
-            foreach ($period as $date) {
-                $dates[] = $date->toDateString(); // Or ->format('Y-m-d') if you prefer
-            }
-        }
-
-        return response()->json(['data' => $dates]);
-    }
-
-
-    public function bookRental(Request $request)
+    /**
+     * Store a newly created rental in storage.
+     */
+    public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'itemId' => 'required|exists:items,id',
-            'startDate' => 'required|date_format:Y-m-d H:i:s',
-            'endDate' => 'required|date_format:Y-m-d H:i:s',
+            'item' => 'required|array',
+            'item.id' => 'required|exists:items,id',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $item_id = $request->input('itemId');
-        $start_date = $request->input('startDate');
-        $end_date = $request->input('endDate');
+        $itemId = $request->input('item.id');
 
-        // Check for conflicts with existing rentals
-        $existingRental = Rental::where('item_id', $item_id)
-            ->where(function ($query) use ($start_date, $end_date) {
-                $query->whereBetween('starts_at', [$start_date, $end_date])
-                    ->orWhereBetween('ends_at', [$start_date, $end_date])
-                    ->orWhereRaw('? BETWEEN starts_at AND ends_at', [$start_date])
-                    ->orWhereRaw('? BETWEEN starts_at AND ends_at', [$end_date]);
-            })
+        // Check if item is already rented (has an active rental)
+        $existingRental = Rental::where('item_id', $itemId)
+            ->where('status', '!=', 'completed')
+            ->where('status', '!=', 'cancelled')
             ->exists();
 
         if ($existingRental) {
             return response()->json([
-                'message' => 'The item is already rented within the requested date range.'
+                'message' => 'The item is already rented.'
             ], 409);
         }
 
@@ -112,24 +67,22 @@ class RentalController extends Controller
             $user = User::with('location')->find($user->id);
         }
 
-        // Create the rental for the entire date range
+        // Create the rental without date ranges
         $rental = Rental::create([
             'rented_by' => $user->id,
-            'item_id' => $item_id,
+            'item_id' => $itemId,
             'rented_at' => now(),
-            'starts_at' => $start_date,
-            'ends_at' => $end_date,
-            'status' => 'booked', // or any other initial status
+            'status' => 'booked',
         ]);
 
         $rental->load('renter:id,discord_username,name,email');
 
-
         // Find the item by ID
+        /** @var \App\Models\Item|null $item */
         $item = Item::with(['owner', 'location'])
             ->leftJoin('users', 'users.id', '=', 'items.owned_by')
             ->leftJoin('archetypes', 'archetypes.id', '=', 'items.archetype_id')
-            ->select('items.*') // Select all columns from the items table
+            ->select('items.*')
             ->selectRaw("
             CONCAT(
                 LOWER(REGEXP_REPLACE(LEFT(users.name, 3), '[^a-zA-Z0-9]', '')), '_', 
@@ -137,21 +90,24 @@ class RentalController extends Controller
                 items.id
             ) AS item_name
         ")
-            ->where('items.id', $item_id)
+            ->where('items.id', $itemId)
             ->first();
-
 
         Log::info($item);
 
         // Set the rental's location property to the item's location if it exists, otherwise use the user's location
-        $rental->location = $item->location ?? $user->location;
+        /** @var \App\Models\Location|null $location */
+        $location = $item->location ?? $user->location;
+        $rental->location = $location;
 
         // Send rental confirmation email
         /** @var \App\Models\User $user */
         Mail::to($user->email)->send(new ConfirmRentalEmail($user, $item, $rental));
 
-        //send load confirmation email
-        Mail::to($item->owner->email)->send(new ConfirmLoanEmail($user, $item, $rental));
+        // Send loan confirmation email
+        /** @var \App\Models\User $owner */
+        $owner = $item->owner;
+        Mail::to($owner->email)->send(new ConfirmLoanEmail($user, $item, $rental));
 
         return response()->json([
             'message' => 'Rental successfully created.',
@@ -183,8 +139,7 @@ class RentalController extends Controller
                 return [
                     'id' => $rental->id,
                     'item_id' => $rental->item_id,
-                    'starts_at' => $rental->starts_at,
-                    'ends_at' => $rental->ends_at,
+                    'rented_at' => $rental->rented_at,
                     'status' => $rental->status,
                     'location' => [
                         'id' => $location->id,
@@ -194,24 +149,19 @@ class RentalController extends Controller
                         'created_at' => $location->created_at,
                         'updated_at' => $location->updated_at,
                     ],
-                    // You can include other rental fields here as needed
                 ];
             });
 
         $response['data'] = $rentals;
-        $response['total'] =  $rentals->count();
+        $response['total'] = $rentals->count();
 
         // Return response
         return response()->json($response);
     }
 
-
-
-
     /**
      * Get all loans for a specific user.
      *
-     * @param  int  $userId
      * @return \Illuminate\Http\JsonResponse
      */
     public function getUserLoans()
@@ -224,20 +174,20 @@ class RentalController extends Controller
         }
 
         // Fetch rentals associated with the authenticated user
+        /** @var \Illuminate\Database\Eloquent\Collection $loans */
         $loans = Rental::whereHas('item', function ($query) use ($user) {
             $query->where('owned_by', $user->id);
         })
-            ->with(['item.location', 'user.location', 'renter.location']) // Eager load item, user location, and renter user location
+            ->with(['item.location', 'user.location', 'renter.location'])
             ->get()
-            ->map(function ($rental) {
+            ->map(function (Rental $rental): array {
                 // Get the item's location, if not available, fallback to the rented_by user's location
                 $location = $rental->item->location ?? $rental->user->location;
 
                 return [
                     'id' => $rental->id,
                     'item_id' => $rental->item_id,
-                    'starts_at' => $rental->starts_at,
-                    'ends_at' => $rental->ends_at,
+                    'rented_at' => $rental->rented_at,
                     'status' => $rental->status,
                     'location' => [
                         'id' => $location->id,
@@ -260,20 +210,14 @@ class RentalController extends Controller
                             'updated_at' => $rental->renter->location->updated_at,
                         ],
                     ],
-                    // Include other rental fields here as needed
                 ];
             });
 
         return response()->json($loans);
     }
 
-
     /**
      * Update the specified rental.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Models\Rental $rental
-     * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
     {
@@ -300,7 +244,6 @@ class RentalController extends Controller
         ]);
     }
 
-
     /**
      * Remove the specified rental from storage.
      *
@@ -310,25 +253,22 @@ class RentalController extends Controller
     public function destroy($id)
     {
         // Find the rental by ID
-
         $rental = Rental::with(['renter'])->find($id);
 
         // Find the item by ID
         $item = Item::with(['owner', 'location'])
             ->leftJoin('users', 'users.id', '=', 'items.owned_by')
             ->leftJoin('archetypes', 'archetypes.id', '=', 'items.archetype_id')
-            ->select('items.*') // Select all columns from the items table
+            ->select('items.*')
             ->selectRaw("
-          CONCAT(
-              LOWER(REGEXP_REPLACE(LEFT(users.name, 3), '[^a-zA-Z0-9]', '')), '_', 
-              LOWER(REGEXP_REPLACE(LEFT(archetypes.name, 3), '[^a-zA-Z0-9]', '')), '_', 
-              items.id
-          ) AS item_name
-      ")
+                CONCAT(
+                    LOWER(REGEXP_REPLACE(LEFT(users.name, 3), '[^a-zA-Z0-9]', '')), '_', 
+                    LOWER(REGEXP_REPLACE(LEFT(archetypes.name, 3), '[^a-zA-Z0-9]', '')), '_', 
+                    items.id
+                ) AS item_name
+            ")
             ->where('items.id', $rental->item_id)
             ->first();
-
-
 
         // Check if the rental exists
         if (!$rental) {
@@ -344,11 +284,9 @@ class RentalController extends Controller
         try {
             $rental->delete();
 
-            // Send rental confirmation email
-
+            // Send rental notification
             $item->owner->notify(new RentalDeletedNotification($item, $rental));
             $rental->renter->notify(new RentalDeletedNotification($item, $rental));
-
 
             return response()->json(['message' => 'Rental canceled successfully'], 200);
         } catch (\Exception $e) {
@@ -357,3 +295,4 @@ class RentalController extends Controller
         }
     }
 }
+

@@ -1,89 +1,84 @@
 <template>
-    <div class="pl-4 text-center">
-        <v-dialog v-model="dialog" @open="onOpen">
+    <div class="text-center">
+        <v-dialog v-model="dialog" max-width="500" @open="onOpen">
             <template #activator="{ props: activatorProps }">
                 <v-btn
-                    color="primary"
+                    color="success"
                     class="text-none font-weight-regular"
-                    prepend-icon="mdi-calendar"
-                    text="Rental Dates"
+                    prepend-icon="mdi-check-circle"
+                    text="Rent this item"
                     variant="tonal"
                     block
                     v-bind="activatorProps"
                 ></v-btn>
             </template>
-            <v-card
-                v-if="localItem"
-                prepend-icon="mdi-calendar"
-                title="Rental Dates"
-                :subtitle="localItem.code"
-            >
+            
+            <v-card v-if="localItem" prepend-icon="mdi-check-circle" title="Rent this item">
                 <v-card-text>
-                    <!-- Date Range Picker -->
-                    <v-row>
-                        <v-col cols="12" md="12">
-                            <v-date-input
-                                v-model="archetypeStore.dateRange"
-                                dense
-                                label="Dates"
-                                prepend-icon=""
-                                persistent-placeholder
-                                multiple="range"
-                                :min="minStartDate"
-                            ></v-date-input>
-                        </v-col>
-                    </v-row>
+                    <!-- Item Info -->
+                    <v-chip v-if="localItem.code" color="primary" variant="outlined" size="small" class="mb-4">
+                        {{ localItem.code }}
+                    </v-chip>
 
-                    <v-alert v-if="localItem.make_item_unavailable" color="error"
-                        >Unavailable</v-alert
+                    <!-- Unavailable Alert -->
+                    <v-alert 
+                        v-if="localItem.make_item_unavailable" 
+                        color="warning" 
+                        variant="tonal" 
+                        class="mb-4"
+                        density="compact"
                     >
-                    <div v-if="unavailableDates && unavailableDates.length">
-                        <v-row>
-                            <v-col v-for="(date, index) in unavailableDates" :key="index" cols="4">
-                                <v-chip class="ma-2" color="red lighten-2">
-                                    {{ new Date(date).toLocaleDateString() }}
-                                </v-chip>
-                            </v-col>
-                        </v-row>
+                        This item is currently marked as unavailable
+                    </v-alert>
+
+                    <!-- Availability Status -->
+                    <div v-if="!localItem.make_item_unavailable && !isItemRented" class="mb-4">
+                        <v-chip color="success" variant="flat">
+                            <v-icon start icon="mdi-check"></v-icon>
+                            Available
+                        </v-chip>
                     </div>
 
-                    <div v-if="rentedDates && rentedDates.length">
-                        <v-row>
-                            <v-col v-for="(date, index) in rentedDates" :key="index" cols="4">
-                                <v-chip class="ma-2" color="red lighten-2">
-                                    {{ new Date(date).toLocaleDateString() }}
-                                </v-chip>
-                            </v-col>
-                        </v-row>
-                    </div>
+                    <!-- Already Rented Alert -->
+                    <v-alert 
+                        v-if="isItemRented" 
+                        color="error" 
+                        variant="tonal" 
+                        class="mb-4"
+                        density="compact"
+                    >
+                        This item is currently rented
+                    </v-alert>
                 </v-card-text>
+                
                 <v-divider></v-divider>
 
                 <v-card-actions>
                     <v-spacer></v-spacer>
-
                     <v-btn text="Cancel" variant="plain" @click="dialog = false"></v-btn>
-                    <ConfirmRentalDialog :item="localItem" />
+                    <v-btn
+                        v-if="!isItemRented && !localItem.make_item_unavailable"
+                        color="success"
+                        text="Confirm Rental"
+                        variant="tonal"
+                        @click="confirmRental"
+                    ></v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
     </div>
 </template>
+
 <script setup>
-import { shallowRef, ref, computed, watch } from 'vue';
-import ConfirmRentalDialog from './ConfirmRentalDialog.vue';
+import { shallowRef, ref, watch } from 'vue';
+import { router } from '@inertiajs/vue3';
 import api from '@/services/api';
 
 const dialog = shallowRef(false);
 
 const localItem = ref(null);
-const rentedDates = ref([]);
-const unavailableDates = ref([]);
-
-// Computed properties for date constraints
-const today = new Date();
-today.setHours(0, 0, 0, 0);
-const minStartDate = computed(() => today);
+const isItemRented = ref(false);
+const rentalError = ref('');
 
 const props = defineProps({
     item: { type: Object, required: true },
@@ -100,17 +95,44 @@ watch(dialog, (newVal) => {
 
 // Function to initialize
 const initialize = async () => {
-    localItem.value = {
-        ...props.item,
-    };
-
-    rentedDates.value = api.get(route('item.index-rented-dates', localItem.value.id));
-    unavailableDates.value = api.get(route('item.index-unavailable-dates', localItem.value.id));
+    localItem.value = { ...props.item };
+    isItemRented.value = false;
+    rentalError.value = '';
+    
+    // Check if item has an active rental
+    try {
+        const response = await api.get(route('item.is-rented', localItem.value.id));
+        // If there's an active rental
+        isItemRented.value = response.data.data === true;
+    } catch (error) {
+        console.error('Error checking rental status:', error);
+        isItemRented.value = false;
+    }
 };
 
 const onOpen = async () => {
     initialize();
 };
 
-const onClose = () => {};
+const onClose = () => {
+    isItemRented.value = false;
+    rentalError.value = '';
+};
+
+const confirmRental = async () => {
+    try {
+        await api.post(route('rentals.store'), {
+            item: localItem.value,
+        });
+        
+        dialog.value = false;
+        router.visit('/my-rentals');
+    } catch (error) {
+        console.error('Error creating rental:', error);
+        if (error.response?.data?.message) {
+            rentalError.value = error.response.data.message;
+        }
+    }
+};
 </script>
+
