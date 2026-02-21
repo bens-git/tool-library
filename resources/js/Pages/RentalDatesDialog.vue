@@ -13,12 +13,35 @@
                 ></v-btn>
             </template>
             
-            <v-card v-if="localItem" prepend-icon="mdi-check-circle" title="Rent this item">
+            <v-card v-if="localItem">
+                <!-- Item Image -->
+                <v-img
+                    v-if="localItem.images?.length"
+                    :src="localItem.images[0].url"
+                    height="200"
+                    cover
+                    class="bg-grey-lighten-2"
+                ></v-img>
+                
                 <v-card-text>
-                    <!-- Item Info -->
+                    <!-- Title using archetype name -->
+                    <div class="text-h6 mb-2">{{ localItem.archetype?.name || 'Item' }}</div>
+
+                    <!-- Item Code -->
                     <v-chip v-if="localItem.code" color="primary" variant="outlined" size="small" class="mb-4">
                         {{ localItem.code }}
                     </v-chip>
+
+                    <!-- Time Credits Required -->
+                    <div v-if="localItem.access_value?.current_daily_rate" class="mb-4">
+                        <v-card variant="tonal" color="info" class="pa-3">
+                            <div class="text-subtitle-2 mb-1">Rental Cost</div>
+                            <div class="text-h5 font-weight-bold">
+                                {{ localItem.access_value.current_daily_rate }}
+                                <span class="text-body-2">credits / day</span>
+                            </div>
+                        </v-card>
+                    </div>
 
                     <!-- Unavailable Alert -->
                     <v-alert 

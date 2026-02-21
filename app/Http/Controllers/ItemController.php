@@ -46,7 +46,7 @@ class ItemController extends Controller
         }
 
         // Build the query with eager loading
-        $query = Item::with(['archetype', 'brand', 'images', 'archetype.categories', 'archetype.usages']);
+        $query = Item::with(['archetype', 'brand', 'images', 'accessValue', 'archetype.categories', 'archetype.usages']);
 
         // Apply archetype filter
         if (!empty($archetypeId)) {
@@ -216,7 +216,7 @@ class ItemController extends Controller
     public function show($id)
     {
         // Find the item by its I
-        $item = Item::with('archetype', 'brand', 'images')
+        $item = Item::with('archetype', 'brand', 'images', 'accessValue')
             ->join('users', 'items.owned_by', '=', 'users.id')
             ->join('archetypes', 'items.archetype_id', '=', 'archetypes.id')
             ->where('items.id', $id)
@@ -364,7 +364,7 @@ class ItemController extends Controller
     {
         return ItemResource::collection(
             Item::whereHas('images') // must have at least 1 image
-                ->with(['images', 'brand', 'archetype'])
+                ->with(['images', 'brand', 'archetype', 'accessValue'])
                 ->inRandomOrder()
                 ->limit(6)
                 ->get()

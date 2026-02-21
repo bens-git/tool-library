@@ -31,33 +31,34 @@
                     ></v-carousel-item>
                 </v-carousel>
                 <v-card-title class="d-flex align-center justify-space-between pb-4">
-                    <div class="d-flex align-center">
-                        <v-icon left size="24" class="mr-2">
-                            {{ aim === 'edit' ? 'mdi-pencil' : aim === 'view' ? 'mdi-eye' : 'mdi-plus' }}
-                        </v-icon>
-                        <span>{{ aim === 'edit' ? 'Edit Item' : aim === 'view' ? 'View Item' : 'Create Item' }}</span>
-                    </div>
+                    <span class="text-h6">{{ aim === 'view' ? localItem.archetype?.name : (aim === 'edit' ? 'Edit Item' : 'Create Item') }}</span>
                     <v-chip v-if="localItem.code" color="primary" variant="outlined" size="small">
                         {{ localItem.code }}
                     </v-chip>
                 </v-card-title>
             </div>
             <v-card-title v-else class="d-flex align-center justify-space-between">
-                <div class="d-flex align-center">
-                    <v-icon left>
-                        {{ aim === 'edit' ? 'mdi-pencil' : aim === 'view' ? 'mdi-eye' : 'mdi-plus' }}
-                    </v-icon>
-                    {{ aim === 'edit' ? 'Edit Item' : aim === 'view' ? 'View Item' : 'Create Item' }}
-                </div>
+                <span class="text-h6">{{ aim === 'view' ? localItem.archetype?.name : (aim === 'edit' ? 'Edit Item' : 'Create Item') }}</span>
                 <v-chip v-if="localItem.code" color="primary" variant="outlined" size="small">
                     {{ localItem.code }}
                 </v-chip>
             </v-card-title>
 
             <v-card-text class="pt-2">
-                <!-- Archetype -->
+                <!-- Time Credits Required (View Mode) -->
+                <div v-if="aim === 'view' && localItem.access_value?.current_daily_rate" class="mb-4">
+                    <v-card variant="tonal" color="info" class="pa-3">
+                        <div class="text-subtitle-2 mb-1">Rental Cost</div>
+                        <div class="text-h5 font-weight-bold">
+                            {{ localItem.access_value.current_daily_rate }}
+                            <span class="text-body-2">credits / day</span>
+                        </div>
+                    </v-card>
+                </div>
+
+                <!-- Archetype (edit/create only) -->
                 <v-autocomplete
-                    v-if="aim !== 'view' || localItem.archetype"
+                    v-if="aim !== 'view'"
                     v-model="localItem.archetype"
                     :items="autocompleteArchetypes"
                     label="Archetype"
@@ -77,34 +78,6 @@
                     class="mb-2"
                 />
 
-                <!-- Brand -->
-                <v-autocomplete
-                    v-if="aim !== 'view' || localItem.brand"
-                    v-model="localItem.brand"
-                    :items="autocompleteBrands"
-                    label="Brand"
-                    clearable
-                    item-title="name"
-                    item-value="id"
-                    hide-no-data
-                    hide-details
-                    :return-object="true"
-                    :readonly="aim === 'view'"
-                    class="mb-2"
-                    @update:search="debouncedAutocompleteBrandSearch"
-                ></v-autocomplete>
-
-                <!-- Description -->
-                <v-textarea
-                    v-if="aim !== 'view' || localItem.description"
-                    v-model="localItem.description"
-                    :readonly="aim === 'view'"
-                    label="Description"
-                    placeholder="Add a description"
-                    rows="2"
-                    class="mb-2"
-                ></v-textarea>
-
                 <!-- Unavailable checkbox (edit only) -->
                 <v-checkbox
                     v-if="aim === 'edit'"
@@ -114,55 +87,6 @@
                     :false-value="0"
                     class="mb-2"
                 ></v-checkbox>
-
-                <!-- Serial & Purchase Value Row -->
-                <v-row>
-                    <v-col cols="6">
-                        <v-text-field
-                            v-if="aim !== 'view' || localItem.serial"
-                            v-model="localItem.serial"
-                            label="Serial"
-                            :readonly="aim === 'view'"
-                        ></v-text-field>
-                    </v-col>
-                    <v-col cols="6">
-                        <v-text-field
-                            v-if="aim !== 'view' || localItem.purchase_value"
-                            v-model="localItem.purchase_value"
-                            label="Purchase Value"
-                            type="number"
-                            :readonly="aim === 'view'"
-                            :error-messages="formErrors.purchase_value"
-                            prefix="$"
-                        ></v-text-field>
-                    </v-col>
-                </v-row>
-
-                <!-- Dates -->
-                <v-row>
-                    <v-col cols="6">
-                        <v-text-field
-                            v-if="aim !== 'view' || localItem.created_at"
-                            v-model="localItem.created_at"
-                            label="Created At"
-                            :disabled="true"
-                            :readonly="aim === 'view'"
-                            persistent-placeholder
-                            :error-messages="formErrors.purchased_at"
-                            base-color="grey"
-                        ></v-text-field>
-                    </v-col>
-                    <v-col cols="6">
-                        <v-text-field
-                            v-if="aim !== 'view' || localItem.manufactured_at"
-                            v-model="localItem.manufactured_at"
-                            label="Manufactured At"
-                            :readonly="aim === 'view'"
-                            persistent-placeholder
-                            base-color="grey"
-                        ></v-text-field>
-                    </v-col>
-                </v-row>
 
                 <!-- Rental Section (View Mode) -->
                 <div v-if="aim === 'view'" class="mt-4">
@@ -223,7 +147,6 @@ const user = page.props.auth.user;
 
 const localItem = ref(null);
 const autocompleteArchetypes = ref([]);
-const autocompleteBrands = ref([]);
 const newImages = ref([]);
 const formErrors = ref({});
 
@@ -265,7 +188,6 @@ const onOpen = async () => {
     initialize();
     newImages.value = [];
     refreshAutocompleteArchetypes();
-    refreshAutocompleteBrands();
 };
 
 const onClose = () => {};
@@ -322,16 +244,8 @@ const refreshAutocompleteArchetypes = async (query) => {
     }
 };
 
-const refreshAutocompleteBrands = async (query) => {
-    const response = await api.get(route('brands.index'), {
-        params: { query },
-    });
-    autocompleteBrands.value = response.data.data;
-};
-
 // Debounced search function
 const debouncedAutocompleteArchetypeSearch = _.debounce(refreshAutocompleteArchetypes, 300);
-const debouncedAutocompleteBrandSearch = _.debounce(refreshAutocompleteBrands, 300);
 
 const handleFileChange = (event) => {
     const files = event.target.files;
