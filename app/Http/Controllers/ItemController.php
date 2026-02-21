@@ -46,7 +46,7 @@ class ItemController extends Controller
         }
 
         // Build the query with eager loading
-        $query = Item::with(['archetype', 'brand', 'images', 'archetype.categories', 'archetype.usages']);
+        $query = Item::with(['archetype', 'brand', 'images', 'accessValue', 'archetype.categories', 'archetype.usages']);
 
         // Apply archetype filter
         if (!empty($archetypeId)) {
@@ -140,15 +140,8 @@ class ItemController extends Controller
             $brand = Brand::findOrFail($request->brand['id']);
         }
 
-        $username = $user->name;
-        $archetypeName = $archetype['name'];
-        $dateString = Carbon::parse($request->purchased_at)->format('d-m-y');
-
-        $code = $username . '_' .
-            strtolower(str_replace(' ', '', $archetypeName)) . '_' .
-            $dateString;
-
-        $uniqueCode = getUniqueString('items', 'code', $code);
+        // Generate new shorter item code
+        $code = generateItemCode($archetype['name'], $request->purchased_at);
 
 
         $item = new Item();
@@ -160,7 +153,7 @@ class ItemController extends Controller
         $item->purchased_at = Carbon::parse($request->purchased_at)->format('Y-m-d H:i:s');
         $item->manufactured_at = $request->manufactured_at ? Carbon::parse($request->manufactured_at)->format('Y-m-d H:i:s') : null;
         $item->owned_by = $user->id;
-        $item->code = $uniqueCode;
+        $item->code = $code;
         $item->save();
 
 
@@ -223,7 +216,7 @@ class ItemController extends Controller
     public function show($id)
     {
         // Find the item by its I
-        $item = Item::with('archetype', 'brand', 'images')
+        $item = Item::with('archetype', 'brand', 'images', 'accessValue')
             ->join('users', 'items.owned_by', '=', 'users.id')
             ->join('archetypes', 'items.archetype_id', '=', 'archetypes.id')
             ->where('items.id', $id)
@@ -371,7 +364,7 @@ class ItemController extends Controller
     {
         return ItemResource::collection(
             Item::whereHas('images') // must have at least 1 image
-                ->with(['images', 'brand', 'archetype'])
+                ->with(['images', 'brand', 'archetype', 'accessValue'])
                 ->inRandomOrder()
                 ->limit(6)
                 ->get()

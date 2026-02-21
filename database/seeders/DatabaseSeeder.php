@@ -53,5 +53,10 @@ class DatabaseSeeder extends Seeder
 
 
         $this->command->info('All JSON seeders finished.');
+
+        // Seed ITC data (balances and item access values)
+        $this->call([
+            ItcSeeder::class,
+        ]);
     }
 }

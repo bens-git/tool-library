@@ -208,6 +208,8 @@ const setupLinks = () => {
         drawerLinks.value = [
             { text: 'My Loans', route: 'my-loans' },
             { text: 'My Rentals', route: 'my-rentals' },
+            { text: 'Time Credits', route: 'itc' },
+            { text: 'Vote on Rates', route: 'credit-voting' },
             { text: 'My Types', route: 'archetype-list' },
             { text: 'My Categories', route: 'category-list' },
             { text: 'My Usages', route: 'usage-list' },
