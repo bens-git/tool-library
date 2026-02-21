@@ -55,4 +55,36 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsTo(Location::class);
     }
+
+    /**
+     * Get the user's ITC balance
+     */
+    public function itcBalance()
+    {
+        return $this->hasOne(ItcBalance::class);
+    }
+
+    /**
+     * Get all ITC ledger transactions
+     */
+    public function itcLedgers()
+    {
+        return $this->hasMany(ItcLedger::class);
+    }
+
+    /**
+     * Get credit votes made by this user
+     */
+    public function creditVotes()
+    {
+        return $this->hasMany(CreditVote::class);
+    }
+
+    /**
+     * Get current ITC balance value
+     */
+    public function getItcBalanceValue(): float
+    {
+        return $this->itcBalance?->balance ?? 0;
+    }
 }

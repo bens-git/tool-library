@@ -140,15 +140,8 @@ class ItemController extends Controller
             $brand = Brand::findOrFail($request->brand['id']);
         }
 
-        $username = $user->name;
-        $archetypeName = $archetype['name'];
-        $dateString = Carbon::parse($request->purchased_at)->format('d-m-y');
-
-        $code = $username . '_' .
-            strtolower(str_replace(' ', '', $archetypeName)) . '_' .
-            $dateString;
-
-        $uniqueCode = getUniqueString('items', 'code', $code);
+        // Generate new shorter item code
+        $code = generateItemCode($archetype['name'], $request->purchased_at);
 
 
         $item = new Item();
@@ -160,7 +153,7 @@ class ItemController extends Controller
         $item->purchased_at = Carbon::parse($request->purchased_at)->format('Y-m-d H:i:s');
         $item->manufactured_at = $request->manufactured_at ? Carbon::parse($request->manufactured_at)->format('Y-m-d H:i:s') : null;
         $item->owned_by = $user->id;
-        $item->code = $uniqueCode;
+        $item->code = $code;
         $item->save();
 
 

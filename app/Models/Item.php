@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\ItemAccessValue;
+use App\Models\CreditVote;
 
 /**
  * Item Model
@@ -125,5 +127,38 @@ class Item extends Model
     public function rentals(): HasMany
     {
         return $this->hasMany(Rental::class);
+    }
+
+    /**
+     * Get the item's access value (credit cost)
+     */
+    public function accessValue()
+    {
+        return $this->hasOne(ItemAccessValue::class);
+    }
+
+    /**
+     * Get credit votes for this item
+     */
+    public function creditVotes()
+    {
+        return $this->hasMany(CreditVote::class);
+    }
+
+    /**
+     * Get the current credit rate for this item
+     */
+    public function getCurrentCreditRate(): float
+    {
+        return $this->accessValue?->current_daily_rate ?? ItemAccessValue::DEFAULT_DAILY_RATE;
+    }
+
+    /**
+     * Calculate credit cost for a rental period
+     */
+    public function calculateCreditCost(int $days): float
+    {
+        $rate = $this->getCurrentCreditRate();
+        return $rate * $days;
     }
 }

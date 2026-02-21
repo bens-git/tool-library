@@ -3,7 +3,9 @@
 use App\Http\Controllers\ArchetypeController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CreditVoteController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\ItcController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\UsageController;
@@ -48,6 +50,15 @@ Route::get('/my-rentals', function () {
 Route::get('/my-loans', function () {
     return Inertia::render('MyLoans');
 })->middleware(['auth', 'verified'])->name('my-loans');
+
+// ITC Pages
+Route::get('/itc', function () {
+    return Inertia::render('ItcDashboard');
+})->middleware(['auth', 'verified'])->name('itc');
+
+Route::get('/credit-voting', function () {
+    return Inertia::render('CreditVoting');
+})->middleware(['auth', 'verified'])->name('credit-voting');
 
 
 Route::get('/archetypes', [ArchetypeController::class, 'index'])
@@ -95,6 +106,42 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// ITC Routes - Time Credit System
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Dashboard
+    Route::get('/itc/dashboard', [ItcController::class, 'dashboard'])->name('itc.dashboard');
+    
+    // Balance
+    Route::get('/itc/balance', [ItcController::class, 'balance'])->name('itc.balance');
+    
+    // Transactions
+    Route::get('/itc/transactions', [ItcController::class, 'transactions'])->name('itc.transactions');
+    
+    // Stats
+    Route::get('/itc/stats', [ItcController::class, 'stats'])->name('itc.stats');
+    
+    // Check balance
+    Route::post('/itc/check-balance', [ItcController::class, 'checkBalance'])->name('itc.check-balance');
+});
+
+// Credit Vote Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Cast vote
+    Route::post('/votes', [CreditVoteController::class, 'store'])->name('votes.store');
+    
+    // Get item votes
+    Route::get('/items/{itemId}/votes', [CreditVoteController::class, 'itemVotes'])->name('votes.item');
+    
+    // Get user's vote for item
+    Route::get('/items/{itemId}/my-vote', [CreditVoteController::class, 'userVote'])->name('votes.user');
+    
+    // Get user's all votes
+    Route::get('/votes/my-votes', [CreditVoteController::class, 'myVotes'])->name('votes.my');
+    
+    // Check if can vote
+    Route::get('/items/{itemId}/can-vote', [CreditVoteController::class, 'canVote'])->name('votes.can-vote');
 });
 
 
