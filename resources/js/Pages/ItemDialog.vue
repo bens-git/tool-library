@@ -32,16 +32,10 @@
                 </v-carousel>
                 <v-card-title class="d-flex align-center justify-space-between pb-4">
                     <span class="text-h6">{{ aim === 'view' ? localItem.archetype?.name : (aim === 'edit' ? 'Edit Item' : 'Create Item') }}</span>
-                    <v-chip v-if="localItem.code" color="primary" variant="outlined" size="small">
-                        {{ localItem.code }}
-                    </v-chip>
                 </v-card-title>
             </div>
             <v-card-title v-else class="d-flex align-center justify-space-between">
                 <span class="text-h6">{{ aim === 'view' ? localItem.archetype?.name : (aim === 'edit' ? 'Edit Item' : 'Create Item') }}</span>
-                <v-chip v-if="localItem.code" color="primary" variant="outlined" size="small">
-                    {{ localItem.code }}
-                </v-chip>
             </v-card-title>
 
             <v-card-text class="pt-2">

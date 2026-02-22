@@ -50,12 +50,18 @@ class Rental extends Model
     }
 
     /**
-     * Get the location through the item relationship.
-     *
-     * @return \App\Models\Location|null
+     * Get the conversation for this rental (if exists).
      */
-    public function getLocationAttribute(): ?\App\Models\Location
+    public function conversation()
     {
-        return $this->item?->location;
+        return $this->hasOne(Conversation::class);
+    }
+
+    /**
+     * Get the item owner.
+     */
+    public function owner(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->item->owner();
     }
 }

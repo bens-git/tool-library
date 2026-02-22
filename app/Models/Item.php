@@ -18,7 +18,6 @@ use App\Models\CreditVote;
  * @property string|null $description
  * @property int $owned_by
  * @property float|null $purchase_value
- * @property int|null $location_id
  * @property string|null $serial
  * @property string|null $purchased_at
  * @property string|null $manufactured_at
@@ -36,7 +35,6 @@ class Item extends Model
         'description',
         'owned_by',
         'purchase_value',
-        'location_id',
         'serial',
         'purchased_at',
         'manufactured_at',
@@ -47,11 +45,6 @@ class Item extends Model
     protected $casts = [
         'make_item_unavailable' => 'boolean', // or 'integer' if you prefer
     ];
-
-    public function location(): BelongsTo
-    {
-        return $this->belongsTo(Location::class);
-    }
 
     public function images(): HasMany
     {

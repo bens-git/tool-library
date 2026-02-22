@@ -31,11 +31,6 @@
                                         {{ rental.status }}
                                     </v-chip>
                                 </div>
-                                <div v-if="rental.location">
-                                    Pickup Location: {{ rental.location.city }},
-                                    {{ rental.location.state }},
-                                    {{ rental.location.country }}
-                                </div>
 
                                 <v-btn
                                     v-if="rental.status === 'active'"

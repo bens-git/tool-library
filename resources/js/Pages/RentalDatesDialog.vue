@@ -27,11 +27,6 @@
                     <!-- Title using archetype name -->
                     <div class="text-h6 mb-2">{{ localItem.archetype?.name || 'Item' }}</div>
 
-                    <!-- Item Code -->
-                    <v-chip v-if="localItem.code" color="primary" variant="outlined" size="small" class="mb-4">
-                        {{ localItem.code }}
-                    </v-chip>
-
                     <!-- Time Credits Required -->
                     <div v-if="localItem.access_value?.current_daily_rate" class="mb-4">
                         <v-card variant="tonal" color="info" class="pa-3">

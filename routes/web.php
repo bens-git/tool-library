@@ -6,6 +6,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CreditVoteController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ItcController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\UsageController;
@@ -59,6 +60,15 @@ Route::get('/itc', function () {
 Route::get('/credit-voting', function () {
     return Inertia::render('CreditVoting');
 })->middleware(['auth', 'verified'])->name('credit-voting');
+
+// Messages Pages
+Route::get('/messages', function () {
+    return Inertia::render('Messages');
+})->middleware(['auth', 'verified'])->name('messages');
+
+Route::get('/community', function () {
+    return Inertia::render('PublicFeed');
+})->middleware(['auth', 'verified'])->name('community');
 
 
 Route::get('/archetypes', [ArchetypeController::class, 'index'])
@@ -142,6 +152,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Check if can vote
     Route::get('/items/{itemId}/can-vote', [CreditVoteController::class, 'canVote'])->name('votes.can-vote');
+});
+
+// Message Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Public feed
+    Route::get('/messages/public', [MessageController::class, 'publicFeed'])->name('messages.public');
+    Route::post('/messages/public', [MessageController::class, 'createPublicPost'])->name('messages.public.create');
+    
+    // Private conversations
+    Route::get('/messages/conversations', [MessageController::class, 'conversations'])->name('messages.conversations');
+    Route::post('/messages/conversations', [MessageController::class, 'startConversation'])->name('messages.conversations.start');
+    Route::get('/messages/conversations/{conversationId}', [MessageController::class, 'show'])->name('messages.conversations.show');
+    Route::post('/messages/conversations/{conversationId}', [MessageController::class, 'store'])->name('messages.conversations.store');
+    
+    // Rental conversation
+    Route::get('/messages/rental/{rentalId}', [MessageController::class, 'getRentalConversation'])->name('messages.rental');
+    
+    // Unread count
+    Route::get('/messages/unread', [MessageController::class, 'unreadCount'])->name('messages.unread');
 });
 
 

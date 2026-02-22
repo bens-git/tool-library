@@ -80,8 +80,7 @@ class ItemController extends Controller
         // Apply search filter
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('code', 'like', '%' . $search . '%')
-                    ->orWhereHas('archetype', function ($q) use ($search) {
+                $q->whereHas('archetype', function ($q) use ($search) {
                         $q->where('name', 'like', '%' . $search . '%');
                     });
             });
@@ -140,10 +139,6 @@ class ItemController extends Controller
             $brand = Brand::findOrFail($request->brand['id']);
         }
 
-        // Generate new shorter item code
-        $code = generateItemCode($archetype['name'], $request->purchased_at);
-
-
         $item = new Item();
         $item->archetype_id = $archetype->id;              // Store the ID from the validated JSON
         $item->brand_id = $brand->id ?? null;       // Optional: Store other fields from the JSON
@@ -153,7 +148,6 @@ class ItemController extends Controller
         $item->purchased_at = Carbon::parse($request->purchased_at)->format('Y-m-d H:i:s');
         $item->manufactured_at = $request->manufactured_at ? Carbon::parse($request->manufactured_at)->format('Y-m-d H:i:s') : null;
         $item->owned_by = $user->id;
-        $item->code = $code;
         $item->save();
 
 

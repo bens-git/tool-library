@@ -37,12 +37,8 @@
     "dependencies": {
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/inertia-vue3": "^0.6.0",
-        "leaflet": "^1.9.4",
-        "leaflet-control-geocoder": "^3.3.1",
-        "leaflet-geosearch": "^4.2.2",
         "lodash": "^4.17.23",
-        "pinia": "^3.0.4",
-        "vue3-leaflet": "^1.0.50"
+        "pinia": "^3.0.4"
     },
     "eslintConfig": {
         "root": true,

@@ -4,7 +4,6 @@ import { Head } from '@inertiajs/vue3';
 import ItemDialog from '@/Pages/ItemDialog.vue';
 import AvailabilityDialog from '@/Pages/AvailabilityDialog.vue';
 import DeleteItemDialog from '@/Pages/DeleteItemDialog.vue';
-import LocationDialog from '@/Pages/LocationDialog.vue';
 import { ref, onMounted, watch } from 'vue';
 import _ from 'lodash';
 import api from '@/services/api';
@@ -20,8 +19,6 @@ const filters = ref({
     usage: null,
     brand: null,
     search: null,
-    radius: 10,
-    location: null,
     user_id: null,
 });
 const pageNumber = ref(1);
@@ -43,12 +40,6 @@ const debounceSearch = _.debounce(() => {
     refreshItems();
 }, 300);
 
-const handleSetLocation = (location, address, radius) => {
-    filters.value.location = location;
-    filters.value.radius = radius;
-    refreshItems();
-};
-
 const refreshItems = async () => {
     const query = {
         page: pageNumber.value,
@@ -58,14 +49,12 @@ const refreshItems = async () => {
         usage_id: filters.value?.usage?.id,
         category_id: filters.value?.category?.id,
         search: filters.value?.search,
-        radius: filters.value?.radius,
-        location_id: filters.value?.location?.id,
         user_id: filters.value?.user_id,
     };
 
     // Check if any search filter is active
     hasSearchResults.value = !!(query.brand_id || query.archetype_id || query.usage_id || 
-        query.category_id || query.search || query.location_id || query.user_id);
+        query.category_id || query.search || query.user_id);
 
     if (filters.value.user_id) {
         const response = await api.get(route('me.items.index'), {
@@ -148,7 +137,7 @@ const refreshFeaturedItems = async () => {
             <div style="width: 100%">
                 <!-- Header -->
                 <div class="d-flex justify-space-between align-center mb-4">
-                    <div class="text-h5 font-weight-bold">Items</div>
+                    <div class="text-h5 font-weight-bold">Tools</div>
                     <div>
                         <v-btn size="small" variant="outlined" @click="toggleAdvancedSearch">
                             {{ advancedSearch ? 'Hide Advanced' : 'Advanced Search' }}
@@ -181,7 +170,7 @@ const refreshFeaturedItems = async () => {
                                 v-model="filters.user_id"
                                 :true-value="user?.id"
                                 :false-value="null"
-                                label="Show only my items"
+                                label="Show only my tools"
                                 hide-details
                                 density="compact"
                                 @update:model-value="debounceSearch"
@@ -232,10 +221,6 @@ const refreshFeaturedItems = async () => {
                             @update:model-value="debounceSearch"
                             @update:search="debouncedAutocompleteUsageSearch"
                         />
-
-                        <div v-if="!filters.user_id" class="mt-3">
-                            <LocationDialog @set-location="handleSetLocation" />
-                        </div>
                     </div>
                 </v-expand-transition>
 
@@ -321,7 +306,7 @@ const refreshFeaturedItems = async () => {
                 <!-- No Results Message -->
                 <div v-if="hasSearchResults && !items.length" class="mt-6 text-center">
                     <v-icon size="64" color="grey">mdi-magnify</v-icon>
-                    <div class="text-h6 mt-2">No items found</div>
+                    <div class="text-h6 mt-2">No tools found</div>
                 </div>
             </div>
         </v-container>
@@ -331,3 +316,4 @@ const refreshFeaturedItems = async () => {
 <style scoped>
 /* Minimal spacing / centered container already handled inline */
 </style>
+

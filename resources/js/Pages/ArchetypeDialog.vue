@@ -63,14 +63,6 @@
                     </v-col>
 
                     <v-col cols="12" md="4" sm="6">
-                        <v-text-field
-                            v-model="localArchetype.code"
-                            density="compact"
-                            label="Code"
-                        ></v-text-field>
-                    </v-col>
-
-                    <v-col cols="12" md="4" sm="6">
                         <v-autocomplete
                             v-model="localArchetype.categories"
                             density="compact"

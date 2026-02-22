@@ -22,7 +22,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
-        'location_id',
     ];
 
     /**
@@ -46,14 +45,6 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-    }
-
-    /**
-     * Get the location associated with the user.
-     */
-    public function location(): BelongsTo
-    {
-        return $this->belongsTo(Location::class);
     }
 
     /**
@@ -86,5 +77,49 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getItcBalanceValue(): float
     {
         return $this->itcBalance?->balance ?? 0;
+    }
+
+    /**
+     * Get conversations this user participates in.
+     */
+    public function conversations()
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_participants')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get messages sent by this user.
+     */
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
+    }
+
+    /**
+     * Get private conversations for this user.
+     */
+    public function privateConversations()
+    {
+        return $this->conversations()->where('type', 'private');
+    }
+
+    /**
+     * Get unread message count for this user.
+     */
+    public function unreadMessageCount(): int
+    {
+        $conversations = $this->conversations()->with('messages')->get();
+        $count = 0;
+        
+        foreach ($conversations as $conversation) {
+            foreach ($conversation->messages as $message) {
+                if ($message->user_id !== $this->id && !$message->isReadBy($this->id)) {
+                    $count++;
+                }
+            }
+        }
+        
+        return $count;
     }
 }

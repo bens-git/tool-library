@@ -79,16 +79,38 @@
             ></v-btn>
         </template>
 
-        <v-spacer />
-
+        <!-- Catalog - Icon on Mobile, Text on Desktop -->
         <v-btn
             :class="{ 'v-btn--active': route().current('library-catalog') }"
             :color="route().current('library-catalog') ? 'primary' : undefined"
             :variant="route().current('library-catalog') ? 'flat' : 'text'"
-            prepend-icon="mdi-book"
-            text="Catalog"
+            :prepend-icon="mobile ? 'mdi-book' : 'mdi-book'"
+            :text="!mobile ? 'Catalog' : undefined"
             @click="router.visit('library-catalog')"
         ></v-btn>
+
+        <!-- Messages - Icon on Mobile (when logged in), Text on Desktop -->
+        <v-btn
+            v-if="user"
+            :class="{ 'v-btn--active': route().current('messages') }"
+            :color="route().current('messages') ? 'primary' : undefined"
+            :variant="route().current('messages') ? 'flat' : 'text'"
+            :prepend-icon="mobile ? 'mdi-message' : 'mdi-message'"
+            :text="!mobile ? 'Messages' : undefined"
+            @click="router.visit('messages')"
+        ></v-btn>
+
+        <!-- Community - Icon on Mobile (when logged in), Text on Desktop -->
+        <v-btn
+            v-if="user"
+            :class="{ 'v-btn--active': route().current('community') }"
+            :color="route().current('community') ? 'primary' : undefined"
+            :variant="route().current('community') ? 'flat' : 'text'"
+            :prepend-icon="mobile ? 'mdi-account-group' : 'mdi-account-group'"
+            :text="!mobile ? 'Community' : undefined"
+            @click="router.visit('community')"
+        ></v-btn>
+
         <v-spacer />
 
         <v-spacer />
@@ -208,6 +230,8 @@ const setupLinks = () => {
         drawerLinks.value = [
             { text: 'My Loans', route: 'my-loans' },
             { text: 'My Rentals', route: 'my-rentals' },
+            { text: 'Messages', route: 'messages', icon: 'mdi-message' },
+            { text: 'Community', route: 'community', icon: 'mdi-account-group' },
             { text: 'Time Credits', route: 'itc' },
             { text: 'Vote on Rates', route: 'credit-voting' },
             { text: 'My Types', route: 'archetype-list' },

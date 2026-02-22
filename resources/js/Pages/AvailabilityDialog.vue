@@ -15,7 +15,6 @@
             v-if="localItem"
             prepend-icon="mdi-calendar"
             title="Item Availability"
-            :subtitle="localItem.code"
         >
             <v-card-text>
                 <v-checkbox

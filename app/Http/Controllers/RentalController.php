@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Rental;
 use App\Models\Item;
 use App\Models\User;
+use App\Models\Conversation;
+use App\Models\Message;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
@@ -62,12 +64,7 @@ class RentalController extends Controller
 
         $user = Auth::user();
 
-        // Check if $user is not null before loading location
-        if ($user) {
-            $user = User::with('location')->find($user->id);
-        }
-
-        // Create the rental without date ranges
+        // Create the rental
         $rental = Rental::create([
             'rented_by' => $user->id,
             'item_id' => $itemId,
@@ -79,7 +76,7 @@ class RentalController extends Controller
 
         // Find the item by ID
         /** @var \App\Models\Item|null $item */
-        $item = Item::with(['owner', 'location'])
+        $item = Item::with(['owner'])
             ->leftJoin('users', 'users.id', '=', 'items.owned_by')
             ->leftJoin('archetypes', 'archetypes.id', '=', 'items.archetype_id')
             ->select('items.*')
@@ -95,11 +92,6 @@ class RentalController extends Controller
 
         Log::info($item);
 
-        // Set the rental's location property to the item's location if it exists, otherwise use the user's location
-        /** @var \App\Models\Location|null $location */
-        $location = $item->location ?? $user->location;
-        $rental->location = $location;
-
         // Send rental confirmation email
         /** @var \App\Models\User $user */
         Mail::to($user->email)->send(new ConfirmRentalEmail($user, $item, $rental));
@@ -109,8 +101,37 @@ class RentalController extends Controller
         $owner = $item->owner;
         Mail::to($owner->email)->send(new ConfirmLoanEmail($user, $item, $rental));
 
+        // Create a private conversation for this rental
+        $conversation = Conversation::create([
+            'type' => 'private',
+            'rental_id' => $rental->id,
+        ]);
+
+        // Add both participants (renter and owner)
+        $conversation->participants()->attach([$user->id, $owner->id]);
+
+        // Get item name for messages
+        $itemName = $item->name ?? $item->archetype?->name ?? 'the item';
+
+        // Send system message to renter
+        Message::create([
+            'conversation_id' => $conversation->id,
+            'user_id' => $user->id,
+            'body' => "Hi! You've rented {$itemName}. Please contact {$owner->name} to arrange pickup/drop-off.",
+            'is_system_message' => true,
+        ]);
+
+        // Send system message to owner
+        Message::create([
+            'conversation_id' => $conversation->id,
+            'user_id' => $owner->id,
+            'body' => "Hi! {$user->name} has rented your {$itemName}. Please contact them to arrange pickup/drop-off.",
+            'is_system_message' => true,
+        ]);
+
         return response()->json([
             'message' => 'Rental successfully created.',
+            'conversation_id' => $conversation->id,
         ], 201);
     }
 
@@ -130,25 +151,14 @@ class RentalController extends Controller
 
         // Fetch rentals associated with the authenticated user
         $rentals = Rental::where('rented_by', $user->id)
-            ->with(['item.location', 'user.location']) // Eager load item and user location
+            ->with(['item'])
             ->get()
-            ->map(function ($rental) use ($user) {
-                // Check if item has a location, if not, use the user's location
-                $location = $rental->item->location ?? $user->location;
-
+            ->map(function ($rental) {
                 return [
                     'id' => $rental->id,
                     'item_id' => $rental->item_id,
                     'rented_at' => $rental->rented_at,
                     'status' => $rental->status,
-                    'location' => [
-                        'id' => $location->id,
-                        'city' => $location->city,
-                        'state' => $location->state,
-                        'country' => $location->country,
-                        'created_at' => $location->created_at,
-                        'updated_at' => $location->updated_at,
-                    ],
                 ];
             });
 
@@ -178,37 +188,18 @@ class RentalController extends Controller
         $loans = Rental::whereHas('item', function ($query) use ($user) {
             $query->where('owned_by', $user->id);
         })
-            ->with(['item.location', 'user.location', 'renter.location'])
+            ->with(['item', 'renter'])
             ->get()
             ->map(function (Rental $rental): array {
-                // Get the item's location, if not available, fallback to the rented_by user's location
-                $location = $rental->item->location ?? $rental->user->location;
-
                 return [
                     'id' => $rental->id,
                     'item_id' => $rental->item_id,
                     'rented_at' => $rental->rented_at,
                     'status' => $rental->status,
-                    'location' => [
-                        'id' => $location->id,
-                        'city' => $location->city,
-                        'state' => $location->state,
-                        'country' => $location->country,
-                        'created_at' => $location->created_at,
-                        'updated_at' => $location->updated_at,
-                    ],
                     'rented_by' => [
                         'id' => $rental->renter->id,
                         'name' => $rental->renter->name,
                         'email' => $rental->renter->email,
-                        'location' => [
-                            'id' => $rental->renter->location->id,
-                            'city' => $rental->renter->location->city,
-                            'state' => $rental->renter->location->state,
-                            'country' => $rental->renter->location->country,
-                            'created_at' => $rental->renter->location->created_at,
-                            'updated_at' => $rental->renter->location->updated_at,
-                        ],
                     ],
                 ];
             });
@@ -256,7 +247,7 @@ class RentalController extends Controller
         $rental = Rental::with(['renter'])->find($id);
 
         // Find the item by ID
-        $item = Item::with(['owner', 'location'])
+        $item = Item::with(['owner'])
             ->leftJoin('users', 'users.id', '=', 'items.owned_by')
             ->leftJoin('archetypes', 'archetypes.id', '=', 'items.archetype_id')
             ->select('items.*')

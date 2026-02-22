@@ -11,7 +11,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-01",
         "make_item_unavailable": "0"
     },
     {
@@ -26,7 +25,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-02",
         "make_item_unavailable": "0"
     },
     {
@@ -41,7 +39,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-03",
         "make_item_unavailable": "0"
     },
     {
@@ -56,7 +53,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-04",
         "make_item_unavailable": "0"
     },
     {
@@ -71,7 +67,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-05",
         "make_item_unavailable": "0"
     },
     {
@@ -86,7 +81,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-06",
         "make_item_unavailable": "0"
     },
     {
@@ -101,7 +95,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-07",
         "make_item_unavailable": "0"
     },
     {
@@ -116,7 +109,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-08",
         "make_item_unavailable": "0"
     },
     {
@@ -131,7 +123,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-09",
         "make_item_unavailable": "0"
     },
     {
@@ -146,7 +137,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-10",
         "make_item_unavailable": "0"
     },
     {
@@ -161,7 +151,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-11",
         "make_item_unavailable": "0"
     },
     {
@@ -176,7 +165,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "A F-12",
         "make_item_unavailable": "0"
     },
     {
@@ -191,7 +179,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "AIR-01",
         "make_item_unavailable": "0"
     },
     {
@@ -206,7 +193,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "ANG-01",
         "make_item_unavailable": "0"
     },
     {
@@ -221,7 +207,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "ANG-01",
         "make_item_unavailable": "0"
     },
     {
@@ -236,7 +221,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -251,7 +235,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BAN-01",
         "make_item_unavailable": "0"
     },
     {
@@ -266,7 +249,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BAT-01",
         "make_item_unavailable": "0"
     },
     {
@@ -281,7 +263,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BAT-02",
         "make_item_unavailable": "0"
     },
     {
@@ -296,7 +277,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": "2024-09-26 13:23:05",
-        "code": "BAT-01",
         "make_item_unavailable": "0"
     },
     {
@@ -311,7 +291,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BAT-02",
         "make_item_unavailable": "0"
     },
     {
@@ -326,7 +305,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BAT-03",
         "make_item_unavailable": "0"
     },
     {
@@ -341,7 +319,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BAT-04",
         "make_item_unavailable": "0"
     },
     {
@@ -356,7 +333,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BAT-01",
         "make_item_unavailable": "0"
     },
     {
@@ -371,7 +347,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BEL-01",
         "make_item_unavailable": "0"
     },
     {
@@ -386,7 +361,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BEL-01",
         "make_item_unavailable": "0"
     },
     {
@@ -401,7 +375,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BEN-01",
         "make_item_unavailable": "0"
     },
     {
@@ -416,7 +389,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BLU-01",
         "make_item_unavailable": "0"
     },
     {
@@ -431,7 +403,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BRA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -446,7 +417,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CAU-01",
         "make_item_unavailable": "0"
     },
     {
@@ -461,7 +431,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CEM-01",
         "make_item_unavailable": "0"
     },
     {
@@ -476,7 +445,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CHA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -491,7 +459,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "STI-01",
         "make_item_unavailable": "0"
     },
     {
@@ -506,7 +473,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "HUS-01",
         "make_item_unavailable": "0"
     },
     {
@@ -521,7 +487,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CHA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -536,7 +501,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CHA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -551,7 +515,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CHO-01",
         "make_item_unavailable": "0"
     },
     {
@@ -566,7 +529,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CHO-01",
         "make_item_unavailable": "0"
     },
     {
@@ -581,7 +543,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CHO-01",
         "make_item_unavailable": "0"
     },
     {
@@ -596,7 +557,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CIR-01",
         "make_item_unavailable": "0"
     },
     {
@@ -611,7 +571,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CLA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -626,7 +585,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "COM-01",
         "make_item_unavailable": "0"
     },
     {
@@ -641,7 +599,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "COP-01",
         "make_item_unavailable": "0"
     },
     {
@@ -656,7 +613,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "COR-01",
         "make_item_unavailable": "0"
     },
     {
@@ -671,7 +627,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "COR-01",
         "make_item_unavailable": "0"
     },
     {
@@ -686,7 +641,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "COR-01",
         "make_item_unavailable": "0"
     },
     {
@@ -701,7 +655,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "COR-01",
         "make_item_unavailable": "0"
     },
     {
@@ -716,7 +669,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "COR-02",
         "make_item_unavailable": "0"
     },
     {
@@ -731,7 +683,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "COR-03",
         "make_item_unavailable": "0"
     },
     {
@@ -746,7 +697,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CRO-01",
         "make_item_unavailable": "0"
     },
     {
@@ -761,7 +711,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CRO-02",
         "make_item_unavailable": "0"
     },
     {
@@ -776,7 +725,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "CUT-01",
         "make_item_unavailable": "0"
     },
     {
@@ -791,7 +739,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "DIG-01",
         "make_item_unavailable": "0"
     },
     {
@@ -806,7 +753,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "DOZ-01",
         "make_item_unavailable": "0"
     },
     {
@@ -821,7 +767,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "DRA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -836,7 +781,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "DRI-01",
         "make_item_unavailable": "0"
     },
     {
@@ -851,7 +795,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "ENC-01",
         "make_item_unavailable": "0"
     },
     {
@@ -866,7 +809,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "EXT-01",
         "make_item_unavailable": "0"
     },
     {
@@ -881,7 +823,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "FIN-01",
         "make_item_unavailable": "0"
     },
     {
@@ -896,7 +837,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "FOL-01",
         "make_item_unavailable": "0"
     },
     {
@@ -911,7 +851,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "GEN-01",
         "make_item_unavailable": "0"
     },
     {
@@ -926,7 +865,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "GEN-01",
         "make_item_unavailable": "0"
     },
     {
@@ -941,7 +879,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "GLU-01",
         "make_item_unavailable": "0"
     },
     {
@@ -956,7 +893,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "GRE-01",
         "make_item_unavailable": "0"
     },
     {
@@ -971,7 +907,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "HAL-01",
         "make_item_unavailable": "0"
     },
     {
@@ -986,7 +921,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "HAN-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1001,7 +935,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "HEA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1016,7 +949,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "HEA-02",
         "make_item_unavailable": "0"
     },
     {
@@ -1031,7 +963,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "HEA-03",
         "make_item_unavailable": "0"
     },
     {
@@ -1046,7 +977,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "HEA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1061,7 +991,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "HED-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1076,7 +1005,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "IMP-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1091,7 +1019,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "IMP-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1106,7 +1033,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "INF-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1121,7 +1047,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "INS-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1136,7 +1061,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "IRO-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1151,7 +1075,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "JIG-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1166,7 +1089,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "KEV-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1181,7 +1103,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "LAS-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1196,7 +1117,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "LAT-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1211,7 +1131,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "LEA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1226,7 +1145,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "LED-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1241,7 +1159,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "LED-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1256,7 +1173,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "LOP-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1271,7 +1187,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "LOP-02",
         "make_item_unavailable": "0"
     },
     {
@@ -1286,7 +1201,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "MET-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1301,7 +1215,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "MIT-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1316,7 +1229,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "MUL-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1331,7 +1243,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "OPE-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1346,7 +1257,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "PAI-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1361,7 +1271,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "PAI-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1376,7 +1285,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "PIC-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1391,7 +1299,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "PLA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1406,7 +1313,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "POC-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1421,7 +1327,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "POL-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1436,7 +1341,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "POL-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1451,7 +1355,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "POR-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1466,7 +1369,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "POR-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1481,7 +1383,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "POW-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1496,7 +1397,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "RAN-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1511,7 +1411,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "REC-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1526,7 +1425,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "RIG-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1541,7 +1439,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "ROL-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1556,7 +1453,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "ROT-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1571,7 +1467,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "ROT-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1586,7 +1481,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "ROU-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1601,7 +1495,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "SEE-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1616,7 +1509,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "SLE-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1631,7 +1523,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "SNO-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1646,7 +1537,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "SOI-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1661,7 +1551,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "STR-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1676,7 +1565,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "STU-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1691,7 +1579,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TAB-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1706,7 +1593,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TIE-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1721,7 +1607,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TIE-02",
         "make_item_unavailable": "0"
     },
     {
@@ -1736,7 +1621,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TIE-03",
         "make_item_unavailable": "0"
     },
     {
@@ -1751,7 +1635,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TIE-04",
         "make_item_unavailable": "0"
     },
     {
@@ -1766,7 +1649,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TIE-05",
         "make_item_unavailable": "0"
     },
     {
@@ -1781,7 +1663,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TIE-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1796,7 +1677,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TIE-02",
         "make_item_unavailable": "0"
     },
     {
@@ -1811,7 +1691,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TIL-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1826,7 +1705,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-01",
         "make_item_unavailable": "0"
     },
     {
@@ -1841,7 +1719,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-02",
         "make_item_unavailable": "0"
     },
     {
@@ -1856,7 +1733,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-03",
         "make_item_unavailable": "0"
     },
     {
@@ -1871,7 +1747,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-04",
         "make_item_unavailable": "0"
     },
     {
@@ -1886,7 +1761,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-05",
         "make_item_unavailable": "0"
     },
     {
@@ -1901,7 +1775,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-06",
         "make_item_unavailable": "0"
     },
     {
@@ -1916,7 +1789,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-07",
         "make_item_unavailable": "0"
     },
     {
@@ -1931,7 +1803,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-08",
         "make_item_unavailable": "0"
     },
     {
@@ -1946,7 +1817,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-09",
         "make_item_unavailable": "0"
     },
     {
@@ -1961,7 +1831,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-10",
         "make_item_unavailable": "0"
     },
     {
@@ -1976,7 +1845,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-11",
         "make_item_unavailable": "0"
     },
     {
@@ -1991,7 +1859,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-12",
         "make_item_unavailable": "0"
     },
     {
@@ -2006,7 +1873,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-13",
         "make_item_unavailable": "0"
     },
     {
@@ -2021,7 +1887,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-14",
         "make_item_unavailable": "0"
     },
     {
@@ -2036,7 +1901,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-15",
         "make_item_unavailable": "0"
     },
     {
@@ -2051,7 +1915,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-16",
         "make_item_unavailable": "0"
     },
     {
@@ -2066,7 +1929,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-17",
         "make_item_unavailable": "0"
     },
     {
@@ -2081,7 +1943,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-18",
         "make_item_unavailable": "0"
     },
     {
@@ -2096,7 +1957,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-19",
         "make_item_unavailable": "0"
     },
     {
@@ -2111,7 +1971,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRA-20",
         "make_item_unavailable": "0"
     },
     {
@@ -2126,7 +1985,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "TRE-01",
         "make_item_unavailable": "0"
     },
     {
@@ -2141,7 +1999,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "WET-01",
         "make_item_unavailable": "0"
     },
     {
@@ -2156,7 +2013,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "WOO-01",
         "make_item_unavailable": "0"
     },
     {
@@ -2171,7 +2027,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "WOO-01",
         "make_item_unavailable": "0"
     },
     {
@@ -2186,7 +2041,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "WOO-02",
         "make_item_unavailable": "0"
     },
     {
@@ -2201,7 +2055,6 @@
         "brand_id": "1",
         "created_at": null,
         "updated_at": "2025-03-01 14:24:59",
-        "code": "MIT-02",
         "make_item_unavailable": "0"
     },
     {
@@ -2216,7 +2069,6 @@
         "brand_id": null,
         "created_at": null,
         "updated_at": null,
-        "code": "BAN-02",
         "make_item_unavailable": "0"
     },
     {
@@ -2231,7 +2083,6 @@
         "brand_id": null,
         "created_at": "2024-10-23 22:03:37",
         "updated_at": "2024-10-24 18:24:10",
-        "code": "ELE-01",
         "make_item_unavailable": "0"
     },
     {
@@ -2246,7 +2097,6 @@
         "brand_id": null,
         "created_at": "2024-10-26 15:07:40",
         "updated_at": "2024-10-26 15:07:40",
-        "code": "DRI-01",
         "make_item_unavailable": "0"
     },
     {
@@ -2261,7 +2111,6 @@
         "brand_id": "2",
         "created_at": "2024-12-26 17:17:58",
         "updated_at": "2024-12-26 17:28:05",
-        "code": "IND-01",
         "make_item_unavailable": "0"
     },
     {
@@ -2276,7 +2125,6 @@
         "brand_id": "2",
         "created_at": "2024-12-26 17:38:16",
         "updated_at": "2024-12-26 17:39:57",
-        "code": "WAT-01",
         "make_item_unavailable": "0"
     },
     {
@@ -2291,7 +2139,6 @@
         "brand_id": "2",
         "created_at": "2024-12-26 17:38:57",
         "updated_at": "2024-12-26 17:40:04",
-        "code": "WAT-02",
         "make_item_unavailable": "0"
     },
     {
@@ -2306,7 +2153,6 @@
         "brand_id": "2",
         "created_at": "2024-12-26 17:39:21",
         "updated_at": "2024-12-26 17:39:21",
-        "code": "WAT-03",
         "make_item_unavailable": "0"
     },
     {
@@ -2321,7 +2167,6 @@
         "brand_id": "2",
         "created_at": "2024-12-27 12:31:44",
         "updated_at": "2024-12-27 12:36:23",
-        "code": "WAT-04",
         "make_item_unavailable": "0"
     },
     {
@@ -2336,7 +2181,6 @@
         "brand_id": "3",
         "created_at": "2024-12-27 12:32:59",
         "updated_at": "2024-12-27 12:34:17",
-        "code": "WAT-05",
         "make_item_unavailable": "0"
     },
     {
@@ -2351,7 +2195,6 @@
         "brand_id": null,
         "created_at": "2025-03-30 11:28:12",
         "updated_at": "2025-03-30 13:32:51",
-        "code": "CED-01",
         "make_item_unavailable": "1"
     },
     {
@@ -2366,7 +2209,6 @@
         "brand_id": null,
         "created_at": "2025-03-30 17:53:13",
         "updated_at": "2025-03-30 17:53:23",
-        "code": "TEE-01",
         "make_item_unavailable": "1"
     }
 ]

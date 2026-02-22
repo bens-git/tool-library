@@ -15,7 +15,6 @@
             v-if="localItem"
             prepend-icon="mdi-delete"
             title="Delete Item"
-            :subtitle="localItem.code"
         >
             <v-card-text> Are you sure you want to delete this item? </v-card-text>
             <v-divider></v-divider>

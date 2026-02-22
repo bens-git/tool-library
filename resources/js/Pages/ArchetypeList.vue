@@ -184,55 +184,6 @@ const resetFilters = async () => {
                 >
                     <v-icon>mdi-refresh</v-icon>
                 </v-btn>
-
-                <!-- <v-data-table-server
-                    v-model:options="options"
-                    :headers="headers"
-                    :items="archetypes"
-                    :items-length="totalArchetypes"
-                    loading-text="Loading... Please wait"
-                    item-value="id"
-                    mobile-breakpoint="sm"
-                    fixed-header
-                    :height="'50vh'"
-                    @update:options="refreshArchetypes"
-                >
-                    <template #[`item.actions`]="{ item }">
-                        <ArchetypeDialog
-                            v-if="user && item.created_by == user.id"
-                            :archetype="item"
-                        />
-                    </template>
-
-                    <template #[`item.image`]="{ item }">
-                        <v-img
-                            v-if="item.images?.length > 0"
-                            :src="fullImageUrl(item.images[0].path)"
-                            max-height="200"
-                            max-width="200"
-                            min-height="200"
-                            min-width="200"
-                            alt="Archetype Image"
-                        ></v-img>
-                        <v-icon v-else>mdi-image-off</v-icon>
-                    </template>
-
-                    <template #[`item.locations`]="{ item }">
-                        <div v-html="formatLocation(item.locations)"></div>
-                    </template>
-
-                    <template #[`item.item_count`]="{ item }">
-                        <div v-if="item.available_item_count">
-                            {{
-                                item.available_item_count -
-                                (item.rented_item_count ? item.rented_item_count : 0)
-                            }}
-                        </div>
-                        <div v-if="item.rented_item_count">
-                            {{ item.rented_item_count }} (rented)
-                        </div>
-                    </template>
-                </v-data-table-server> -->
             </div>
         </v-container>
     </PageLayout>
@@ -247,3 +198,4 @@ const resetFilters = async () => {
     pointer-events: auto;
 }
 </style>
+
