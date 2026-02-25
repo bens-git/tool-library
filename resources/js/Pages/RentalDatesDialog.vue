@@ -20,6 +20,7 @@
                     :src="localItem.images[0].url"
                     height="200"
                     cover
+                    lazy-src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTIeMmUyIi8+PC9zdmc+"
                     class="bg-grey-lighten-2"
                 ></v-img>
                 
@@ -137,20 +138,22 @@ const onClose = () => {
     rentalError.value = '';
 };
 
-const confirmRental = async () => {
-    try {
-        await api.post(route('rentals.store'), {
-            item: localItem.value,
-        });
-        
-        dialog.value = false;
-        router.visit('/my-rentals');
-    } catch (error) {
-        console.error('Error creating rental:', error);
-        if (error.response?.data?.message) {
-            rentalError.value = error.response.data.message;
+const confirmRental = () => {
+    dialog.value = false;
+    router.post(route('rentals.store'), {
+        item: localItem.value,
+    }, {
+        onSuccess: () => {
+            // Redirect to My Rentals where user can see contact info and message owner
+            router.visit('/my-rentals');
+        },
+        onError: (errors) => {
+            console.error('Error creating rental:', errors);
+            if (errors.message) {
+                rentalError.value = errors.message;
+            }
         }
-    }
+    });
 };
 </script>
 

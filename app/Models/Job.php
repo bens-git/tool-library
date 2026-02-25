@@ -8,6 +8,7 @@ use App\Models\Archetype;
 class Job extends Model
 {
     public $timestamps = false;
+    protected $table = 'work_jobs';
 
     protected $fillable = [
         'name',

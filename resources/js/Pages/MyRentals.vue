@@ -8,12 +8,8 @@
           <!-- Show rentals -->
           <template v-if="rentals.length">
             <v-list-item v-for="rental in rentals" :key="rental.id">
-              <v-list-item-title>
-                {{
-                  items[rental.item_id]
-                    ? itemStore.itemCode(items[rental.item_id])
-                    : 'Loading...'
-                }}
+              <v-list-item-title class="text-h6 mb-1">
+                {{ rental.item?.name || rental.item?.archetype?.name || 'Loading...' }}
               </v-list-item-title>
               <v-list-item-subtitle>
                 <div class="mb-2">
@@ -24,7 +20,28 @@
                   >
                     {{ rental.status }}
                   </v-chip>
+                  <span class="text-caption text-grey">
+                    Rented: {{ formatDate(rental.rented_at) }}
+                  </span>
                 </div>
+
+                <!-- Owner Contact Info -->
+                <div v-if="rental.owner" class="mb-3 pa-2 bg-grey-lighten-4 rounded">
+                  <div class="text-caption font-weight-bold">Owner</div>
+                  <div class="text-body-2">{{ rental.owner.name }}</div>
+                  <div class="text-caption text-grey">{{ rental.owner.email }}</div>
+                </div>
+
+                <v-btn
+                  v-if="rental.conversation_id && (rental.status === 'booked' || rental.status === 'active' || rental.status === 'holding')"
+                  color="primary"
+                  size="small"
+                  class="mt-2 mr-2"
+                  :href="'/messages?conversation=' + rental.conversation_id"
+                >
+                  <v-icon start size="small">mdi-message</v-icon>
+                  Contact Owner
+                </v-btn>
 
                 <v-btn
                   v-if="rental.status === 'booked'"
@@ -78,7 +95,6 @@ import PageLayout from '@/Layouts/PageLayout.vue';
 import axios from 'axios';
 
 const rentals = ref([]);
-const items = ref({});
 const showCancelDialog = ref(false);
 const rentalToCancel = ref(null);
 
@@ -91,6 +107,12 @@ const getStatusColor = (status) => {
     'holding': 'orange',
   };
   return colors[status] || 'grey';
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString();
 };
 
 const refreshRentals = async () => {

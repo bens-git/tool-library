@@ -103,8 +103,5 @@
 {"id":"102","name":"Electronic Tools","description":"Tools for doing hobby electronics","notes":null,"code":null,"modular":"1","resource":"TOOL","created_at":"2024-10-23 22:03:17","updated_at":"2024-10-23 22:03:17","created_by":"3"},
 {"id":"104","name":"Drill","description":null,"notes":null,"code":null,"modular":"1","resource":"TOOL","created_at":"2024-10-26 15:06:12","updated_at":"2024-10-26 15:06:12","created_by":"8"},
 {"id":"105","name":"Industrial Dehumidifier","description":"Dry out damp areas fast. Prevent mold and mildew damage.","notes":null,"code":null,"modular":"1","resource":"TOOL","created_at":"2024-12-26 17:15:05","updated_at":"2024-12-26 17:15:05","created_by":"2"},
-{"id":"106","name":"Water Damage Dryer","description":"Water Damage Dryer for Carpets, Walls, Floors","notes":null,"code":null,"modular":"1","resource":"TOOL","created_at":"2024-12-26 17:37:18","updated_at":"2024-12-26 17:37:18","created_by":"2"},
-{"id":"110","name":"Cedar Tree","description":null,"notes":null,"code":null,"modular":"1","resource":"MATERIAL","created_at":"2025-03-20 22:27:32","updated_at":"2025-03-22 12:55:16","created_by":"2"},
-{"id":"111","name":"Cedar Pole","description":null,"notes":null,"code":null,"modular":"1","resource":"MATERIAL","created_at":"2025-03-20 22:28:07","updated_at":"2025-03-22 09:19:46","created_by":"2"},
-{"id":"112","name":"Teepee","description":null,"notes":null,"code":null,"modular":"1","resource":"MATERIAL","created_at":"2025-03-30 17:26:50","updated_at":"2025-03-30 17:26:50","created_by":"2"}
+{"id":"106","name":"Water Damage Dryer","description":"Water Damage Dryer for Carpets, Walls, Floors","notes":null,"code":null,"modular":"1","resource":"TOOL","created_at":"2024-12-26 17:37:18","updated_at":"2024-12-26 17:37:18","created_by":"2"}
 ]

@@ -82,6 +82,11 @@ createInertiaApp({
             render: () => h(App, props),
         });
 
+        // Share CSRF token from Inertia page props to window object
+        if (props.initialPage.props.csrfToken) {
+            window.csrfToken = props.initialPage.props.csrfToken;
+        }
+
         app
             .use(plugin)
             .use(pinia)   // ✅ Pinia before anything that may use stores

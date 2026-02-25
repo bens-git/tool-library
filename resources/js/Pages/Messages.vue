@@ -4,7 +4,6 @@ import { Head } from '@inertiajs/vue3';
 import { ref, onMounted, computed, nextTick } from 'vue';
 import axios from 'axios';
 import { usePage } from '@inertiajs/vue3';
-
 const page = usePage();
 const user = page.props.auth.user;
 
@@ -25,6 +24,16 @@ const fetchConversations = async () => {
         conversations.value.forEach(conv => {
             unreadCounts.value[conv.id] = conv.unread_count || 0;
         });
+
+        // Check for conversation query parameter from page props
+        const queryParams = page.props.queryParams || {};
+        const conversationId = queryParams.conversation;
+        if (conversationId) {
+            const conv = conversations.value.find(c => c.id === parseInt(conversationId));
+            if (conv) {
+                selectConversation(conv);
+            }
+        }
     } catch (error) {
         console.error('Error fetching conversations:', error);
     }
