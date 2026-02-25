@@ -18,6 +18,7 @@ use App\Mail\ConfirmLoanEmail;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Notifications\RentalDeletedNotification;
+use Inertia\Inertia;
 
 class RentalController extends Controller
 {
@@ -72,7 +73,7 @@ class RentalController extends Controller
             'status' => 'booked',
         ]);
 
-        $rental->load('renter:id,discord_username,name,email');
+        $rental->load('renter:id,name,email');
 
         // Find the item by ID
         /** @var \App\Models\Item|null $item */
@@ -129,10 +130,8 @@ class RentalController extends Controller
             'is_system_message' => true,
         ]);
 
-        return response()->json([
-            'message' => 'Rental successfully created.',
-            'conversation_id' => $conversation->id,
-        ], 201);
+        // Return Inertia redirect to my-rentals page
+        return Inertia::location(route('my-rentals'));
     }
 
     /**
@@ -151,7 +150,7 @@ class RentalController extends Controller
 
         // Fetch rentals associated with the authenticated user
         $rentals = Rental::where('rented_by', $user->id)
-            ->with(['item'])
+            ->with(['item', 'item.owner', 'conversation'])
             ->get()
             ->map(function ($rental) {
                 return [
@@ -159,6 +158,19 @@ class RentalController extends Controller
                     'item_id' => $rental->item_id,
                     'rented_at' => $rental->rented_at,
                     'status' => $rental->status,
+                    'item' => $rental->item ? [
+                        'id' => $rental->item->id,
+                        'name' => $rental->item->name ?? $rental->item->archetype?->name,
+                        'archetype' => $rental->item->archetype ? [
+                            'name' => $rental->item->archetype->name,
+                        ] : null,
+                    ] : null,
+                    'owner' => $rental->item && $rental->item->owner ? [
+                        'id' => $rental->item->owner->id,
+                        'name' => $rental->item->owner->name,
+                        'email' => $rental->item->owner->email,
+                    ] : null,
+                    'conversation_id' => $rental->conversation?->id,
                 ];
             });
 
@@ -188,7 +200,7 @@ class RentalController extends Controller
         $loans = Rental::whereHas('item', function ($query) use ($user) {
             $query->where('owned_by', $user->id);
         })
-            ->with(['item', 'renter'])
+            ->with(['item', 'item.owner', 'renter', 'conversation'])
             ->get()
             ->map(function (Rental $rental): array {
                 return [
@@ -196,11 +208,19 @@ class RentalController extends Controller
                     'item_id' => $rental->item_id,
                     'rented_at' => $rental->rented_at,
                     'status' => $rental->status,
-                    'rented_by' => [
+                    'item' => $rental->item ? [
+                        'id' => $rental->item->id,
+                        'name' => $rental->item->name ?? $rental->item->archetype?->name,
+                        'archetype' => $rental->item->archetype ? [
+                            'name' => $rental->item->archetype->name,
+                        ] : null,
+                    ] : null,
+                    'renter' => $rental->renter ? [
                         'id' => $rental->renter->id,
                         'name' => $rental->renter->name,
                         'email' => $rental->renter->email,
-                    ],
+                    ] : null,
+                    'conversation_id' => $rental->conversation?->id,
                 ];
             });
 

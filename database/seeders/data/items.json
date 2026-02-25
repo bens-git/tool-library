@@ -335,48 +335,9 @@
         "updated_at": null,
         "make_item_unavailable": "0"
     },
-    {
-        "id": "25",
-        "serial": null,
-        "description": null,
-        "purchase_value": "90.00",
-        "purchased_at": null,
-        "manufactured_at": null,
-        "owned_by": "1",
-        "archetype_id": "10",
-        "brand_id": null,
-        "created_at": null,
-        "updated_at": null,
-        "make_item_unavailable": "0"
-    },
-    {
-        "id": "26",
-        "serial": null,
-        "description": null,
-        "purchase_value": "80.00",
-        "purchased_at": null,
-        "manufactured_at": null,
-        "owned_by": "1",
-        "archetype_id": "11",
-        "brand_id": null,
-        "created_at": null,
-        "updated_at": null,
-        "make_item_unavailable": "0"
-    },
-    {
-        "id": "27",
-        "serial": null,
-        "description": null,
-        "purchase_value": "100.00",
-        "purchased_at": null,
-        "manufactured_at": null,
-        "owned_by": "1",
-        "archetype_id": "12",
-        "brand_id": null,
-        "created_at": null,
-        "updated_at": null,
-        "make_item_unavailable": "0"
-    },
+   
+ 
+ 
     {
         "id": "28",
         "serial": null,

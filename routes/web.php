@@ -93,6 +93,8 @@ Route::middleware('auth')->group(function () {
         ->name('item.is-rented');
     Route::get('/items/{itemId}/unavailable-dates', [ItemController::class, 'getItemUnavailableDates'])
         ->name('item.index-unavailable-dates');
+    Route::post('/items/{itemId}/images', [ItemController::class, 'storeImage'])
+        ->name('item-images.store');
 });
 
 

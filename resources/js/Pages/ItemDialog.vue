@@ -23,6 +23,11 @@
                     height="280"
                     show-arrows="hover"
                 >
+                    <template #placeholder>
+                        <div class="d-flex align-center justify-center fill-height bg-grey-lighten-2">
+                            <v-progress-circular indeterminate color="grey-lighten-1"></v-progress-circular>
+                        </div>
+                    </template>
                     <v-carousel-item
                         v-for="(image, index) in localItem.images"
                         :key="index"
@@ -195,7 +200,7 @@ const createItem = async () => {
 
             //add new images
             for (const image of newImages.value) {
-                await api.post(route('item-images.store'), image);
+                await api.post(route('item-images.store', localItem.value.id), image);
             }
             emit('stored');
             dialog.value = false;
@@ -216,7 +221,7 @@ const saveItem = async () => {
         if (response?.success) {
             for (const image of newImages.value) {
                 //console.log(image)
-                await api.post(route('item-images.store'), image);
+                await api.post(route('item-images.store', localItem.value.id), image);
             }
 
             emit('updated');

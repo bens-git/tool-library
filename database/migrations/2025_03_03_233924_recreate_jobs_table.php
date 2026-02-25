@@ -13,11 +13,9 @@ class RecreateJobsTable extends Migration
      */
     public function up()
     {
-        Schema::table('jobs', function (Blueprint $table) {
-            Schema::dropIfExists('jobs');
-        });
+        Schema::dropIfExists('work_jobs');
 
-        Schema::create('jobs', function (Blueprint $table) {
+        Schema::create('work_jobs', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
@@ -38,22 +36,6 @@ class RecreateJobsTable extends Migration
      */
     public function down()
     {
-        Schema::table('jobs', function (Blueprint $table) {
-            Schema::dropIfExists('jobs');
-        });
-
-        Schema::table('jobs', function (Blueprint $table) {
-            Schema::create('jobs', function (Blueprint $table) {
-                $table->id();
-                $table->string('name');
-                $table->text('description')->nullable();
-
-                $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
-
-                $table->foreignId('material_id')->constrained('types')->onDelete('cascade');
-                $table->foreignId('product_id')->constrained('types')->onDelete('cascade');
-                $table->foreignId('tool_id')->constrained('types')->onDelete('cascade');
-            });
-        });
+        Schema::dropIfExists('work_jobs');
     }
 }

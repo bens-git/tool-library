@@ -21,7 +21,6 @@ class UpdateItemsTableAddColumn extends Migration
 
         // Update existing items with unique code
         DB::table('items')->get()->each(function ($item) {
-            $discordUserName = DB::table('users')->where('id', $item->owned_by)->value('discord_username');
             $typeName = DB::table('types')->where('id', $item->type_id)->value('name');
             $dateString = Carbon::parse($item->purchased_at)->format('d-m-y');
 

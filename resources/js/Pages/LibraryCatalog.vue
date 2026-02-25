@@ -49,26 +49,22 @@ const refreshItems = async () => {
         usage_id: filters.value?.usage?.id,
         category_id: filters.value?.category?.id,
         search: filters.value?.search,
-        user_id: filters.value?.user_id,
     };
+
+    // Add user_id filter if "Show only my tools" is checked
+    if (filters.value.user_id) {
+        query.user_id = filters.value.user_id;
+    }
 
     // Check if any search filter is active
     hasSearchResults.value = !!(query.brand_id || query.archetype_id || query.usage_id || 
         query.category_id || query.search || query.user_id);
 
-    if (filters.value.user_id) {
-        const response = await api.get(route('me.items.index'), {
-            params: { query },
-        });
-        items.value = response.data.data;
-        totalItems.value = response.data.total;
-    } else {
-        const response = await api.get(route('items.index'), {
-            params: query,
-        });
-        items.value = response.data.data;
-        totalItems.value = response.data.total;
-    }
+    const response = await api.get(route('items.index'), {
+        params: query,
+    });
+    items.value = response.data.data;
+    totalItems.value = response.data.total;
 };
 
 const refreshAutocompleteArchetypes = async (query) => {
@@ -236,6 +232,7 @@ const refreshFeaturedItems = async () => {
                                     :src="item.images[0].url"
                                     height="180"
                                     cover
+                                    lazy-src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTIeMmUyIi8+PC9zdmc+"
                                 />
                                 <v-icon v-else size="80" class="ma-4">mdi-image-off</v-icon>
 
@@ -267,6 +264,7 @@ const refreshFeaturedItems = async () => {
                                     :src="item.images[0].url"
                                     height="180"
                                     cover
+                                    lazy-src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTIeMmUyIi8+PC9zdmc+"
                                 />
                                 <v-icon v-else size="80" class="ma-4">mdi-image-off</v-icon>
 
@@ -278,15 +276,17 @@ const refreshFeaturedItems = async () => {
                                     {{ item.brand?.name }}
                                 </v-card-subtitle>
 
-                                <v-card-actions>
-                                    <AvailabilityDialog v-if="user && item.owned_by === user.id" :item="item" />
-                                    <ItemDialog
-                                        v-if="user && item.owned_by === user.id"
-                                        :item="item"
-                                        aim="edit"
-                                    />
-                                    <ItemDialog v-if="item.owned_by !== user.id" :item="item" aim="view" />
-                                    <DeleteItemDialog v-if="user && item.owned_by === user.id" :item="item" />
+                                <v-card-actions class="flex-wrap">
+                                    <div class="d-flex flex-wrap ga-2" style="width: 100%">
+                                        <AvailabilityDialog v-if="user && item.owned_by === user.id" :item="item" />
+                                        <ItemDialog
+                                            v-if="user && item.owned_by === user.id"
+                                            :item="item"
+                                            aim="edit"
+                                        />
+                                        <ItemDialog v-if="!user || item.owned_by !== user.id" :item="item" aim="view" />
+                                        <DeleteItemDialog v-if="user && item.owned_by === user.id" :item="item" />
+                                    </div>
                                 </v-card-actions>
                             </v-card>
                         </v-col>

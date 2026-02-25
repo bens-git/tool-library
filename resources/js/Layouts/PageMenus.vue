@@ -14,7 +14,7 @@
         <v-menu v-if="user">
             <template #activator="{ props }">
                 <v-btn color="primary" v-bind="props" size="small">
-                    {{ user.discord_username ? user.discord_username : user.name }}
+                    {{  user.name }}
                     <v-icon right>mdi-menu-down</v-icon>
                 </v-btn>
             </template>
