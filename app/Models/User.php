@@ -122,4 +122,40 @@ class User extends Authenticatable implements MustVerifyEmail
         
         return $count;
     }
+
+    /**
+     * Check if there are new community posts since last visit.
+     */
+    public function hasNewCommunityPosts(): bool
+    {
+        // Get the public conversation
+        $publicConversation = Conversation::public()->first();
+        
+        if (!$publicConversation) {
+            return false;
+        }
+        
+        // If user has never visited community, check for posts created in the last hour
+        if (!$this->last_community_visit) {
+            $oneHourAgo = now()->subHour();
+            return Message::where('conversation_id', $publicConversation->id)
+                ->where('is_system_message', false)
+                ->where('created_at', '>', $oneHourAgo)
+                ->exists();
+        }
+        
+        // Check if there are any posts since last visit
+        return Message::where('conversation_id', $publicConversation->id)
+            ->where('is_system_message', false)
+            ->where('created_at', '>', $this->last_community_visit)
+            ->exists();
+    }
+
+    /**
+     * Update last community visit timestamp.
+     */
+    public function updateLastCommunityVisit(): void
+    {
+        $this->update(['last_community_visit' => now()]);
+    }
 }

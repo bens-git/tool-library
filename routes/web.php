@@ -173,6 +173,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Unread count
     Route::get('/messages/unread', [MessageController::class, 'unreadCount'])->name('messages.unread');
+    
+    // Mark community visited
+    Route::post('/messages/community/visited', [MessageController::class, 'markCommunityVisited'])->name('messages.community.visited');
 });
 
 

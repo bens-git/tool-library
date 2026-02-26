@@ -72,7 +72,6 @@ class RentalController extends Controller
             'rented_at' => now(),
             'status' => 'booked',
         ]);
-
         $rental->load('renter:id,name,email');
 
         // Find the item by ID
@@ -130,8 +129,8 @@ class RentalController extends Controller
             'is_system_message' => true,
         ]);
 
-        // Return Inertia redirect to my-rentals page
-        return Inertia::location(route('my-rentals'));
+        // Return redirect to my-rentals page
+        return redirect()->route('my-rentals');
     }
 
     /**
@@ -264,7 +263,7 @@ class RentalController extends Controller
     public function destroy($id)
     {
         // Find the rental by ID
-        $rental = Rental::with(['renter'])->find($id);
+        $rental = Rental::with(['renter', 'conversation'])->find($id);
 
         // Find the item by ID
         $item = Item::with(['owner'])
@@ -291,8 +290,29 @@ class RentalController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        // Get item name for the message
+        $itemName = $item->name ?? $item->archetype?->name ?? 'the item';
+        
+        // Get the current user who is cancelling
+        $cancellingUser = Auth::user();
+        $cancellerName = $cancellingUser->name;
+        
+        // Determine who cancelled (renter or owner)
+        $isRenterCancelling = Auth::id() === $rental->rented_by;
+        $cancellerRole = $isRenterCancelling ? 'renter' : 'owner';
+
         // Attempt to delete the rental
         try {
+            // Add system message to conversation before deleting the rental
+            if ($rental->conversation) {
+                Message::create([
+                    'conversation_id' => $rental->conversation->id,
+                    'user_id' => $cancellingUser->id,
+                    'body' => "This rental for {$itemName} has been cancelled by {$cancellerName} ({$cancellerRole}).",
+                    'is_system_message' => true,
+                ]);
+            }
+
             $rental->delete();
 
             // Send rental notification

@@ -98,7 +98,16 @@
             :prepend-icon="mobile ? 'mdi-message' : 'mdi-message'"
             :text="!mobile ? 'Messages' : undefined"
             @click="router.visit('messages')"
-        ></v-btn>
+        >
+            <template #append>
+                <v-badge
+                    v-if="notifications?.unread_messages > 0"
+                    :content="notifications.unread_messages"
+                    color="error"
+                    inline
+                ></v-badge>
+            </template>
+        </v-btn>
 
         <!-- Community - Icon on Mobile (when logged in), Text on Desktop -->
         <v-btn
@@ -109,7 +118,16 @@
             :prepend-icon="mobile ? 'mdi-account-group' : 'mdi-account-group'"
             :text="!mobile ? 'Community' : undefined"
             @click="router.visit('community')"
-        ></v-btn>
+        >
+            <template #append>
+                <v-badge
+                    v-if="notifications?.has_new_community_posts"
+                    dot
+                    color="error"
+                    inline
+                ></v-badge>
+            </template>
+        </v-btn>
 
         <v-spacer />
 
@@ -215,7 +233,8 @@ const page = usePage();
 const { mobile } = useDisplay();
 const drawer = ref(false);
 const appTitle = import.meta.env.VITE_APP_NAME;
-const user = page.props.auth.user;
+const user = page.props.auth?.user;
+const notifications = page.props.notifications;
 
 const drawerLinks = ref([]);
 

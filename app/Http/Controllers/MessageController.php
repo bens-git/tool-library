@@ -356,5 +356,17 @@ class MessageController extends Controller
 
         return response()->json(['unread_count' => $count]);
     }
+
+    /**
+     * Update user's last community visit timestamp.
+     */
+    public function markCommunityVisited(): JsonResponse
+    {
+        $user = Auth::user();
+        
+        $user->updateLastCommunityVisit();
+
+        return response()->json(['message' => 'Community visit updated']);
+    }
 }
 

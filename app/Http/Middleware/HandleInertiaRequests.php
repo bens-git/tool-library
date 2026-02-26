@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use App\Models\User;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -29,11 +30,24 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        
+        $notifications = [
+            'unread_messages' => 0,
+            'has_new_community_posts' => false,
+        ];
+        
+        if ($user) {
+            $notifications['unread_messages'] = $user->unreadMessageCount();
+            $notifications['has_new_community_posts'] = $user->hasNewCommunityPosts();
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
             ],
+            'notifications' => $notifications,
             'csrfToken' => csrf_token(),
         ];
     }

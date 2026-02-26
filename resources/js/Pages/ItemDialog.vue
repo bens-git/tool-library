@@ -4,9 +4,9 @@
             <v-btn
                 :color="aim === 'edit' || aim === 'view' ? 'primary' : 'success'"
                 :prepend-icon="
-                    aim === 'edit' ? 'mdi-pencil' : aim === 'view' ? 'mdi-eye' : 'mdi-plus'
+                    aim === 'edit' ? 'mdi-pencil' : aim === 'view' ? 'mdi-cart' : 'mdi-plus'
                 "
-                :text="aim === 'edit' ? 'Edit Item' : aim === 'view' ? 'View Item' : 'Create Item'"
+                :text="aim === 'edit' ? 'Edit Item' : aim === 'view' ? 'Rent Item' : 'Create Item'"
                 variant="tonal"
                 block
                 v-bind="activatorProps"
@@ -44,17 +44,6 @@
             </v-card-title>
 
             <v-card-text class="pt-2">
-                <!-- Time Credits Required (View Mode) -->
-                <div v-if="aim === 'view' && localItem.access_value?.current_daily_rate" class="mb-4">
-                    <v-card variant="tonal" color="info" class="pa-3">
-                        <div class="text-subtitle-2 mb-1">Rental Cost</div>
-                        <div class="text-h5 font-weight-bold">
-                            {{ localItem.access_value.current_daily_rate }}
-                            <span class="text-body-2">credits / day</span>
-                        </div>
-                    </v-card>
-                </div>
-
                 <!-- Archetype (edit/create only) -->
                 <v-autocomplete
                     v-if="aim !== 'view'"
@@ -87,10 +76,61 @@
                     class="mb-2"
                 ></v-checkbox>
 
-                <!-- Rental Section (View Mode) -->
+                <!-- Rental Section (View/Rent Mode) -->
                 <div v-if="aim === 'view'" class="mt-4">
                     <v-divider class="mb-4"></v-divider>
-                    <RentalDatesDialog :item="localItem" />
+                    
+                    <!-- Time Credits Required -->
+                    <div v-if="localItem.access_value?.current_daily_rate" class="mb-4">
+                        <v-card variant="tonal" color="info" class="pa-3">
+                            <div class="text-subtitle-2 mb-1">Rental Cost</div>
+                            <div class="text-h5 font-weight-bold">
+                                {{ localItem.access_value.current_daily_rate }}
+                                <span class="text-body-2">credits / day</span>
+                            </div>
+                        </v-card>
+                    </div>
+
+                    <!-- Unavailable Alert -->
+                    <v-alert 
+                        v-if="localItem.make_item_unavailable" 
+                        color="warning" 
+                        variant="tonal" 
+                        class="mb-4"
+                        density="compact"
+                    >
+                        This item is currently marked as unavailable
+                    </v-alert>
+
+                    <!-- Availability Status -->
+                    <div v-if="!localItem.make_item_unavailable && !isItemRented" class="mb-4">
+                        <v-chip color="success" variant="flat">
+                            <v-icon start icon="mdi-check"></v-icon>
+                            Available
+                        </v-chip>
+                    </div>
+
+                    <!-- Already Rented Alert -->
+                    <v-alert 
+                        v-if="isItemRented" 
+                        color="error" 
+                        variant="tonal" 
+                        class="mb-4"
+                        density="compact"
+                    >
+                        This item is currently rented
+                    </v-alert>
+
+                    <!-- Error Message -->
+                    <v-alert 
+                        v-if="rentalError" 
+                        color="error" 
+                        variant="tonal" 
+                        class="mb-4"
+                        density="compact"
+                    >
+                        {{ rentalError }}
+                    </v-alert>
                 </div>
 
                 <!-- File upload (edit/create only) -->
@@ -126,6 +166,15 @@
                     variant="tonal"
                     @click="createItem"
                 ></v-btn>
+
+                <v-btn
+                    v-if="aim === 'view' && !isItemRented && !localItem.make_item_unavailable"
+                    color="success"
+                    text="Confirm Rental"
+                    variant="tonal"
+                    :loading="isConfirmingRental"
+                    @click="confirmRental"
+                ></v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
@@ -135,8 +184,7 @@
 import { shallowRef, ref, watch } from 'vue';
 import _ from 'lodash';
 import ArchetypeDialog from './ArchetypeDialog.vue';
-import RentalDatesDialog from './RentalDatesDialog.vue';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, router } from '@inertiajs/vue3';
 import api from '@/services/api';
 
 const dialog = shallowRef(false);
@@ -148,6 +196,11 @@ const localItem = ref(null);
 const autocompleteArchetypes = ref([]);
 const newImages = ref([]);
 const formErrors = ref({});
+
+// Rental state
+const isItemRented = ref(false);
+const rentalError = ref('');
+const isConfirmingRental = ref(false);
 
 const props = defineProps({
     item: { type: Object, default: null },
@@ -169,6 +222,21 @@ const refreshLocalItem = async () => {
     const response = await api.get(route('items.show', props.item.id));
 
     localItem.value = response.data.data;
+    
+    // Check rental status
+    await checkRentalStatus();
+};
+
+// Check if item has an active rental
+const checkRentalStatus = async () => {
+    isItemRented.value = false;
+    try {
+        const response = await api.get(route('item.is-rented', localItem.value.id));
+        isItemRented.value = response.data.data === true;
+    } catch (error) {
+        console.error('Error checking rental status:', error);
+        isItemRented.value = false;
+    }
 };
 
 // Function to initialize
@@ -189,7 +257,10 @@ const onOpen = async () => {
     refreshAutocompleteArchetypes();
 };
 
-const onClose = () => {};
+const onClose = () => {
+    isItemRented.value = false;
+    rentalError.value = '';
+};
 
 const createItem = async () => {
     formErrors.value = {};
@@ -231,6 +302,32 @@ const saveItem = async () => {
         if (error.response?.data?.errors) {
             formErrors.value = error.response.data.errors;
         }
+    }
+};
+
+const confirmRental = async () => {
+    isConfirmingRental.value = true;
+    rentalError.value = '';
+    
+    try {
+        await api.post(route('rentals.store'), {
+            item: localItem.value,
+        });
+        
+        // Success - close dialog and redirect to My Rentals
+        dialog.value = false;
+        router.visit('/my-rentals');
+    } catch (error) {
+        console.error('Error creating rental:', error);
+        if (error.response?.data?.message) {
+            rentalError.value = error.response.data.message;
+        } else if (error.response?.data?.errors) {
+            rentalError.value = Object.values(error.response.data.errors).flat().join(', ');
+        } else {
+            rentalError.value = 'Failed to create rental. Please try again.';
+        }
+    } finally {
+        isConfirmingRental.value = false;
     }
 };
 

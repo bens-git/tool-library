@@ -44,6 +44,14 @@ const createPost = async () => {
     }
 };
 
+const markCommunityVisited = async () => {
+    try {
+        await axios.post(route('messages.community.visited'));
+    } catch (error) {
+        console.error('Error marking community visited:', error);
+    }
+};
+
 const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -56,6 +64,7 @@ const getUserInitial = (name) => {
 
 onMounted(() => {
     fetchPosts();
+    markCommunityVisited();
 });
 </script>
 
