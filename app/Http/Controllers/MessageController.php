@@ -365,8 +365,11 @@ class MessageController extends Controller
         $user = Auth::user();
         
         $user->updateLastCommunityVisit();
+        
+        // Refresh the user model to get the updated timestamp
+        $user->refresh();
 
-        return response()->json(['message' => 'Community visit updated']);
+        return response()->json(['message' => 'Community visit updated', 'last_visit' => $user->last_community_visit]);
     }
 }
 

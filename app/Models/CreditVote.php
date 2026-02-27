@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Credit Vote Model - community voting on item credit rates
+ * Credit Vote Model - community voting on archetype credit rates
  * 
  * @property int $id
  * @property int $user_id
- * @property int $item_id
+ * @property int|null $archetype_id
  * @property float $vote_value
  * @property string|null $reason
  * @property float|null $user_balance_at_vote
@@ -19,7 +19,7 @@ class CreditVote extends Model
 {
     protected $fillable = [
         'user_id',
-        'item_id',
+        'archetype_id',
         'vote_value',
         'reason',
         'user_balance_at_vote',
@@ -43,11 +43,11 @@ class CreditVote extends Model
     }
 
     /**
-     * Get the item being voted on
+     * Get the archetype being voted on
      */
-    public function item(): BelongsTo
+    public function archetype(): BelongsTo
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(Archetype::class);
     }
 
     /**

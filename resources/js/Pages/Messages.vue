@@ -3,7 +3,7 @@ import PageLayout from '@/Layouts/PageLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref, onMounted, computed, nextTick } from 'vue';
 import axios from 'axios';
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 const page = usePage();
 const user = page.props.auth.user;
 
@@ -56,6 +56,9 @@ const fetchMessages = async (conversationId) => {
         // Scroll to bottom
         await nextTick();
         scrollToBottom();
+        
+        // Refresh the global notifications to update unread count
+        router.reload({ only: ['notifications'] });
     } catch (error) {
         console.error('Error fetching messages:', error);
     } finally {

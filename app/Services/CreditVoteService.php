@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Archetype;
+use App\Models\ArchetypeAccessValue;
 use App\Models\CreditVote;
-use App\Models\Item;
-use App\Models\ItemAccessValue;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Log;
  * Credit Vote Service - handles community voting on credit rates
  * 
  * This service manages:
- * - Recording user votes on item credit rates
+ * - Recording user votes on archetype credit rates
  * - Calculating weighted votes
- * - Applying vote results to item access values
+ * - Applying vote results to archetype access values
  * - Voting bonuses
  */
 class CreditVoteService
@@ -28,16 +28,16 @@ class CreditVoteService
     public const VOTE_COOLDOWN_DAYS = 7;
     
     /**
-     * Cast or update a vote on an item's credit rate
+     * Cast or update a vote on an archetype's credit rate
      */
-    public function castVote(User $user, Item $item, float $voteValue, ?string $reason = null): array
+    public function castArchetypeVote(User $user, Archetype $archetype, float $voteValue, ?string $reason = null): array
     {
         // Validate vote value
         $voteValue = round(max(self::MIN_VOTE_VALUE, min(self::MAX_VOTE_VALUE, $voteValue)), 2);
         
         // Check for existing vote
         $existingVote = CreditVote::where('user_id', $user->id)
-            ->where('item_id', $item->id)
+            ->where('archetype_id', $archetype->id)
             ->first();
         
         // Check cooldown for updates
@@ -52,10 +52,12 @@ class CreditVoteService
         $userBalance = $user->itcBalance?->balance ?? 0;
         
         // Get or create access value
-        $accessValue = ItemAccessValue::firstOrNew(['item_id' => $item->id]);
+        $accessValue = ArchetypeAccessValue::firstOrNew(['archetype_id' => $archetype->id]);
         if (!$accessValue->exists) {
-            $valuationService = app(AccessValuationService::class);
-            $accessValue = $valuationService->setAccessValue($item);
+            $accessValue->base_credit_value = ArchetypeAccessValue::DEFAULT_DAILY_RATE;
+            $accessValue->current_daily_rate = ArchetypeAccessValue::DEFAULT_DAILY_RATE;
+            $accessValue->current_weekly_rate = ArchetypeAccessValue::DEFAULT_WEEKLY_RATE;
+            $accessValue->save();
         }
         
         // Create or update vote
@@ -68,7 +70,7 @@ class CreditVoteService
         } else {
             $vote = CreditVote::create([
                 'user_id' => $user->id,
-                'item_id' => $item->id,
+                'archetype_id' => $archetype->id,
                 'vote_value' => $voteValue,
                 'reason' => $reason,
                 'user_balance_at_vote' => $userBalance,
@@ -80,12 +82,11 @@ class CreditVoteService
         }
         
         // Apply vote to access value
-        $valuationService = app(AccessValuationService::class);
-        $newRate = $valuationService->applyVote($accessValue, $voteValue, $userBalance);
+        $newRate = $this->applyArchetypeVote($accessValue, $voteValue, $userBalance);
         
-        Log::info("Vote cast", [
+        Log::info("Archetype vote cast", [
             'user_id' => $user->id,
-            'item_id' => $item->id,
+            'archetype_id' => $archetype->id,
             'vote_value' => $voteValue,
             'new_rate' => $newRate,
         ]);
@@ -99,11 +100,20 @@ class CreditVoteService
     }
 
     /**
-     * Get all votes for an item
+     * Apply a vote to an archetype's access value
      */
-    public function getItemVotes(Item $item): array
+    protected function applyArchetypeVote(ArchetypeAccessValue $accessValue, float $voteValue, float $userBalance): float
     {
-        $votes = CreditVote::where('item_id', $item->id)
+        $accessValue->addVote($voteValue);
+        return $accessValue->current_daily_rate;
+    }
+
+    /**
+     * Get all votes for an archetype
+     */
+    public function getArchetypeVotes(Archetype $archetype): array
+    {
+        $votes = CreditVote::where('archetype_id', $archetype->id)
             ->with('user:id,name,email')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -123,29 +133,30 @@ class CreditVoteService
     }
 
     /**
-     * Get user's vote for an item
+     * Get user's vote for an archetype
      */
-    public function getUserVoteForItem(User $user, Item $item): ?CreditVote
+    public function getUserVoteForArchetype(User $user, Archetype $archetype): ?CreditVote
     {
         return CreditVote::where('user_id', $user->id)
-            ->where('item_id', $item->id)
+            ->where('archetype_id', $archetype->id)
             ->first();
     }
 
     /**
-     * Get items user has voted on
+     * Get archetypes user has voted on
      */
-    public function getUserVotedItems(User $user): array
+    public function getUserVotedArchetypes(User $user): array
     {
         $votes = CreditVote::where('user_id', $user->id)
-            ->with('item')
+            ->whereNotNull('archetype_id')
+            ->with('archetype')
             ->orderBy('created_at', 'desc')
             ->get();
         
         return $votes->map(function ($vote) {
             return [
-                'item_id' => $vote->item_id,
-                'item_name' => $vote->item->name ?? 'Unknown',
+                'archetype_id' => $vote->archetype_id,
+                'archetype_name' => $vote->archetype?->name ?? 'Unknown',
                 'vote_value' => $vote->vote_value,
                 'vote_date' => $vote->created_at->toIso8601String(),
             ];
@@ -153,17 +164,17 @@ class CreditVoteService
     }
 
     /**
-     * Get vote statistics for an item
+     * Get vote statistics for an archetype
      */
-    public function getItemVoteStats(Item $item): array
+    public function getArchetypeVoteStats(Archetype $archetype): array
     {
-        $accessValue = ItemAccessValue::where('item_id', $item->id)->first();
+        $accessValue = ArchetypeAccessValue::where('archetype_id', $archetype->id)->first();
         
         if (!$accessValue) {
             return [
                 'vote_count' => 0,
                 'average_vote' => 0,
-                'current_rate' => ItemAccessValue::DEFAULT_DAILY_RATE,
+                'current_rate' => ArchetypeAccessValue::DEFAULT_DAILY_RATE,
             ];
         }
         
@@ -179,11 +190,11 @@ class CreditVoteService
     }
 
     /**
-     * Check if user can vote on an item
+     * Check if user can vote on an archetype
      */
-    public function canVote(User $user, Item $item): array
+    public function canVoteOnArchetype(User $user, Archetype $archetype): array
     {
-        $existingVote = $this->getUserVoteForItem($user, $item);
+        $existingVote = $this->getUserVoteForArchetype($user, $archetype);
         
         if ($existingVote) {
             $daysSinceVote = $existingVote->created_at->diffInDays(now());

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Item;
+use App\Models\Archetype;
 use App\Models\User;
 use App\Services\CreditVoteService;
 use Illuminate\Http\Request;
@@ -18,22 +18,22 @@ class CreditVoteController extends Controller
     }
 
     /**
-     * Cast or update a vote on an item's credit rate
+     * Cast or update a vote on an archetype's credit rate
      */
     public function store(Request $request)
     {
         $request->validate([
-            'item_id' => 'required|exists:items,id',
+            'archetype_id' => 'required|exists:archetypes,id',
             'vote_value' => 'required|numeric|min:0.1|max:10',
             'reason' => 'nullable|string|max:500',
         ]);
 
         $user = Auth::user();
-        $item = Item::findOrFail($request->input('item_id'));
+        $archetype = Archetype::findOrFail($request->input('archetype_id'));
         
-        $result = $this->voteService->castVote(
+        $result = $this->voteService->castArchetypeVote(
             $user,
-            $item,
+            $archetype,
             $request->input('vote_value'),
             $request->input('reason')
         );
@@ -52,14 +52,14 @@ class CreditVoteController extends Controller
     }
 
     /**
-     * Get votes for an item
+     * Get votes for an archetype
      */
-    public function itemVotes($itemId)
+    public function archetypeVotes($archetypeId)
     {
-        $item = Item::findOrFail($itemId);
+        $archetype = Archetype::findOrFail($archetypeId);
         
-        $votes = $this->voteService->getItemVotes($item);
-        $stats = $this->voteService->getItemVoteStats($item);
+        $votes = $this->voteService->getArchetypeVotes($archetype);
+        $stats = $this->voteService->getArchetypeVoteStats($archetype);
 
         return response()->json([
             'votes' => $votes,
@@ -68,18 +68,18 @@ class CreditVoteController extends Controller
     }
 
     /**
-     * Get user's vote for a specific item
+     * Get user's vote for a specific archetype
      */
-    public function userVote($itemId)
+    public function userVote($archetypeId)
     {
         $user = Auth::user();
-        $item = Item::findOrFail($itemId);
+        $archetype = Archetype::findOrFail($archetypeId);
         
-        $vote = $this->voteService->getUserVoteForItem($user, $item);
-        $canVote = $this->voteService->canVote($user, $item);
+        $vote = $this->voteService->getUserVoteForArchetype($user, $archetype);
+        $canVote = $this->voteService->canVoteOnArchetype($user, $archetype);
 
         return response()->json([
-            'has_voted' => $vote !== null,
+            'has_vote' => $vote !== null,
             'vote' => $vote ? [
                 'id' => $vote->id,
                 'vote_value' => $vote->vote_value,
@@ -92,27 +92,27 @@ class CreditVoteController extends Controller
     }
 
     /**
-     * Get user's voted items
+     * Get user's voted archetypes
      */
     public function myVotes()
     {
         $user = Auth::user();
-        $votedItems = $this->voteService->getUserVotedItems($user);
+        $votedArchetypes = $this->voteService->getUserVotedArchetypes($user);
 
         return response()->json([
-            'items' => $votedItems,
+            'archetypes' => $votedArchetypes,
         ]);
     }
 
     /**
-     * Check if user can vote on an item
+     * Check if user can vote on an archetype
      */
-    public function canVote($itemId)
+    public function canVote($archetypeId)
     {
         $user = Auth::user();
-        $item = Item::findOrFail($itemId);
+        $archetype = Archetype::findOrFail($archetypeId);
         
-        $result = $this->voteService->canVote($user, $item);
+        $result = $this->voteService->canVoteOnArchetype($user, $archetype);
 
         return response()->json($result);
     }

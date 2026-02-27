@@ -2,11 +2,11 @@
   <PageLayout title="Time Credits Dashboard">
     <Head title="Time Credits Dashboard" />
 
-    <v-container>
-      <!-- Balance Card -->
+    <v-container fluid>
+      <!-- Balance Card and Stats Row -->
       <v-row>
-        <v-col cols="12" md="6">
-          <v-card class="pa-4" color="primary" dark>
+        <v-col cols="12" md="4">
+          <v-card class="pa-4 fill-height" color="primary" dark>
             <v-card-title class="text-h4">
               <v-icon size="32" class="mr-2">mdi-currency-usd</v-icon>
               Current Balance
@@ -20,91 +20,29 @@
           </v-card>
         </v-col>
 
-        <v-col cols="12" md="6">
-          <v-row>
-            <v-col cols="6">
-              <v-card class="pa-4" color="success" dark>
-                <v-card-title class="text-h6">Lifetime Earned</v-card-title>
-                <v-card-text class="text-h5">
-                  +{{ formatNumber(stats.lifetime_earned) }}
-                </v-card-text>
-              </v-card>
-            </v-col>
-            <v-col cols="6">
-              <v-card class="pa-4" color="error" dark>
-                <v-card-title class="text-h6">Lifetime Spent</v-card-title>
-                <v-card-text class="text-h5">
-                  -{{ formatNumber(stats.lifetime_spent) }}
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12">
-              <v-card class="pa-4">
-                <v-card-title class="text-h6">Total Transactions</v-card-title>
-                <v-card-text class="text-h5">
-                  {{ stats.transaction_count }}
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
+        <v-col cols="12" md="4">
+          <v-card class="pa-4 fill-height" color="success" dark>
+            <v-card-title class="text-h6">Lifetime Earned</v-card-title>
+            <v-card-text class="text-h5">
+              +{{ formatNumber(stats.lifetime_earned) }}
+            </v-card-text>
+          </v-card>
         </v-col>
-      </v-row>
 
-      <!-- How it works -->
-      <v-row class="mt-4">
-        <v-col cols="12">
-          <v-card>
-            <v-card-title>How the Time Credit System Works</v-card-title>
-            <v-card-text>
-              <v-list>
-                <v-list-item>
-                  <template #prepend>
-                    <v-icon color="success">mdi-plus-circle</v-icon>
-                  </template>
-                  <v-list-item-title>Earn Credits</v-list-item-title>
-                  <v-list-item-subtitle>
-                    Lend tools to others to earn credits. The more you share, the more you earn!
-                  </v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <template #prepend>
-                    <v-icon color="error">mdi-minus-circle</v-icon>
-                  </template>
-                  <v-list-item-title>Spend Credits</v-list-item-title>
-                  <v-list-item-subtitle>
-                    Borrow tools using credits. Credits are deducted from your balance.
-                  </v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <template #prepend>
-                    <v-icon color="warning">mdi-vote</v-icon>
-                  </template>
-                  <v-list-item-title>Vote on Rates</v-list-item-title>
-                  <v-list-item-subtitle>
-                    Participate in community voting to set credit rates for tools. Earn bonus credits for voting!
-                  </v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <template #prepend>
-                    <v-icon color="info">mdi-clock-outline</v-icon>
-                  </template>
-                  <v-list-item-title>Decay</v-list-item-title>
-                  <v-list-item-subtitle>
-                    Credits may decay over time to prevent accumulation and encourage active participation.
-                  </v-list-item-subtitle>
-                </v-list-item>
-              </v-list>
+        <v-col cols="12" md="4">
+          <v-card class="pa-4 fill-height" color="error" dark>
+            <v-card-title class="text-h6">Lifetime Spent</v-card-title>
+            <v-card-text class="text-h5">
+              -{{ formatNumber(stats.lifetime_spent) }}
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
 
-      <!-- Recent Transactions -->
+      <!-- Second Row - Transactions and Info -->
       <v-row class="mt-4">
-        <v-col cols="12">
-          <v-card>
+        <v-col cols="12" md="8">
+          <v-card class="fill-height">
             <v-card-title>Recent Transactions</v-card-title>
             <v-card-text>
               <v-list v-if="transactions.length">
@@ -130,6 +68,76 @@
             </v-card-text>
           </v-card>
         </v-col>
+
+        <v-col cols="12" md="4">
+          <v-card class="fill-height d-flex flex-column" min-height="300">
+            <v-card-title class="d-flex align-center justify-space-between flex-grow-0 flex-wrap">
+              <span>How it Works</span>
+              <v-btn
+                color="primary"
+                variant="tonal"
+                prepend-icon="mdi-information"
+                size="small"
+                class="ml-2"
+                @click="goToInfo"
+              >
+                Learn More
+              </v-btn>
+            </v-card-title>
+            <v-card-text class="flex-grow-1 overflow-auto">
+              <v-list density="compact">
+                <v-list-item>
+                  <template #prepend>
+                    <v-icon color="success" size="small">mdi-plus-circle</v-icon>
+                  </template>
+                  <v-list-item-title class="text-body-2">Earn Credits</v-list-item-title>
+                  <v-list-item-subtitle class="text-caption">
+                    Lend tools to others to earn credits.
+                  </v-list-item-subtitle>
+                </v-list-item>
+                <v-list-item>
+                  <template #prepend>
+                    <v-icon color="error" size="small">mdi-minus-circle</v-icon>
+                  </template>
+                  <v-list-item-title class="text-body-2">Spend Credits</v-list-item-title>
+                  <v-list-item-subtitle class="text-caption">
+                    Borrow tools using credits.
+                  </v-list-item-subtitle>
+                </v-list-item>
+                <v-list-item>
+                  <template #prepend>
+                    <v-icon color="warning" size="small">mdi-vote</v-icon>
+                  </template>
+                  <v-list-item-title class="text-body-2">Vote on Rates</v-list-item-title>
+                  <v-list-item-subtitle class="text-caption">
+                    Participate in community voting.
+                  </v-list-item-subtitle>
+                </v-list-item>
+                <v-list-item>
+                  <template #prepend>
+                    <v-icon color="info" size="small">mdi-clock-outline</v-icon>
+                  </template>
+                  <v-list-item-title class="text-body-2">Decay</v-list-item-title>
+                  <v-list-item-subtitle class="text-caption">
+                    Credits may decay over time.
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Total Transactions Card -->
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <v-card class="pa-4">
+            <v-card-title class="text-h6">Total Transactions</v-card-title>
+            <v-card-text class="text-h5">
+              {{ stats.transaction_count }}
+            </v-card-text>
+          </v-card>
+        </v-col>
       </v-row>
     </v-container>
   </PageLayout>
@@ -138,6 +146,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import PageLayout from '@/Layouts/PageLayout.vue';
 import axios from 'axios';
 
@@ -162,6 +171,10 @@ const formatDate = (dateStr) => {
     month: 'short',
     day: 'numeric',
   });
+};
+
+const goToInfo = () => {
+  router.visit(route('itc.info'));
 };
 
 const loadDashboard = async () => {

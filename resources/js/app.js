@@ -7,6 +7,7 @@ import { createApp, h } from 'vue';
 import { createPinia } from 'pinia';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import { VDateInput } from 'vuetify/labs/VDateInput';
+import { useUserStore } from '@/Stores/user';
 
 // Vuetify imports
 import 'vuetify/styles';
@@ -87,12 +88,23 @@ createInertiaApp({
             window.csrfToken = props.initialPage.props.csrfToken;
         }
 
+        // ✅ Register Pinia FIRST before using any stores
         app
+            .use(pinia)
             .use(plugin)
-            .use(pinia)   // ✅ Pinia before anything that may use stores
             .use(ZiggyVue)
-            .use(vuetify)
-            .mount(el);
+            .use(vuetify);
+
+        // ✅ NOW it's safe to use Pinia stores - after pinia is registered
+        const userStore = useUserStore();
+        if (props.initialPage.props.auth?.user) {
+            userStore.syncWithInertia(props.initialPage.props.auth.user);
+        } else {
+            // User not authenticated - clear any stale data
+            userStore.syncWithInertia(null);
+        }
+
+        app.mount(el);
 
         return app;
     },

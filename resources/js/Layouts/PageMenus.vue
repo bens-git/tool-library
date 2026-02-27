@@ -102,9 +102,11 @@
             <template #append>
                 <v-badge
                     v-if="notifications?.unread_messages > 0"
-                    :content="notifications.unread_messages"
+                    :content="notifications.unread_messages > 99 ? '99+' : notifications.unread_messages"
                     color="error"
-                    inline
+                    offset-x="3"
+                    offset-y="-2"
+                    style="margin-right: -8px;"
                 ></v-badge>
             </template>
         </v-btn>
@@ -120,12 +122,10 @@
             @click="router.visit('community')"
         >
             <template #append>
-                <v-badge
-                    v-if="notifications?.has_new_community_posts"
-                    dot
-                    color="error"
-                    inline
-                ></v-badge>
+                <span 
+                    v-if="notifications?.has_new_community_posts" 
+                    class="notification-dot"
+                ></span>
             </template>
         </v-btn>
 
@@ -298,5 +298,33 @@ const goToLogout = () => {
     width: 100%;
     padding: 8px;
     gap: 8px;
+}
+
+/* Custom notification dot for community feed */
+.notification-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: rgb(var(--v-theme-error));
+    border-radius: 50%;
+    margin-left: 4px;
+    margin-right: -4px;
+    box-shadow: 0 0 4px rgba(255, 0, 0, 0.4);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 </style>

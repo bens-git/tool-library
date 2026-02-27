@@ -3,7 +3,7 @@ import PageLayout from '@/Layouts/PageLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 
 const page = usePage();
 const user = page.props.auth.user;
@@ -47,6 +47,12 @@ const createPost = async () => {
 const markCommunityVisited = async () => {
     try {
         await axios.post(route('messages.community.visited'));
+        
+        // Wait a brief moment for the database to update, then refresh notifications
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Refresh the global notifications to update the community badge
+        router.reload({ only: ['notifications'] });
     } catch (error) {
         console.error('Error marking community visited:', error);
     }

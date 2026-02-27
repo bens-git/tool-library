@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Archetype;
+use App\Models\ArchetypeAccessValue;
 use App\Models\Item;
 use App\Models\Usage;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,8 @@ class ArchetypeController extends Controller
             ->leftJoin('usages', 'archetype_usage.usage_id', '=', 'usages.id')
             ->leftJoin('items', 'items.archetype_id', '=', 'archetypes.id')
             ->leftJoin('brands', 'items.brand_id', '=', 'brands.id')
-            ->leftJoin('users as owner', 'items.owned_by', '=', 'owner.id');
+            ->leftJoin('users as owner', 'items.owned_by', '=', 'owner.id')
+            ->leftJoin('archetype_access_values', 'archetypes.id', '=', 'archetype_access_values.archetype_id');
 
         $query->leftJoin('rentals', function ($join) use ($startDate, $endDate) {
             $join->on('items.id', '=', 'rentals.item_id')
@@ -51,6 +53,9 @@ class ArchetypeController extends Controller
             'archetypes.id',
             'archetypes.name',
             'archetypes.created_by',
+            DB::raw('COALESCE(archetype_access_values.current_daily_rate, ' . ArchetypeAccessValue::DEFAULT_DAILY_RATE . ') as current_daily_rate'),
+            DB::raw('COALESCE(archetype_access_values.base_credit_value, ' . ArchetypeAccessValue::DEFAULT_DAILY_RATE . ') as base_credit_value'),
+            DB::raw('COALESCE(archetype_access_values.vote_count, 0) as vote_count'),
             DB::raw('GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC SEPARATOR ", ") as categories'),
             DB::raw('GROUP_CONCAT(DISTINCT categories.id ORDER BY categories.id ASC SEPARATOR ", ") as category_ids'),
             DB::raw('GROUP_CONCAT(DISTINCT usages.name ORDER BY usages.name ASC SEPARATOR ", ") as usages'),
@@ -62,7 +67,7 @@ class ArchetypeController extends Controller
             DB::raw('GROUP_CONCAT(DISTINCT items.id ORDER BY items.owned_by ASC SEPARATOR ", ") as item_ids')
         );
 
-        $query->groupBy('archetypes.id');
+        $query->groupBy('archetypes.id', 'archetypes.name', 'archetypes.created_by', 'archetype_access_values.current_daily_rate', 'archetype_access_values.base_credit_value', 'archetype_access_values.vote_count');
 
         // Apply search filter if needed
         if (!empty($search)) {
@@ -176,6 +181,7 @@ class ArchetypeController extends Controller
             ->leftJoin('archetype_usage', 'archetypes.id', '=', 'archetype_usage.archetype_id')
             ->leftJoin('usages', 'archetype_usage.usage_id', '=', 'usages.id')
             ->leftJoin('items', 'items.archetype_id', '=', 'archetypes.id')
+            ->leftJoin('archetype_access_values', 'archetypes.id', '=', 'archetype_access_values.archetype_id')
             ->select(
                 'archetypes.id',
                 'archetypes.name',
@@ -184,6 +190,9 @@ class ArchetypeController extends Controller
                 'archetypes.notes',
                 'archetypes.code',
                 'archetypes.resource',
+                DB::raw('COALESCE(archetype_access_values.current_daily_rate, ' . ArchetypeAccessValue::DEFAULT_DAILY_RATE . ') as current_daily_rate'),
+                DB::raw('COALESCE(archetype_access_values.base_credit_value, ' . ArchetypeAccessValue::DEFAULT_DAILY_RATE . ') as base_credit_value'),
+                DB::raw('COALESCE(archetype_access_values.vote_count, 0) as vote_count'),
                 DB::raw('GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC SEPARATOR ", ") as categories'),
                 DB::raw('GROUP_CONCAT(DISTINCT categories.id ORDER BY categories.id ASC SEPARATOR ", ") as category_ids'),
                 DB::raw('GROUP_CONCAT(DISTINCT usages.name ORDER BY usages.name ASC SEPARATOR ", ") as usages'),
@@ -198,7 +207,10 @@ class ArchetypeController extends Controller
             'archetypes.description',
             'archetypes.notes',
             'archetypes.code',
-            'archetypes.resource'
+            'archetypes.resource',
+            'archetype_access_values.current_daily_rate',
+            'archetype_access_values.base_credit_value',
+            'archetype_access_values.vote_count'
         );
 
         // Apply search filter if needed

@@ -57,6 +57,10 @@ Route::get('/itc', function () {
     return Inertia::render('ItcDashboard');
 })->middleware(['auth', 'verified'])->name('itc');
 
+Route::get('/itc/info', function () {
+    return Inertia::render('ItcInfo');
+})->middleware(['auth', 'verified'])->name('itc.info');
+
 Route::get('/credit-voting', function () {
     return Inertia::render('CreditVoting');
 })->middleware(['auth', 'verified'])->name('credit-voting');
@@ -140,20 +144,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Credit Vote Routes
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Cast vote
+    // Cast vote (now for archetypes)
     Route::post('/votes', [CreditVoteController::class, 'store'])->name('votes.store');
     
-    // Get item votes
-    Route::get('/items/{itemId}/votes', [CreditVoteController::class, 'itemVotes'])->name('votes.item');
+    // Get archetype votes
+    Route::get('/archetypes/{archetypeId}/votes', [CreditVoteController::class, 'archetypeVotes'])->name('votes.archetype');
     
-    // Get user's vote for item
-    Route::get('/items/{itemId}/my-vote', [CreditVoteController::class, 'userVote'])->name('votes.user');
+    // Get user's vote for archetype
+    Route::get('/archetypes/{archetypeId}/my-vote', [CreditVoteController::class, 'userVote'])->name('votes.user');
     
     // Get user's all votes
     Route::get('/votes/my-votes', [CreditVoteController::class, 'myVotes'])->name('votes.my');
     
-    // Check if can vote
-    Route::get('/items/{itemId}/can-vote', [CreditVoteController::class, 'canVote'])->name('votes.can-vote');
+    // Check if can vote on archetype
+    Route::get('/archetypes/{archetypeId}/can-vote', [CreditVoteController::class, 'canVote'])->name('votes.can-vote');
 });
 
 // Message Routes

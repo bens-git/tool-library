@@ -51,6 +51,22 @@ class RentalController extends Controller
 
         $itemId = $request->input('item.id');
 
+        // Get the item to check ownership
+        $item = Item::find($itemId);
+        
+        if (!$item) {
+            return response()->json([
+                'message' => 'Item not found.'
+            ], 404);
+        }
+
+        // Prevent users from renting their own items
+        if ($item->owned_by === Auth::id()) {
+            return response()->json([
+                'message' => 'You cannot rent your own item.'
+            ], 422);
+        }
+
         // Check if item is already rented (has an active rental)
         $existingRental = Rental::where('item_id', $itemId)
             ->where('status', '!=', 'completed')

@@ -33,12 +33,13 @@ class ItemController extends Controller
         $search = $request->query('search', '');
         $itemsPerPage = $request->query('itemsPerPage', 9);
         $page = $request->query('page', 1);
+        $getAll = $request->query('get_all', false);
 
         // Check if any search filter is active
         $hasFilters = $brandId || $archetypeId || $userId || $categoryId || $usageId || $search;
 
-        // If no filters, return empty response
-        if (!$hasFilters) {
+        // If no filters and not requesting all, return empty response
+        if (!$hasFilters && !$getAll) {
             return response()->json([
                 'data' => [],
                 'total' => 0,

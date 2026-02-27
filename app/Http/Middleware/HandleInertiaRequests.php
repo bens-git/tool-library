@@ -30,7 +30,11 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        // Refresh the user to get latest data from database
         $user = $request->user();
+        if ($user) {
+            $user->refresh();
+        }
         
         $notifications = [
             'unread_messages' => 0,
@@ -45,7 +49,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
             ],
             'notifications' => $notifications,
             'csrfToken' => csrf_token(),
