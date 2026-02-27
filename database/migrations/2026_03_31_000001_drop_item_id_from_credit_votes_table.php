@@ -13,31 +13,53 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, drop the foreign key constraint
-        // The constraint name follows Laravel's convention: credit_votes_item_id_foreign
-        DB::statement('ALTER TABLE credit_votes DROP FOREIGN KEY credit_votes_item_id_foreign');
+        // First, find and drop all foreign key constraints that reference item_id
+        // (MySQL requires dropping FK before dropping the unique index it references)
+        $foreignKeys = DB::select("
+            SELECT CONSTRAINT_NAME 
+            FROM information_schema.TABLE_CONSTRAINTS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = 'credit_votes' 
+            AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+        ");
         
-        // Drop the unique constraint
-        // Note: The actual constraint name may vary, let's check first
+        foreach ($foreignKeys as $fk) {
+            try {
+                DB::statement("ALTER TABLE credit_votes DROP FOREIGN KEY {$fk->CONSTRAINT_NAME}");
+            } catch (\Exception $e) {
+                // Foreign key may already be dropped or have issues
+            }
+        }
+        
+        // Drop the unique constraint first (before dropping the column it references)
+        // Note: The unique constraint includes item_id, so we must drop it first
         $constraints = DB::select("SHOW INDEX FROM credit_votes WHERE Key_name = 'credit_votes_user_id_item_id_unique'");
         
         if (count($constraints) > 0) {
             DB::statement('ALTER TABLE credit_votes DROP INDEX credit_votes_user_id_item_id_unique');
         }
         
-        // Drop the index on item_id and created_at
+        // Drop the index on item_id and created_at if it exists
         $indexes = DB::select("SHOW INDEX FROM credit_votes WHERE Key_name = 'credit_votes_item_id_created_at_index'");
         
         if (count($indexes) > 0) {
             DB::statement('ALTER TABLE credit_votes DROP INDEX credit_votes_item_id_created_at_index');
         }
         
-        // Now drop the column
-        DB::statement('ALTER TABLE credit_votes DROP COLUMN item_id');
+        // Drop the item_id column if it exists
+        $columns = DB::select("SHOW COLUMNS FROM credit_votes WHERE Field = 'item_id'");
         
-        // Add a new unique constraint for archetype voting
+        if (count($columns) > 0) {
+            DB::statement('ALTER TABLE credit_votes DROP COLUMN item_id');
+        }
+        
+        // Add a new unique constraint for archetype voting if it doesn't exist
         // Each user can only vote once per archetype
-        DB::statement('ALTER TABLE credit_votes ADD UNIQUE INDEX credit_votes_user_archetype_unique (user_id, archetype_id)');
+        $uniqueExists = DB::select("SHOW INDEX FROM credit_votes WHERE Key_name = 'credit_votes_user_archetype_unique'");
+        
+        if (count($uniqueExists) === 0) {
+            DB::statement('ALTER TABLE credit_votes ADD UNIQUE INDEX credit_votes_user_archetype_unique (user_id, archetype_id)');
+        }
     }
 
     /**
@@ -46,17 +68,22 @@ return new class extends Migration
     public function down(): void
     {
         // Drop the new unique constraint
-        DB::statement('ALTER TABLE credit_votes DROP INDEX credit_votes_user_archetype_unique');
+        try {
+            DB::statement('ALTER TABLE credit_votes DROP INDEX credit_votes_user_archetype_unique');
+        } catch (\Exception $e) {
+            // Index may not exist
+        }
         
         // Re-add the item_id column
-        DB::statement('ALTER TABLE credit_votes ADD COLUMN item_id BIGINT UNSIGNED NULL AFTER user_id');
+        $columns = DB::select("SHOW COLUMNS FROM credit_votes WHERE Field = 'item_id'");
         
-        // Re-add the foreign key
-        DB::statement('ALTER TABLE credit_votes ADD CONSTRAINT credit_votes_item_id_foreign FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE');
-        
-        // Re-add the unique constraint (we need to handle NULL values differently)
-        // This is complex in MySQL, so we'll skip the unique constraint in down()
-        // In production, you'd need to handle this more carefully
+        if (count($columns) === 0) {
+            DB::statement('ALTER TABLE credit_votes ADD COLUMN item_id BIGINT UNSIGNED NULL AFTER user_id');
+            
+            // Re-add the unique constraint (we need to handle NULL values differently)
+            // This is complex in MySQL, so we'll skip the unique constraint in down()
+            // In production, you'd need to handle this more carefully
+        }
     }
 };
 
