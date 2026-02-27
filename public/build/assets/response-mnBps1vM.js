@@ -1,1 +1,0 @@
-import{O as r}from"./app-CNC4IMbH.js";const n=r("response",{state:()=>({response:{success:!1,message:"",errors:[]}}),actions:{setResponse(s,e,o=[]){this.response={success:s,message:e,errors:o}},clearResponse(){this.response={success:!1,message:"",errors:[]}}}});export{n as u};

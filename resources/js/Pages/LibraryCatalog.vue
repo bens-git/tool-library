@@ -1,18 +1,28 @@
 <script setup>
+/* global IntersectionObserver */
 import PageLayout from '@/Layouts/PageLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import ItemDialog from '@/Pages/ItemDialog.vue';
 import AvailabilityDialog from '@/Pages/AvailabilityDialog.vue';
 import DeleteItemDialog from '@/Pages/DeleteItemDialog.vue';
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
 import _ from 'lodash';
 import api from '@/services/api';
 import { usePage } from '@inertiajs/vue3';
 
 const page = usePage();
 const user = page.props.auth.user;
-const items = ref([]);
-const totalItems = ref(0);
+
+// Search results state
+const items = ref([])
+const pageNumber = ref(1)
+const itemsPerPage = ref(9)
+const loading = ref(false)
+const hasMore = ref(true)
+const loadTrigger = ref(null)
+let observer = null
+
+// Filters
 const filters = ref({
     archetype: null,
     category: null,
@@ -21,10 +31,7 @@ const filters = ref({
     search: null,
     user_id: null,
 });
-const pageNumber = ref(1);
-const itemsPerPage = ref(9);
 const advancedSearch = ref(false);
-const hasSearchResults = ref(false);
 
 const toggleAdvancedSearch = () => (advancedSearch.value = !advancedSearch.value);
 
@@ -33,14 +40,19 @@ const autocompleteArchetypes = ref([]);
 const autocompleteBrands = ref([]);
 const autocompleteCategories = ref([]);
 const autocompleteUsages = ref([]);
-const featuredItems = ref([])
 
 const debounceSearch = _.debounce(() => {
     pageNumber.value = 1;
-    refreshItems();
+    items.value = [];
+    hasMore.value = true;
+    loadItems();
 }, 300);
 
-const refreshItems = async () => {
+const loadItems = async () => {
+    if (loading.value || !hasMore.value) return;
+    
+    loading.value = true;
+    
     const query = {
         page: pageNumber.value,
         itemsPerPage: itemsPerPage.value,
@@ -56,15 +68,39 @@ const refreshItems = async () => {
         query.user_id = filters.value.user_id;
     }
 
-    // Check if any search filter is active
-    hasSearchResults.value = !!(query.brand_id || query.archetype_id || query.usage_id || 
-        query.category_id || query.search || query.user_id);
+    try {
+        const response = await api.get(route('items.index'), {
+            params: query,
+        });
+        
+        const newItems = response.data.data || [];
+        const total = response.data.total || 0;
+        
+        // Append new items
+        items.value = [...items.value, ...newItems];
+        
+        // Check if there are more items
+        hasMore.value = items.value.length < total;
+        pageNumber.value++;
+    } catch (error) {
+        console.error('Error loading items:', error);
+    } finally {
+        loading.value = false;
+    }
+};
 
-    const response = await api.get(route('items.index'), {
-        params: query,
-    });
-    items.value = response.data.data;
-    totalItems.value = response.data.total;
+const setupIntersectionObserver = () => {
+    if (observer) observer.disconnect();
+    
+    observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && !loading.value && hasMore.value) {
+            loadItems();
+        }
+    }, { threshold: 0.1 });
+    
+    if (loadTrigger.value) {
+        observer.observe(loadTrigger.value);
+    }
 };
 
 const refreshAutocompleteArchetypes = async (query) => {
@@ -102,9 +138,10 @@ const debouncedAutocompleteBrandSearch = _.debounce(refreshAutocompleteBrands, 3
 const debouncedAutocompleteCategorySearch = _.debounce(refreshAutocompleteCategories, 300);
 const debouncedAutocompleteUsageSearch = _.debounce(refreshAutocompleteUsages, 300);
 
-// Load initial autocomplete values
+// Initial load
 onMounted(async () => {
-    refreshFeaturedItems();
+    loadItems();
+    setupIntersectionObserver();
     refreshAutocompleteArchetypes();
 
     watch(
@@ -119,10 +156,9 @@ onMounted(async () => {
     );
 });
 
-const refreshFeaturedItems = async () => {
-    const response = await api.get(route('items.featured'));
-    featuredItems.value = response.data.data;
-};
+onUnmounted(() => {
+    if (observer) observer.disconnect();
+});
 </script>
 
 <template>
@@ -220,42 +256,8 @@ const refreshFeaturedItems = async () => {
                     </div>
                 </v-expand-transition>
 
-                <!-- Featured Tools -->
-                <div v-if="featuredItems.length && !hasSearchResults" class="mt-6">
-                    <div class="text-h6 font-weight-bold mb-3">Featured Tools</div>
-
-                    <v-row>
-                        <v-col v-for="item in featuredItems" :key="item.id" cols="12" sm="6" md="4">
-                            <v-card class="pa-2" elevation="2">
-                                <v-img
-                                    v-if="item.images?.length"
-                                    :src="item.images[0].url"
-                                    height="180"
-                                    cover
-                                    lazy-src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTIeMmUyIi8+PC9zdmc+"
-                                />
-                                <v-icon v-else size="80" class="ma-4">mdi-image-off</v-icon>
-
-                                <v-card-title class="text-subtitle-1">
-                                    {{ item.archetype?.name }}
-                                </v-card-title>
-
-                                <v-card-subtitle>
-                                    {{ item.brand?.name }}
-                                </v-card-subtitle>
-
-                                <v-card-actions>
-                                    <ItemDialog :item="item" aim="view" />
-                                </v-card-actions>
-                            </v-card>
-                        </v-col>
-                    </v-row>
-                </div>
-
                 <!-- Search Results as Card Grid -->
-                <div v-if="hasSearchResults && items.length" class="mt-6">
-                    <div class="text-h6 font-weight-bold mb-3">Search Results</div>
-
+                <div class="mt-6">
                     <v-row>
                         <v-col v-for="item in items" :key="item.id" cols="12" sm="6" md="4">
                             <v-card class="pa-2" elevation="2">
@@ -292,19 +294,24 @@ const refreshFeaturedItems = async () => {
                         </v-col>
                     </v-row>
 
-                    <!-- Pagination -->
-                    <div class="d-flex justify-center mt-4">
-                        <v-pagination
-                            v-model="pageNumber"
-                            :length="Math.ceil(totalItems / itemsPerPage)"
-                            :total-visible="5"
-                            @update:model-value="refreshItems"
-                        />
+                    <!-- Load more trigger for infinite scroll -->
+                    <div ref="loadTrigger" class="text-center pa-4">
+                        <v-progress-circular
+                            v-if="loading"
+                            indeterminate
+                            color="primary"
+                        ></v-progress-circular>
+                        <p v-else-if="hasMore" class="text-grey">
+                            Scroll for more...
+                        </p>
+                        <p v-else-if="items.length" class="text-grey">
+                            No more tools
+                        </p>
                     </div>
                 </div>
 
                 <!-- No Results Message -->
-                <div v-if="hasSearchResults && !items.length" class="mt-6 text-center">
+                <div v-if="!items.length && !loading" class="mt-6 text-center">
                     <v-icon size="64" color="grey">mdi-magnify</v-icon>
                     <div class="text-h6 mt-2">No tools found</div>
                 </div>

@@ -1,0 +1,1 @@
+import{O as i,x as s,i as a}from"./app-Cl7cSYny.js";const r=i("loading",()=>{const e=a(0),n=s(()=>e.value>0);function o(){e.value++}function t(){e.value>0&&e.value--}return{isLoading:n,start:o,finish:t}});export{r as u};

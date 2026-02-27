@@ -35,17 +35,6 @@ class ItemController extends Controller
         $page = $request->query('page', 1);
         $getAll = $request->query('get_all', false);
 
-        // Check if any search filter is active
-        $hasFilters = $brandId || $archetypeId || $userId || $categoryId || $usageId || $search;
-
-        // If no filters and not requesting all, return empty response
-        if (!$hasFilters && !$getAll) {
-            return response()->json([
-                'data' => [],
-                'total' => 0,
-            ]);
-        }
-
         // Build the query with eager loading
         $query = Item::with(['archetype', 'brand', 'images', 'accessValue', 'archetype.categories', 'archetype.usages']);
 
@@ -359,22 +348,35 @@ class ItemController extends Controller
     }
 
     /**
-     * Get featured items - one per archetype (up to 6 unique archetypes)
+     * Get featured items - one per archetype, with pagination support
      */
-    public function featured(): AnonymousResourceCollection
+    public function featured(Request $request): AnonymousResourceCollection|JsonResponse
     {
+        $page = $request->query('page', 1);
+        $itemsPerPage = $request->query('itemsPerPage', 6);
+
         // Get distinct archetype IDs that have items with images AND a valid archetype
-        $archetypeIds = Item::whereHas('images')
+        $allArchetypeIds = Item::whereHas('images')
             ->whereHas('archetype')
             ->whereNotNull('archetype_id')
             ->distinct()
-            ->pluck('archetype_id');
+            ->pluck('archetype_id')
+            ->toArray();
 
-        // Shuffle and take up to 6 archetype IDs
-        $archetypeIdsArray = $archetypeIds->shuffle()->take(6)->toArray();
+        // Shuffle archetype IDs for randomness
+        shuffle($allArchetypeIds);
+
+        // Calculate pagination
+        $totalArchetypes = count($allArchetypeIds);
+        $archetypeIdsArray = array_slice($allArchetypeIds, ($page - 1) * $itemsPerPage, $itemsPerPage);
 
         if (empty($archetypeIdsArray)) {
-            return ItemResource::collection(collect([]));
+            return response()->json([
+                'data' => [],
+                'total' => $totalArchetypes,
+                'current_page' => $page,
+                'last_page' => ceil($totalArchetypes / $itemsPerPage),
+            ]);
         }
 
         // Get one random item per archetype
@@ -392,7 +394,12 @@ class ItemController extends Controller
             }
         }
 
-        return ItemResource::collection(collect($items));
+        return response()->json([
+            'data' => ItemResource::collection(collect($items))->resolve(),
+            'total' => $totalArchetypes,
+            'current_page' => $page,
+            'last_page' => ceil($totalArchetypes / $itemsPerPage),
+        ]);
     }
 
     public function getItemUnavailableDates($itemId)
