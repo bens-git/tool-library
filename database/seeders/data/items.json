@@ -8,7 +8,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -21,7 +20,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -34,7 +32,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -47,7 +44,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -60,7 +56,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -73,7 +68,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -86,7 +80,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -99,7 +92,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -112,7 +104,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -125,7 +116,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -138,7 +128,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -151,7 +140,6 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "1",
-
         "created_at": null,
         "updated_at": null
     },
@@ -177,7 +165,7 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "3",
-
+        "thumbnail_path": "images/20240917141504_1.jpg",
         "created_at": null,
         "updated_at": null
     },
@@ -203,7 +191,7 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "5",
-
+        "thumbnail_path": "images/20240926180415_1.jpg",
         "created_at": null,
         "updated_at": null
     },
@@ -255,7 +243,7 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "8",
-
+        "thumbnail_path": "images/20240917141206_1.jpg",
         "created_at": null,
         "updated_at": "2024-09-26 13:23:05"
     },
@@ -1023,7 +1011,7 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "63",
-
+        "thumbnail_path": "images/20240917141332_1.jpg",
         "created_at": null,
         "updated_at": null
     },
@@ -1036,7 +1024,7 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "64",
-
+        "thumbnail_path": "images/20240917141317_1.jpg",
         "created_at": null,
         "updated_at": null
     },
@@ -1049,7 +1037,7 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "65",
-
+        "thumbnail_path": "images/20240926173252_1.jpg",
         "created_at": null,
         "updated_at": null
     },
@@ -1309,7 +1297,7 @@
         "manufactured_at": null,
         "owned_by": "1",
         "archetype_id": "84",
-
+        "thumbnail_path": "images/20240917141405_1.jpg",
         "created_at": null,
         "updated_at": null
     },
@@ -1868,7 +1856,7 @@
         "manufactured_at": null,
         "owned_by": "2",
         "archetype_id": "67",
-
+        "thumbnail_path": "images/20250301192509_2.jpg",
         "created_at": null,
         "updated_at": "2025-03-01 14:24:59"
     },
@@ -1920,7 +1908,7 @@
         "manufactured_at": null,
         "owned_by": "2",
         "archetype_id": "105",
-
+        "thumbnail_path": "images/20241226222423_2.jpg",
         "created_at": "2024-12-26 17:17:58",
         "updated_at": "2024-12-26 17:28:05"
     },
@@ -1933,7 +1921,7 @@
         "manufactured_at": null,
         "owned_by": "2",
         "archetype_id": "106",
-
+        "thumbnail_path": "images/20241226223816_2.jpg",
         "created_at": "2024-12-26 17:38:16",
         "updated_at": "2024-12-26 17:39:57"
     },
@@ -1946,7 +1934,7 @@
         "manufactured_at": null,
         "owned_by": "2",
         "archetype_id": "106",
-
+        "thumbnail_path": "images/20241226223857_2.jpg",
         "created_at": "2024-12-26 17:38:57",
         "updated_at": "2024-12-26 17:40:04"
     },
@@ -1959,7 +1947,7 @@
         "manufactured_at": null,
         "owned_by": "2",
         "archetype_id": "106",
-
+        "thumbnail_path": "images/20241226223921_2.jpg",
         "created_at": "2024-12-26 17:39:21",
         "updated_at": "2024-12-26 17:39:21"
     },
@@ -1972,7 +1960,7 @@
         "manufactured_at": null,
         "owned_by": "2",
         "archetype_id": "106",
-
+        "thumbnail_path": "images/20241227173144_2.jpg",
         "created_at": "2024-12-27 12:31:44",
         "updated_at": "2024-12-27 12:36:23"
     },
@@ -1985,7 +1973,7 @@
         "manufactured_at": null,
         "owned_by": "2",
         "archetype_id": "106",
-
+        "thumbnail_path": "images/20241227173316_2.jpg",
         "created_at": "2024-12-27 12:32:59",
         "updated_at": "2024-12-27 12:34:17"
     },
@@ -1998,7 +1986,7 @@
         "manufactured_at": null,
         "owned_by": "2",
         "archetype_id": "110",
-
+        "thumbnail_path": "images/20250330173255_2.jpg",
         "created_at": "2025-03-30 11:28:12",
         "updated_at": "2025-03-30 13:32:51"
     },
@@ -2011,7 +1999,7 @@
         "manufactured_at": null,
         "owned_by": "2",
         "archetype_id": "112",
-
+        "thumbnail_path": "images/20250330215317_2.jpg",
         "created_at": "2025-03-30 17:53:13",
         "updated_at": "2025-03-30 17:53:23"
     }
