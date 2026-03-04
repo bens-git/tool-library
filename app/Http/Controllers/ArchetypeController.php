@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Archetype;
 use App\Models\ArchetypeAccessValue;
 use App\Models\Item;
-use App\Models\Usage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,12 +31,7 @@ class ArchetypeController extends Controller
 
         // Base query for data
         $query = Archetype::query()
-            ->leftJoin('archetype_category', 'archetypes.id', '=', 'archetype_category.archetype_id')
-            ->leftJoin('categories', 'archetype_category.category_id', '=', 'categories.id')
-            ->leftJoin('archetype_usage', 'archetypes.id', '=', 'archetype_usage.archetype_id')
-            ->leftJoin('usages', 'archetype_usage.usage_id', '=', 'usages.id')
             ->leftJoin('items', 'items.archetype_id', '=', 'archetypes.id')
-            ->leftJoin('brands', 'items.brand_id', '=', 'brands.id')
             ->leftJoin('users as owner', 'items.owned_by', '=', 'owner.id')
             ->leftJoin('archetype_access_values', 'archetypes.id', '=', 'archetype_access_values.archetype_id');
 
@@ -53,21 +47,16 @@ class ArchetypeController extends Controller
             'archetypes.id',
             'archetypes.name',
             'archetypes.created_by',
+            'archetypes.resource',
             DB::raw('COALESCE(archetype_access_values.current_daily_rate, ' . ArchetypeAccessValue::DEFAULT_DAILY_RATE . ') as current_daily_rate'),
             DB::raw('COALESCE(archetype_access_values.base_credit_value, ' . ArchetypeAccessValue::DEFAULT_DAILY_RATE . ') as base_credit_value'),
             DB::raw('COALESCE(archetype_access_values.vote_count, 0) as vote_count'),
-            DB::raw('GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC SEPARATOR ", ") as categories'),
-            DB::raw('GROUP_CONCAT(DISTINCT categories.id ORDER BY categories.id ASC SEPARATOR ", ") as category_ids'),
-            DB::raw('GROUP_CONCAT(DISTINCT usages.name ORDER BY usages.name ASC SEPARATOR ", ") as usages'),
-            DB::raw('GROUP_CONCAT(DISTINCT usages.id ORDER BY usages.id ASC SEPARATOR ", ") as usage_ids'),
-            DB::raw('GROUP_CONCAT(DISTINCT brands.name ORDER BY brands.name ASC SEPARATOR ", ") as brand_names'),
-            DB::raw('GROUP_CONCAT(DISTINCT brands.id ORDER BY brands.id ASC SEPARATOR ", ") as brand_ids'),
             DB::raw('COUNT(DISTINCT CASE WHEN rentals.id IS NULL THEN items.id END) as available_item_count'),
             DB::raw('COUNT(DISTINCT CASE WHEN rentals.id IS NOT NULL THEN rentals.item_id END) as rented_item_count'),
             DB::raw('GROUP_CONCAT(DISTINCT items.id ORDER BY items.owned_by ASC SEPARATOR ", ") as item_ids')
         );
 
-        $query->groupBy('archetypes.id', 'archetypes.name', 'archetypes.created_by', 'archetype_access_values.current_daily_rate', 'archetype_access_values.base_credit_value', 'archetype_access_values.vote_count');
+        $query->groupBy('archetypes.id', 'archetypes.name', 'archetypes.created_by', 'archetypes.resource', 'archetype_access_values.current_daily_rate', 'archetype_access_values.base_credit_value', 'archetype_access_values.vote_count');
 
         // Apply search filter if needed
         if (!empty($search)) {
@@ -81,21 +70,6 @@ class ArchetypeController extends Controller
         if ($request->path() == 'api/user/archetypes') {
             $user = $request->user();
             $query->where('archetypes.created_by', $user->id);
-        }
-
-        // Apply category filter if provided
-        if ($request->filled('categoryId')) {
-            $query->where('archetype_category.category_id', '=', $request->input('categoryId'));
-        }
-
-        // Apply usage filter if provided
-        if ($request->filled('usageId')) {
-            $query->where('archetype_usage.usage_id', '=', $request->input('usageId'));
-        }
-
-        // Apply brand filter if provided
-        if ($request->filled('brandId')) {
-            $query->where('items.brand_id', '=', $request->input('brandId'));
         }
 
         // Apply archetype filter if provided
@@ -119,23 +93,21 @@ class ArchetypeController extends Controller
 
         $archetypeIds = array_column($archetypesArray, 'id');
 
-        // Fetch random item images for archetypes missing archetype images
-        $itemImages = DB::table('item_images')
-            ->select('items.archetype_id', DB::raw('MIN(item_images.id) as id'), DB::raw('MIN(item_images.path) as path'))
-            ->join('items', 'items.id', '=', 'item_images.item_id')
-            ->whereIn('items.archetype_id', $archetypeIds)
-            ->groupBy('items.archetype_id')
+        // Fetch random item thumbnails for archetypes missing archetype images
+        $itemThumbnails = Item::whereIn('archetype_id', $archetypeIds)
+            ->whereNotNull('thumbnail_path')
+            ->select('archetype_id', 'thumbnail_path')
             ->inRandomOrder()
             ->get()
-            ->keyBy('archetype_id');
+            ->groupBy('archetype_id');
 
         $images = [];
-        foreach ($itemImages as $archetypeId => $image) {
+        foreach ($itemThumbnails as $archetypeId => $items) {
             if (!isset($images[$archetypeId])) {
+                $firstItem = $items->first();
                 $images[$archetypeId] = [
                     [
-                        'id' => $image->id,
-                        'path' => '/storage/' . $image->path
+                        'path' => '/storage/' . $firstItem->thumbnail_path
                     ]
                 ];
             }
@@ -167,19 +139,13 @@ class ArchetypeController extends Controller
     {
         // Get request parameters
         $page = $request->input('page', 1);
-        $itemsPerPage = $request->input('itemsPerPage', 10);
+        $itemsPerPage = $request->input('itemsPerPage', -1); // Default to all for autocomplete
         $sortBy = $request->input('sortBy');
         $search = $request->input('search');
         $resource = $request->input('resource');
-        $categoryId = $request->input('categoryId');
-        $usageId = $request->input('usageId');
 
         // Base query for data
         $query = Archetype::query()
-            ->leftJoin('archetype_category', 'archetypes.id', '=', 'archetype_category.archetype_id')
-            ->leftJoin('categories', 'archetype_category.category_id', '=', 'categories.id')
-            ->leftJoin('archetype_usage', 'archetypes.id', '=', 'archetype_usage.archetype_id')
-            ->leftJoin('usages', 'archetype_usage.usage_id', '=', 'usages.id')
             ->leftJoin('items', 'items.archetype_id', '=', 'archetypes.id')
             ->leftJoin('archetype_access_values', 'archetypes.id', '=', 'archetype_access_values.archetype_id')
             ->select(
@@ -193,10 +159,6 @@ class ArchetypeController extends Controller
                 DB::raw('COALESCE(archetype_access_values.current_daily_rate, ' . ArchetypeAccessValue::DEFAULT_DAILY_RATE . ') as current_daily_rate'),
                 DB::raw('COALESCE(archetype_access_values.base_credit_value, ' . ArchetypeAccessValue::DEFAULT_DAILY_RATE . ') as base_credit_value'),
                 DB::raw('COALESCE(archetype_access_values.vote_count, 0) as vote_count'),
-                DB::raw('GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC SEPARATOR ", ") as categories'),
-                DB::raw('GROUP_CONCAT(DISTINCT categories.id ORDER BY categories.id ASC SEPARATOR ", ") as category_ids'),
-                DB::raw('GROUP_CONCAT(DISTINCT usages.name ORDER BY usages.name ASC SEPARATOR ", ") as usages'),
-                DB::raw('GROUP_CONCAT(DISTINCT usages.id ORDER BY usages.id ASC SEPARATOR ", ") as usage_ids'),
                 DB::raw('GROUP_CONCAT(DISTINCT items.id ORDER BY items.owned_by ASC SEPARATOR ", ") as item_ids'),
             );
 
@@ -226,18 +188,6 @@ class ArchetypeController extends Controller
             });
         }
 
-        if (!empty($categoryId)) {
-            $query->where(function ($query) use ($categoryId) {
-                $query->where('archetype_category.category_id', '=',  $categoryId);
-            });
-        }
-
-        if (!empty($usageId)) {
-            $query->where(function ($query) use ($usageId) {
-                $query->where('archetype_usage.usage_id', '=',  $usageId);
-            });
-        }
-
         // Check if the path is 'me/items' and filter by user if so
         if ($request->path() == 'api/me/archetypes') {
             $user = $request->user();
@@ -255,7 +205,7 @@ class ArchetypeController extends Controller
         }
 
         // Apply pagination
-        if ($request->itemsPerPage == -1) {
+        if ($itemsPerPage == -1) {
             $archetypesArray = $query->get()->toArray();
             $totalCount = count($archetypesArray);
         } else {
@@ -265,6 +215,14 @@ class ArchetypeController extends Controller
         }
 
         $archetypeIds = array_column($archetypesArray, 'id');
+
+        // Handle empty results
+        if (empty($archetypeIds)) {
+            return response()->json([
+                'total' => 0,
+                'data' => []
+            ]);
+        }
 
         // Fetch the archetype images
         $archetypeImages = DB::table('archetype_images')
@@ -276,17 +234,15 @@ class ArchetypeController extends Controller
         // Determine which archetypes are missing images
         $archetypesMissingImages = array_diff($archetypeIds, array_keys($archetypeImages->toArray()));
 
-        // Fetch random item images for archetypes missing archetype images
-        $itemImages = DB::table('item_images')
-            ->select('items.archetype_id', DB::raw('MIN(item_images.id) as id'), DB::raw('MIN(item_images.path) as path'))
-            ->join('items', 'items.id', '=', 'item_images.item_id')
-            ->whereIn('items.archetype_id', $archetypesMissingImages)
-            ->groupBy('items.archetype_id')
+        // Fetch random item thumbnails for archetypes missing archetype images
+        $itemThumbnails = Item::whereIn('archetype_id', $archetypesMissingImages)
+            ->whereNotNull('thumbnail_path')
+            ->select('archetype_id', 'thumbnail_path')
             ->inRandomOrder()
             ->get()
-            ->keyBy('archetype_id');
+            ->groupBy('archetype_id');
 
-        // Combine both archetype images and item images
+        // Combine both archetype images and item thumbnails
         $combinedImages = $archetypeImages->mapWithKeys(function ($imageGroup, $archetypeId) {
             return [
                 $archetypeId => $imageGroup->map(function ($image) {
@@ -298,13 +254,13 @@ class ArchetypeController extends Controller
             ];
         });
 
-        // Merge in the item images where archetype images are missing
-        foreach ($itemImages as $archetypeId => $image) {
+        // Merge in the item thumbnails where archetype images are missing
+        foreach ($itemThumbnails as $archetypeId => $items) {
             if (!isset($combinedImages[$archetypeId])) {
+                $firstItem = $items->first();
                 $combinedImages[$archetypeId] = collect([
                     [
-                        'id' => $image->id,
-                        'path' => '/storage/' . $image->path
+                        'path' => '/storage/' . $firstItem->thumbnail_path
                     ]
                 ]);
             }
@@ -329,7 +285,7 @@ class ArchetypeController extends Controller
      */
     public function show($id)
     {
-        $archetype = Archetype::with(['categories', 'usages'])->findOrFail($id);
+        $archetype = Archetype::findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -345,44 +301,19 @@ class ArchetypeController extends Controller
      */
     public function store(Request $request)
     {
-        // Preprocess the inputs to convert comma-separated strings into arrays
-        if ($request->has('category_ids') && is_string($request->input('category_ids'))) {
-            $request->merge([
-                'category_ids' => array_map('intval', explode(',', $request->input('category_ids')))
-            ]);
-        }
-
-        if ($request->has('usage_ids') && is_string($request->input('usage_ids'))) {
-            $request->merge([
-                'usage_ids' => array_map('intval', explode(',', $request->input('usage_ids')))
-            ]);
-        }
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:archetypes',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'description' => 'nullable|string|max:1000',
             'notes' => 'nullable|string|max:1000',
             'code' => 'nullable|string|max:255',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'integer|exists:categories,id',
             'resource' => 'nullable|string',
-            'usage_ids' => 'nullable|array',
-            'usage_ids.*' => 'integer|exists:usages,id',
         ]);
         $user = Auth::user();
 
         $validated['created_by'] = $user->id;
 
         $archetype = Archetype::create($validated);
-
-        // Attach categories and usages
-        if (isset($validated['category_ids'])) {
-            $archetype->categories()->attach($validated['category_ids']);
-        }
-
-        if (isset($validated['usage_ids'])) {
-            $archetype->usages()->attach($validated['usage_ids']);
-        }
 
         return response()->json(['success' => true, 'data' => $archetype, 'message' => 'Archetype created']);
     }
@@ -396,50 +327,19 @@ class ArchetypeController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // Preprocess the inputs to convert comma-separated strings into arrays
-        if ($request->has('categories') && is_string($request->input('category_ids'))) {
-            $request->merge([
-                'category_ids' => array_map('intval', explode(',', $request->input('category_ids')))
-            ]);
-        }
-
-        if ($request->has('usage_ids') && is_string($request->input('usage_ids'))) {
-            $request->merge([
-                'usage_ids' => array_map('intval', explode(',', $request->input('usage_ids')))
-            ]);
-        }
-
-        $archetype = $request->validate([
+        $validated = $request->validate([
             'name' => "required|string|max:255|unique:archetypes,name,{$id}",
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'description' => 'nullable|string|max:1000',
             'notes' => 'nullable|string|max:1000',
             'code' => 'nullable|string|max:255',
-            'categories'   => 'nullable|array',
-            'categories.*.id' => 'nullable|integer|exists:categories,id',
-            'usages'   => 'nullable|array',
-            'usages.*.id' => 'nullable|integer|exists:usages,id',
+            'resource' => 'nullable|string',
         ]);
 
-        $archetype = DB::transaction(function () use ($request, $id) {
+        $archetype = DB::transaction(function () use ($validated, $id) {
             $archetype = Archetype::findOrFail($id);
-            $archetype->fill($request->all());
+            $archetype->fill($validated);
             $archetype->save();
-
-            // Sync categories and usages
-            if (isset($request['categories']) && is_array($request['categories'])) {
-                $categoryIds = array_map(function ($category) {
-                    return $category['id'];
-                }, $request['categories']);
-                $archetype->categories()->sync($categoryIds);
-            }
-
-            if (isset($request['usages']) && is_array($request['usages'])) {
-                $usageIds = array_map(function ($usage) {
-                    return $usage['id'];
-                }, $request['usages']);
-                $archetype->usages()->sync($usageIds);
-            }
 
             return $archetype;
         });
@@ -470,25 +370,6 @@ class ArchetypeController extends Controller
         $archetype->delete();
 
         return response()->json(['success' => true, 'message' => 'Archetype deleted']);
-    }
-
-    // Fetch all usages
-    public function getUsages(Request $request)
-    {
-        $query = Usage::query();
-        $query->orderBy('name', 'ASC');
-
-        if ($request->path() == 'api/user/usages') {
-            $user = $request->user();
-            $query->where('created_by', $user->id);
-        }
-
-        $usages = $query->get();
-
-        return response()->json([
-            'count' => $usages->count(),
-            'data' => $usages
-        ]);
     }
 }
 

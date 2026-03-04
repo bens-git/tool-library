@@ -4,7 +4,7 @@
         <v-app-bar-nav-icon @click="drawer = !drawer" />
 
         <v-btn v-if="!mobile" :class="{ 'v-btn--active': isActive('/landing-page') }" to="/" text>
-            <v-icon size="32" color="primary">mdi-hammer</v-icon>
+            <v-icon size="32" color="primary">mdi-handshake</v-icon>
             <span class="logo-text">{{ appTitle }}</span>
         </v-btn>
 
@@ -147,7 +147,7 @@
                 block
                 @click="router.visit('/')"
             >
-                <v-icon color="primary">mdi-hammer</v-icon>
+                <v-icon color="primary">mdi-handshake</v-icon>
                 <span class="logo-text">{{ appTitle }}</span>
             </v-btn>
         </div>
@@ -247,16 +247,12 @@ onMounted(async () => {
 const setupLinks = () => {
     if (user) {
         drawerLinks.value = [
-            { text: 'My Loans', route: 'my-loans' },
-            { text: 'My Rentals', route: 'my-rentals' },
+            { text: 'My Usage', route: 'my-usage' },
+            { text: 'My Offerings', route: 'my-offerings' },
             { text: 'Messages', route: 'messages', icon: 'mdi-message' },
             { text: 'Community', route: 'community', icon: 'mdi-account-group' },
             { text: 'Time Credits', route: 'itc' },
             { text: 'Vote on Rates', route: 'credit-voting' },
-            { text: 'My Types', route: 'archetype-list' },
-            { text: 'My Categories', route: 'category-list' },
-            { text: 'My Usages', route: 'usage-list' },
-            { text: 'My Brands', route: 'brand-list' },
         ];
     } else {
         drawerLinks.value = [];

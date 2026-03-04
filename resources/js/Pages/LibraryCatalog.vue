@@ -3,9 +3,8 @@
 import PageLayout from '@/Layouts/PageLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import ItemDialog from '@/Pages/ItemDialog.vue';
-import AvailabilityDialog from '@/Pages/AvailabilityDialog.vue';
 import DeleteItemDialog from '@/Pages/DeleteItemDialog.vue';
-import { ref, onMounted, watch, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import _ from 'lodash';
 import api from '@/services/api';
 import { usePage } from '@inertiajs/vue3';
@@ -24,23 +23,29 @@ let observer = null
 
 // Filters
 const filters = ref({
-    archetype: null,
-    category: null,
-    usage: null,
-    brand: null,
     search: null,
     user_id: null,
+    resource: null,
 });
-const advancedSearch = ref(false);
 
-const toggleAdvancedSearch = () => (advancedSearch.value = !advancedSearch.value);
+// Resource type options - comprehensive list for community sharing
+const resourceOptions = [
+    { title: 'All Types', value: null },
+    { title: 'Tools', value: 'TOOL', icon: 'mdi-tools' },
+    { title: 'Materials', value: 'MATERIAL', icon: 'mdi-cube' },
+    { title: 'Labor/Services', value: 'LABOR', icon: 'mdi-account-hard-hat' },
+    { title: 'Rideshare', value: 'RIDESHARE', icon: 'mdi-car' },
+    { title: 'Furniture', value: 'FURNITURE', icon: 'mdi-table-furniture' },
+    { title: 'Kitchen', value: 'KITCHEN', icon: 'mdi-blender' },
+    { title: 'Electronics', value: 'ELECTRONICS', icon: 'mdi-television' },
+    { title: 'Sports', value: 'SPORTS', icon: 'mdi-basketball' },
+    { title: 'Outdoor', value: 'OUTDOOR', icon: 'mdi-tent' },
+    { title: 'Party', value: 'PARTY', icon: 'mdi-party-popper' },
+    { title: 'Books', value: 'BOOKS', icon: 'mdi-book' },
+    { title: 'Other', value: 'OTHER', icon: 'mdi-dots-horizontal' },
+];
 
-// Autocomplete data
-const autocompleteArchetypes = ref([]);
-const autocompleteBrands = ref([]);
-const autocompleteCategories = ref([]);
-const autocompleteUsages = ref([]);
-
+// Debounced search for items (searches by archetype name)
 const debounceSearch = _.debounce(() => {
     pageNumber.value = 1;
     items.value = [];
@@ -56,11 +61,8 @@ const loadItems = async () => {
     const query = {
         page: pageNumber.value,
         itemsPerPage: itemsPerPage.value,
-        brand_id: filters.value.brand?.id,
-        archetype_id: filters.value?.archetype?.id,
-        usage_id: filters.value?.usage?.id,
-        category_id: filters.value?.category?.id,
         search: filters.value?.search,
+        resource: filters.value?.resource,
     };
 
     // Add user_id filter if "Show only my tools" is checked
@@ -103,62 +105,21 @@ const setupIntersectionObserver = () => {
     }
 };
 
-const refreshAutocompleteArchetypes = async (query) => {
-    if (query) {
-        const response = await api.get(route('archetypes.index'), {
-            params: { query },
-        });
-        autocompleteArchetypes.value = response.data.data;
-    }
-};
-
-const refreshAutocompleteBrands = async (query) => {
-    const response = await api.get(route('brands.index'), {
-        params: { query },
-    });
-    autocompleteBrands.value = response.data.data;
-};
-
-const refreshAutocompleteCategories = async (query) => {
-    const response = await api.get(route('categories.index'), {
-        params: { query },
-    });
-    autocompleteCategories.value = response.data.data;
-};
-
-const refreshAutocompleteUsages = async (query) => {
-    const response = await api.get(route('usages.index'), {
-        params: { query },
-    });
-    autocompleteUsages.value = response.data.data;
-};
-
-const debouncedAutocompleteArchetypeSearch = _.debounce(refreshAutocompleteArchetypes, 300);
-const debouncedAutocompleteBrandSearch = _.debounce(refreshAutocompleteBrands, 300);
-const debouncedAutocompleteCategorySearch = _.debounce(refreshAutocompleteCategories, 300);
-const debouncedAutocompleteUsageSearch = _.debounce(refreshAutocompleteUsages, 300);
-
 // Initial load
 onMounted(async () => {
     loadItems();
     setupIntersectionObserver();
-    refreshAutocompleteArchetypes();
-
-    watch(
-        () => advancedSearch.value,
-        async (isAdvanced) => {
-            if (isAdvanced) {
-                refreshAutocompleteBrands();
-                refreshAutocompleteCategories();
-                refreshAutocompleteUsages();
-            }
-        }
-    );
 });
 
 onUnmounted(() => {
     if (observer) observer.disconnect();
 });
+
+// Handle item deleted from DeleteItemDialog
+const handleItemDeleted = (deletedItemId) => {
+    // Remove the deleted item from the items array
+    items.value = items.value.filter(item => item.id !== deletedItemId);
+};
 </script>
 
 <template>
@@ -169,92 +130,47 @@ onUnmounted(() => {
             <div style="width: 100%">
                 <!-- Header -->
                 <div class="d-flex justify-space-between align-center mb-4">
-                    <div class="text-h5 font-weight-bold">Tools</div>
-                    <div>
-                        <v-btn size="small" variant="outlined" @click="toggleAdvancedSearch">
-                            {{ advancedSearch ? 'Hide Advanced' : 'Advanced Search' }}
-                        </v-btn>
-                        <ItemDialog v-if="user" aim="create" class="ml-2" />
-                    </div>
+                    <div class="text-h5 font-weight-bold">Catalog</div>
+                    <ItemDialog v-if="user" aim="create" />
                 </div>
 
-                <!-- Main search -->
-                <v-autocomplete
-                    v-model="filters.archetype"
-                    density="compact"
-                    :items="autocompleteArchetypes"
-                    label="Search"
-                    item-title="name"
-                    item-value="id"
-                    hide-no-data
-                    hide-details
-                    return-object
-                    clearable
-                    @update:model-value="debounceSearch"
-                    @update:search="debouncedAutocompleteArchetypeSearch"
-                />
-
-                <!-- Advanced filters -->
-                <v-expand-transition>
-                    <div v-if="advancedSearch" class="mb-2">
-                        <div v-if="user">
-                            <v-checkbox
-                                v-model="filters.user_id"
-                                :true-value="user?.id"
-                                :false-value="null"
-                                label="Show only my tools"
-                                hide-details
-                                density="compact"
-                                @update:model-value="debounceSearch"
-                            />
-                        </div>
-
-                        <v-autocomplete
-                            v-model="filters.brand"
+                <!-- Search and Filters -->
+                <v-row class="mb-2">
+                    <v-col cols="12" md="8">
+                        <v-text-field
+                            v-model="filters.search"
                             density="compact"
-                            :items="autocompleteBrands"
-                            label="Brand"
-                            item-title="name"
-                            item-value="id"
-                            hide-no-data
+                            label="Search items..."
                             hide-details
-                            return-object
                             clearable
                             @update:model-value="debounceSearch"
-                            @update:search="debouncedAutocompleteBrandSearch"
+                            @click:clear="filters.search = null; debounceSearch();"
                         />
-
-                        <v-autocomplete
-                            v-model="filters.category"
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <v-select
+                            v-model="filters.resource"
+                            :items="resourceOptions"
+                            label="Type"
                             density="compact"
-                            :items="autocompleteCategories"
-                            label="Category"
-                            item-title="name"
-                            item-value="id"
-                            hide-no-data
                             hide-details
-                            return-object
                             clearable
                             @update:model-value="debounceSearch"
-                            @update:search="debouncedAutocompleteCategorySearch"
                         />
+                    </v-col>
+                </v-row>
 
-                        <v-autocomplete
-                            v-model="filters.usage"
-                            density="compact"
-                            :items="autocompleteUsages"
-                            label="Usage"
-                            item-title="name"
-                            item-value="id"
-                            hide-no-data
-                            hide-details
-                            return-object
-                            clearable
-                            @update:model-value="debounceSearch"
-                            @update:search="debouncedAutocompleteUsageSearch"
-                        />
-                    </div>
-                </v-expand-transition>
+                <div v-if="user" class="mb-4">
+                    <v-checkbox
+                        v-model="filters.user_id"
+                        :true-value="user?.id"
+                        :false-value="null"
+                        label="Show only my items"
+                        hide-details
+                        density="compact"
+                        @update:model-value="debounceSearch"
+                    />
+                </div>
 
                 <!-- Search Results as Card Grid -->
                 <div class="mt-6">
@@ -262,8 +178,8 @@ onUnmounted(() => {
                         <v-col v-for="item in items" :key="item.id" cols="12" sm="6" md="4">
                             <v-card class="pa-2" elevation="2">
                                 <v-img
-                                    v-if="item.images?.length"
-                                    :src="item.images[0].url"
+                                    v-if="item.thumbnail_url"
+                                    :src="item.thumbnail_url"
                                     height="180"
                                     cover
                                     lazy-src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTIeMmUyIi8+PC9zdmc+"
@@ -274,20 +190,21 @@ onUnmounted(() => {
                                     {{ item.archetype?.name }}
                                 </v-card-title>
 
-                                <v-card-subtitle>
-                                    {{ item.brand?.name }}
-                                </v-card-subtitle>
-
                                 <v-card-actions class="flex-wrap">
                                     <div class="d-flex flex-wrap ga-2" style="width: 100%">
-                                        <AvailabilityDialog v-if="user && item.owned_by === user.id" :item="item" />
                                         <ItemDialog
                                             v-if="user && item.owned_by === user.id"
                                             :item="item"
                                             aim="edit"
+                                            icon-only
                                         />
                                         <ItemDialog v-if="!user || item.owned_by !== user.id" :item="item" aim="view" />
-                                        <DeleteItemDialog v-if="user && item.owned_by === user.id" :item="item" />
+                                        <DeleteItemDialog 
+                                            v-if="user && item.owned_by === user.id" 
+                                            :item="item" 
+                                            icon-only
+                                            @deleted="handleItemDeleted"
+                                        />
                                     </div>
                                 </v-card-actions>
                             </v-card>
@@ -305,7 +222,7 @@ onUnmounted(() => {
                             Scroll for more...
                         </p>
                         <p v-else-if="items.length" class="text-grey">
-                            No more tools
+                            No more items
                         </p>
                     </div>
                 </div>
@@ -313,7 +230,7 @@ onUnmounted(() => {
                 <!-- No Results Message -->
                 <div v-if="!items.length && !loading" class="mt-6 text-center">
                     <v-icon size="64" color="grey">mdi-magnify</v-icon>
-                    <div class="text-h6 mt-2">No tools found</div>
+                    <div class="text-h6 mt-2">No items found</div>
                 </div>
             </div>
         </v-container>

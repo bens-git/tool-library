@@ -1,18 +1,21 @@
 <?php
 
 use App\Http\Controllers\ArchetypeController;
-use App\Http\Controllers\BrandController;
-use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CreditVoteController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ItcController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RentalController;
-use App\Http\Controllers\UsageController;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+// Customize redirect for authenticated users - go to library-catalog instead of home
+RedirectIfAuthenticated::redirectUsing(function ($request) {
+    return route('library-catalog');
+});
 
 Route::get('/', function () {
     return Inertia::render('LandingPage', [
@@ -38,19 +41,15 @@ Route::get('/library-catalog', function () {
     return Inertia::render('LibraryCatalog');
 })->middleware(['auth', 'verified'])->name('library-catalog');
 
-Route::get('/archetype-list', function () {
-    return Inertia::render('ArchetypeList');
-})->middleware(['auth', 'verified'])->name('archetype-list');
 
 
+Route::get('/my-offerings', function () {
+    return Inertia::render('MyOfferings');
+})->middleware(['auth', 'verified'])->name('my-offerings');
 
-Route::get('/my-rentals', function () {
-    return Inertia::render('MyRentals');
-})->middleware(['auth', 'verified'])->name('my-rentals');
-
-Route::get('/my-loans', function () {
-    return Inertia::render('MyLoans');
-})->middleware(['auth', 'verified'])->name('my-loans');
+Route::get('/my-usage', function () {
+    return Inertia::render('MyUsage');
+})->middleware(['auth', 'verified'])->name('my-usage');
 
 // ITC Pages
 Route::get('/itc', function () {
@@ -79,13 +78,25 @@ Route::get('/archetypes', [ArchetypeController::class, 'index'])
     ->middleware(['auth'])
     ->name('archetypes.index');
 
-Route::middleware('auth')->group(function () {
-    Route::resource('brands', BrandController::class);
-});
+Route::get('/archetypes/resources', [ArchetypeController::class, 'getResources'])
+    ->middleware(['auth'])
+    ->name('archetypes.resources');
 
-Route::middleware('auth')->group(function () {
-    Route::resource('categories', CategoryController::class);
-});
+Route::post('/archetypes', [ArchetypeController::class, 'store'])
+    ->middleware(['auth'])
+    ->name('archetypes.store');
+
+Route::get('/archetypes/{id}', [ArchetypeController::class, 'show'])
+    ->middleware(['auth'])
+    ->name('archetypes.show');
+
+Route::put('/archetypes/{id}', [ArchetypeController::class, 'update'])
+    ->middleware(['auth'])
+    ->name('archetypes.update');
+
+Route::delete('/archetypes/{id}', [ArchetypeController::class, 'destroy'])
+    ->middleware(['auth'])
+    ->name('archetypes.destroy');
 
 Route::middleware('auth')->group(function () {
     Route::resource('items', ItemController::class);
@@ -95,8 +106,6 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/items/{itemId}/is-rented', [RentalController::class, 'isItemRented'])
         ->name('item.is-rented');
-    Route::get('/items/{itemId}/unavailable-dates', [ItemController::class, 'getItemUnavailableDates'])
-        ->name('item.index-unavailable-dates');
     Route::post('/items/{itemId}/images', [ItemController::class, 'storeImage'])
         ->name('item-images.store');
 });
@@ -106,13 +115,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('rentals', RentalController::class);
 });
 
-Route::middleware('auth')->group(function () {
-    Route::resource('usages', UsageController::class);
-});
-
 Route::middleware(['auth'])->group(function () {
     Route::get('/me/rentals', [RentalController::class, 'index'])
         ->name('me.rentals.index');
+    
+    Route::get('/me/loans', [RentalController::class, 'getUserLoans'])
+        ->name('me.loans.index');
 });
 
 Route::middleware('auth')->group(function () {
@@ -185,3 +193,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 require __DIR__ . '/auth.php';
+
+// Catch-all route for non-existent routes - redirect to landing page
+Route::get('/{any}', function () {
+    return redirect('/');
+})->where('any', '.+');

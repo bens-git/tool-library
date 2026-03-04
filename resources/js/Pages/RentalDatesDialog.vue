@@ -16,8 +16,8 @@
             <v-card v-if="localItem">
                 <!-- Item Image -->
                 <v-img
-                    v-if="localItem.images?.length"
-                    :src="localItem.images[0].url"
+                    v-if="localItem.thumbnail_url"
+                    :src="localItem.thumbnail_url"
                     height="200"
                     cover
                     lazy-src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTIeMmUyIi8+PC9zdmc+"
@@ -39,25 +39,6 @@
                         </v-card>
                     </div>
 
-                    <!-- Unavailable Alert -->
-                    <v-alert 
-                        v-if="localItem.make_item_unavailable" 
-                        color="warning" 
-                        variant="tonal" 
-                        class="mb-4"
-                        density="compact"
-                    >
-                        This item is currently marked as unavailable
-                    </v-alert>
-
-                    <!-- Availability Status -->
-                    <div v-if="!localItem.make_item_unavailable && !isItemRented" class="mb-4">
-                        <v-chip color="success" variant="flat">
-                            <v-icon start icon="mdi-check"></v-icon>
-                            Available
-                        </v-chip>
-                    </div>
-
                     <!-- Already Rented Alert -->
                     <v-alert 
                         v-if="isItemRented" 
@@ -76,7 +57,7 @@
                     <v-spacer></v-spacer>
                     <v-btn text="Cancel" variant="plain" @click="dialog = false"></v-btn>
                     <v-btn
-                        v-if="!isItemRented && !localItem.make_item_unavailable"
+                        v-if="!isItemRented"
                         color="success"
                         text="Confirm Rental"
                         variant="tonal"

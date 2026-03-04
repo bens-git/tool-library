@@ -6,10 +6,10 @@
       <div class="text-center">
         <!-- Hero -->
         <div class="mb-8">
-          <v-icon size="72" color="primary" class="mb-2">mdi-hammer</v-icon>
+          <v-icon size="72" color="primary" class="mb-2">mdi-handshake</v-icon>
           <div class="text-h4 font-weight-bold mb-1">{{ appTitle }}</div>
           <div class="text-subtitle-1">
-            Borrow tools. Save money. Build community.
+            Share resources. Save money. Build community.
           </div>
         </div>
 
@@ -17,24 +17,24 @@
         <v-row density="comfortable" class="mb-8">
           <v-col cols="12" sm="4">
             <v-sheet class="pa-6 rounded-lg elevation-2" color="grey-lighten-4">
-              <v-icon size="20" color="primary" class="mb-2">mdi-tools</v-icon>
+              <v-icon size="20" color="primary" class="mb-2">mdi-handshake</v-icon>
               <div class="text-subtitle-1 font-weight-medium mb-1">
-                Borrow What You Need
+                Share & Borrow
               </div>
               <div class="text-body-2">
-                Access shared tools without the cost or storage hassle.
+                List your resources or borrow from neighbors. Everyone contributes, everyone benefits.
               </div>
             </v-sheet>
           </v-col>
 
           <v-col cols="12" sm="4">
             <v-sheet class="pa-6 rounded-lg elevation-2" color="grey-lighten-4">
-              <v-icon size="20" color="primary" class="mb-2">mdi-calendar-check</v-icon>
+              <v-icon size="20" color="primary" class="mb-2">mdi-clock-check</v-icon>
               <div class="text-subtitle-1 font-weight-medium mb-1">
-                Easy Reservations
+                Time Credits System
               </div>
               <div class="text-body-2">
-                See availability and reserve tools in seconds.
+                Earn credits by lending and spend them to borrow. Fair exchange for everyone.
               </div>
             </v-sheet>
           </v-col>
@@ -43,10 +43,10 @@
             <v-sheet class="pa-6 rounded-lg elevation-2" color="grey-lighten-4">
               <v-icon size="20" color="primary" class="mb-2">mdi-account-group</v-icon>
               <div class="text-subtitle-1 font-weight-medium mb-1">
-                Built for Communities
+                Community Driven
               </div>
               <div class="text-body-2">
-                Perfect for neighborhoods, co-ops, and libraries.
+                Connect with neighbors, vote on rates, and help shape your local sharing community.
               </div>
             </v-sheet>
           </v-col>
@@ -75,7 +75,7 @@ const user = page.props.auth.user
 
 
 // App title from env
-const appTitle = import.meta.env.VITE_APP_NAME || 'Community Tool Library'
+const appTitle = import.meta.env.VITE_APP_NAME || 'Community Resource Library'
 
 // Navigate based on login state
 function goNext() {

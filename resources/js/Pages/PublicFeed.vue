@@ -4,6 +4,9 @@ import { Head } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { router, usePage } from '@inertiajs/vue3';
+import { useResponseStore } from '@/Stores/response';
+
+const responseStore = useResponseStore();
 
 const page = usePage();
 const user = page.props.auth.user;
@@ -34,11 +37,13 @@ const createPost = async () => {
             body: newPost.value
         });
         
+        responseStore.setSuccess('Post created successfully');
         // Refresh posts to show the new one
         await fetchPosts();
         newPost.value = '';
     } catch (error) {
         console.error('Error creating post:', error);
+        responseStore.setError(error.response?.data?.message || 'Failed to create post');
     } finally {
         posting.value = false;
     }

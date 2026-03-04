@@ -2,11 +2,11 @@
     <Link href="/">
         <div class="d-flex align-center">
             <v-icon size="40" color="primary" class="mr-2">
-                mdi-hammer
+                mdi-handshake
             </v-icon>
 
             <span class="text-h6 font-weight-bold">
-                Tool Library
+                Resource Library
             </span>
         </div>
     </Link>

@@ -21,7 +21,6 @@ use App\Models\CreditVote;
  * @property string|null $serial
  * @property string|null $purchased_at
  * @property string|null $manufactured_at
- * @property int|null $brand_id
  * @property bool $make_item_unavailable
  * @property string $created_at
  * @property string $updated_at
@@ -38,27 +37,18 @@ class Item extends Model
         'serial',
         'purchased_at',
         'manufactured_at',
-        'brand_id',
-        'make_item_unavailable'
+        'thumbnail_path',
     ];
-
-    protected $casts = [
-        'make_item_unavailable' => 'boolean', // or 'integer' if you prefer
-    ];
-
-    public function images(): HasMany
-    {
-        return $this->hasMany(ItemImage::class, 'item_id');
-    }
 
     /**
-     * Get the dates when the item is unavailable.
+     * Get the full public URL for the thumbnail image.
      */
-    public function unavailableDates(): HasMany
+    public function getThumbnailUrlAttribute(): ?string
     {
-        return $this->hasMany(ItemUnavailableDate::class);
+        return $this->thumbnail_path
+            ? asset('storage/' . $this->thumbnail_path)
+            : null;
     }
-
 
     /**
      * owner
@@ -80,37 +70,6 @@ class Item extends Model
     {
         return $this->belongsTo(Archetype::class);
     }
-
-    /**
-     * brand
-     *
-     * @return BelongsTo
-     */
-    public function brand(): BelongsTo
-    {
-        return $this->belongsTo(Brand::class);
-    }
-
-    /**
-     * category
-     *
-     * @return BelongsTo
-     */
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(Category::class);
-    }
-
-    /**
-     * usage
-     *
-     * @return BelongsTo
-     */
-    public function usage(): BelongsTo
-    {
-        return $this->belongsTo(Usage::class);
-    }
-
 
     /**
      * rentals
@@ -143,7 +102,7 @@ class Item extends Model
      */
     public function getCurrentCreditRate(): float
     {
-        return $this->accessValue?->current_daily_rate ?? ItemAccessValue::DEFAULT_DAILY_RATE;
+        return $this->accessValue->current_daily_rate ?? ItemAccessValue::DEFAULT_DAILY_RATE;
     }
 
     /**

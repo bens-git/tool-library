@@ -10,10 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use App\Models\ItemImage;
 use App\Models\Archetype;
-use App\Models\Brand;
-use App\Models\ItemUnavailableDate;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -25,46 +22,31 @@ class ItemController extends Controller
     public function index(Request $request)
     {
         // Get request parameters
-        $brandId = $request->query('brand_id');
         $archetypeId = $request->query('archetype_id');
         $userId = $request->query('user_id');
-        $categoryId = $request->query('category_id');
-        $usageId = $request->query('usage_id');
         $search = $request->query('search', '');
+        $resource = $request->query('resource');
         $itemsPerPage = $request->query('itemsPerPage', 9);
         $page = $request->query('page', 1);
-        $getAll = $request->query('get_all', false);
 
         // Build the query with eager loading
-        $query = Item::with(['archetype', 'brand', 'images', 'accessValue', 'archetype.categories', 'archetype.usages']);
+        $query = Item::with(['archetype', 'accessValue']);
 
         // Apply archetype filter
         if (!empty($archetypeId)) {
             $query->where('archetype_id', '=', $archetypeId);
         }
 
-        // Apply brand filter
-        if (!empty($brandId)) {
-            $query->where('brand_id', '=', $brandId);
-        }
-
-        // Apply category filter
-        if (!empty($categoryId)) {
-            $query->whereHas('archetype.categories', function ($q) use ($categoryId) {
-                $q->where('categories.id', '=', $categoryId);
-            });
-        }
-
-        // Apply usage filter
-        if (!empty($usageId)) {
-            $query->whereHas('archetype.usages', function ($q) use ($usageId) {
-                $q->where('usages.id', '=', $usageId);
-            });
-        }
-
         // Apply user filter
         if (!empty($userId)) {
             $query->where('owned_by', '=', $userId);
+        }
+
+        // Apply resource type filter
+        if (!empty($resource)) {
+            $query->whereHas('archetype', function ($q) use ($resource) {
+                $q->where('resource', '=', $resource);
+            });
         }
 
         // Apply search filter
@@ -86,24 +68,6 @@ class ItemController extends Controller
         ]);
     }
 
-
-
-
-    public function patchMakeItemUnavailable(Request $request, Item $item)
-    {
-
-        $item->update([
-            'make_item_unavailable' => $request->input('make_item_unavailable'),
-        ]);
-
-
-        return response()->json([
-            'message' => 'Item availability updated successfully',
-            'item'    => $item,
-        ]);
-    }
-
-
     /**
      * Store a newly created item in storage.
      */
@@ -123,15 +87,9 @@ class ItemController extends Controller
 
         // Decode the validated JSON
         $archetype = Archetype::findOrFail($request->archetype['id']);
-        /** @var Brand|null $brand */
-        $brand = null;
-        if ($request->brand) {
-            $brand = Brand::findOrFail($request->brand['id']);
-        }
 
         $item = new Item();
         $item->archetype_id = $archetype->id;
-        $item->brand_id = $brand->id ?? null;
         $item->description = $request->description;
         $item->serial = $request->serial;
         $item->purchase_value = $request->purchase_value;
@@ -147,10 +105,9 @@ class ItemController extends Controller
         return response()->json(['success' => true, 'data' => $item, 'message' => 'Item created']);
     }
 
-
-
     /**
      * Store a newly created image in storage with compression.
+     * Now saves to items.thumbnail_path (single image per item).
      */
     public function storeImage(Request $request, $id)
     {
@@ -166,6 +123,11 @@ class ItemController extends Controller
 
         DB::transaction(function () use ($request, $item, $user) {
             if ($request->hasFile('image')) {
+                // Delete old thumbnail if exists
+                if ($item->thumbnail_path) {
+                    Storage::disk('public')->delete($item->thumbnail_path);
+                }
+
                 $image = $request->file('image');
 
                 // Generate a unique filename
@@ -225,12 +187,9 @@ class ItemController extends Controller
                     imagedestroy($source);
                     imagedestroy($newImage);
 
-                    // Save to database
-                    ItemImage::create([
-                        'item_id' => $item->id,
-                        'path' => 'images/' . $filename,
-                        'created_by' => $userId,
-                    ]);
+                    // Save to items table (single image per item)
+                    $item->thumbnail_path = 'images/' . $filename;
+                    $item->save();
                 }
             }
         });
@@ -243,16 +202,16 @@ class ItemController extends Controller
      */
     public function show($id)
     {
-        $item = Item::with('archetype', 'brand', 'images', 'accessValue')
+        $item = Item::with('archetype', 'accessValue')
             ->join('users', 'items.owned_by', '=', 'users.id')
             ->join('archetypes', 'items.archetype_id', '=', 'archetypes.id')
             ->where('items.id', $id)
             ->select('items.*', 'users.name as owner_name', 'archetypes.name AS archetype_name')
             ->first();
 
-        foreach ($item->images as $image) {
-            /** @var ItemImage $image */
-            $image->url = $image->url;
+        // Add thumbnail URL if thumbnail exists
+        if ($item->thumbnail_path) {
+            $item->thumbnail_url = asset('storage/' . $item->thumbnail_path);
         }
 
         return response()->json(['data' => $item]);
@@ -269,45 +228,21 @@ class ItemController extends Controller
             'serial' => 'nullable|string',
             'purchased_at' => 'required|date',
             'manufactured_at' => 'nullable|date',
-            'make_item_unavailable' => 'boolean',
-            'images' => 'nullable|array',
-            'images.*.id' => 'required|integer',
-            'images.*.path' => 'required|string',
-            'brand.id' => 'nullable|numeric|exists:brands,id',
+            'thumbnail_url' => 'nullable|string',
         ]);
 
         $item = DB::transaction(function () use ($request, $id) {
             $archetype = Archetype::findOrFail($request->archetype['id']);
-            /** @var Brand|null $brand */
-            $brand = null;
-            if ($request->brand) {
-                $brand = Brand::findOrFail($request->brand['id']);
-            }
 
             /** @var Item $item */
             $item = Item::findOrFail($id);
             $item->archetype_id = $archetype->id;
-            $item->brand_id = $brand->id ?? null;
             $item->description = $request->description;
             $item->serial = $request->serial;
             $item->purchase_value = $request->purchase_value;
-            $item->make_item_unavailable = $request->make_item_unavailable;
             $item->purchased_at = Carbon::parse($request->purchased_at)->format('Y-m-d H:i:s');
             $item->manufactured_at = $request->manufactured_at ? Carbon::parse($request->manufactured_at)->format('Y-m-d H:i:s') : null;
             $item->save();
-
-            $postedImageIds = collect($request['images'])->pluck('id')->filter()->toArray();
-            $existingImages = ItemImage::where('item_id', $id)->get();
-            $existingImageIds = $existingImages->pluck('id')->toArray();
-            $imageIdsToDelete = array_diff($existingImageIds, $postedImageIds);
-
-            foreach ($imageIdsToDelete as $imageId) {
-                $image = ItemImage::find($imageId);
-                if ($image) {
-                    Storage::disk('public')->delete($image->path);
-                    $image->delete();
-                }
-            }
             
             return $item;
         });
@@ -333,30 +268,29 @@ class ItemController extends Controller
                 abort(404, "Item can not be deleted because it is currently rented");
             }
 
-            $itemImages = $item->images;
-            foreach ($itemImages as $image) {
-                /** @var ItemImage $image */
-                Storage::disk('public')->delete($image->path);
+            // Delete thumbnail if exists
+            if ($item->thumbnail_path) {
+                Storage::disk('public')->delete($item->thumbnail_path);
             }
 
-            $item->images()->delete();
             $item->rentals()->delete();
             $item->delete();
         });
         
-        return response()->json(['message' => 'Item and associated images deleted successfully']);
+        return response()->json(['message' => 'Item and associated thumbnail deleted successfully']);
     }
 
     /**
      * Get featured items - one per archetype, with pagination support
+     * Now uses thumbnail_path instead of images
      */
     public function featured(Request $request): AnonymousResourceCollection|JsonResponse
     {
         $page = $request->query('page', 1);
         $itemsPerPage = $request->query('itemsPerPage', 6);
 
-        // Get distinct archetype IDs that have items with images AND a valid archetype
-        $allArchetypeIds = Item::whereHas('images')
+        // Get distinct archetype IDs that have items with thumbnail_path AND a valid archetype
+        $allArchetypeIds = Item::whereNotNull('thumbnail_path')
             ->whereHas('archetype')
             ->whereNotNull('archetype_id')
             ->distinct()
@@ -383,9 +317,9 @@ class ItemController extends Controller
         $items = [];
         foreach ($archetypeIdsArray as $archetypeId) {
             $item = Item::where('archetype_id', $archetypeId)
-                ->whereHas('images')
+                ->whereNotNull('thumbnail_path')
                 ->whereHas('archetype')
-                ->with(['images', 'brand', 'archetype', 'accessValue'])
+                ->with(['archetype', 'accessValue'])
                 ->inRandomOrder()
                 ->first();
             
@@ -400,58 +334,6 @@ class ItemController extends Controller
             'current_page' => $page,
             'last_page' => ceil($totalArchetypes / $itemsPerPage),
         ]);
-    }
-
-    public function getItemUnavailableDates($itemId)
-    {
-        $unavailableDates = ItemUnavailableDate::where('item_id', $itemId)
-            ->get(['unavailable_date']);
-
-        $dates = $unavailableDates->pluck('unavailable_date')->map(function ($date) {
-            return $date;
-        });
-
-        return response()->json(['data' => $dates->all()]);
-    }
-
-    function convertToUTCAndMySQLDate($isoDate)
-    {
-        $dateTime = new \DateTime($isoDate, new \DateTimeZone('UTC'));
-        return $dateTime->format('Y-m-d H:i:s');
-    }
-
-    public function updateItemAvailability(Request $request, $itemId)
-    {
-        $validatedData = $request->validate([
-            'unavailableDates' => 'nullable|array',
-            'unavailableDates.*' => 'date',
-            'itemId' => 'required|integer|exists:items,id'
-        ]);
-
-        DB::transaction(function () use ($validatedData) {
-            $unavailableDates = $validatedData['unavailableDates'] ?? [];
-            ItemUnavailableDate::where('item_id', $validatedData['itemId'])->delete();
-
-            if (!empty($unavailableDates)) {
-                $convertedDates = array_map(function ($date) {
-                    return $this->convertToUTCAndMySQLDate($date);
-                }, $validatedData['unavailableDates']);
-
-                $dataToInsert = [];
-                foreach ($convertedDates as $date) {
-                    $dataToInsert[] = [
-                        'item_id' => $validatedData['itemId'],
-                        'unavailable_date' => $date,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-
-                ItemUnavailableDate::insert($dataToInsert);
-            }
-        });
-        
-        return response()->json(['message' => 'Item availability updated successfully.']);
     }
 }
 

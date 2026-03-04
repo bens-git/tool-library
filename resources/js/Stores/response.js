@@ -15,18 +15,22 @@ export const useResponseStore = defineStore("response", {
         message,
         errors,
       };
+    },
 
-      // // Check if the user is not authenticated
-      // if (message === "User not authenticated" && !success) {
-      //   const userStore = useUserStore();
+    setSuccess(message) {
+      this.response = {
+        success: true,
+        message,
+        errors: [],
+      };
+    },
 
-      //   // Clear user data and token
-      //   userStore.logout(); // Assuming you have this method in your user store
-
-      //   // Clear the response
-      //   this.clearResponse();
-
-      // }
+    setError(message, errors = []) {
+      this.response = {
+        success: false,
+        message,
+        errors,
+      };
     },
 
     clearResponse() {

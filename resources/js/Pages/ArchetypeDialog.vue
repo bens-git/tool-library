@@ -37,66 +37,38 @@
             "
         >
             <v-card-text v-if="localArchetype">
-                <v-row dense>
-                    <v-col cols="12" md="4" sm="6">
+                <v-row>
+                    <v-col cols="12" md="6" sm="6">
                         <v-text-field
                             v-model="localArchetype.name"
-                            density="compact"
+                            density="comfortable"
                             :error-messages="responseStore?.response?.errors?.name"
                             label="Name"
                         />
                     </v-col>
-                    <v-col cols="12" md="4" sm="6">
+                    <v-col cols="12" md="6" sm="6">
+                        <v-select
+                            v-model="localArchetype.resource"
+                            :items="resourceOptions"
+                            label="Type"
+                            density="comfortable"
+                            hide-details
+                        ></v-select>
+                    </v-col>
+                    <v-col cols="12" md="6" sm="6">
                         <v-textarea
                             v-model="localArchetype.description"
-                            density="compact"
+                            density="comfortable"
                             label="Description"
                         ></v-textarea>
                     </v-col>
 
-                    <v-col cols="12" md="4" sm="6">
+                    <v-col cols="12" md="6" sm="6">
                         <v-textarea
                             v-model="localArchetype.notes"
-                            density="compact"
+                            density="comfortable"
                             label="Notes"
                         ></v-textarea>
-                    </v-col>
-
-                    <v-col cols="12" md="4" sm="6">
-                        <v-autocomplete
-                            v-model="localArchetype.categories"
-                            density="compact"
-                            :items="autocompleteCategories"
-                            label="Category"
-                            item-title="name"
-                            item-value="id"
-                            hide-no-data
-                            hide-details
-                            return-object
-                            multiple
-                            variant="outlined"
-                            clearable
-                            :error-messages="responseStore?.response?.errors?.category_ids"
-                            @update:search="debouncedAutocompleteCategorySearch"
-                        ></v-autocomplete>
-                    </v-col>
-
-                    <v-col cols="12" md="4" sm="6">
-                        <v-autocomplete
-                            v-model="localArchetype.usages"
-                            density="compact"
-                            :items="autocompleteUsages"
-                            label="Usage"
-                            item-title="name"
-                            item-value="id"
-                            hide-no-data
-                            hide-details
-                            return-object
-                            multiple
-                            variant="outlined"
-                            clearable
-                            @update:search-value="debouncedAutocompleteUsageSearch"
-                        ></v-autocomplete>
                     </v-col>
                 </v-row>
             </v-card-text>
@@ -104,8 +76,6 @@
 
             <v-card-actions>
                 <v-spacer></v-spacer>
-
-                <v-btn text="My Items" variant="plain" @click="myItems()"></v-btn>
 
                 <v-btn text="Close" variant="plain" @click="dialog = false"></v-btn>
 
@@ -126,14 +96,30 @@
 import { shallowRef, ref, watch } from 'vue';
 import { useDisplay } from 'vuetify';
 import api from '@/services/api';
-import _ from 'lodash';
+import { useResponseStore } from '@/Stores/response';
 const { mobile } = useDisplay();
+
+const responseStore = useResponseStore();
 
 const dialog = shallowRef(false);
 
 const localArchetype = ref(null);
-const autocompleteCategories = ref([]);
-const autocompleteUsages = ref([]);
+
+// Resource type options - comprehensive list for community sharing
+const resourceOptions = [
+    { title: 'Tool', value: 'TOOL', icon: 'mdi-tools', description: 'Power tools, hand tools, garden equipment' },
+    { title: 'Material', value: 'MATERIAL', icon: 'mdi-cube', description: 'Building materials, craft supplies, raw materials' },
+    { title: 'Labor/Service', value: 'LABOR', icon: 'mdi-account-hard-hat', description: 'Manual labor, help with tasks, skilled work' },
+    { title: 'Rideshare', value: 'RIDESHARE', icon: 'mdi-car', description: 'Transportation, carpooling, delivery' },
+    { title: 'Furniture', value: 'FURNITURE', icon: 'mdi-table-furniture', description: 'Tables, chairs, desks, event furniture' },
+    { title: 'Kitchen', value: 'KITCHEN', icon: 'mdi-blender', description: 'Kitchen equipment, appliances, cookware' },
+    { title: 'Electronics', value: 'ELECTRONICS', icon: 'mdi-television', description: 'Gadgets, devices, AV equipment' },
+    { title: 'Sports', value: 'SPORTS', icon: 'mdi-basketball', description: 'Sports equipment, fitness gear' },
+    { title: 'Outdoor', value: 'OUTDOOR', icon: 'mdi-tent', description: 'Camping gear, outdoor equipment' },
+    { title: 'Party', value: 'PARTY', icon: 'mdi-party-popper', description: 'Party supplies, decorations, event equipment' },
+    { title: 'Books', value: 'BOOKS', icon: 'mdi-book', description: 'Educational materials, textbooks, manuals' },
+    { title: 'Other', value: 'OTHER', icon: 'mdi-dots-horizontal', description: 'Miscellaneous items' },
+];
 
 const props = defineProps({
     aim: { type: String, default: 'Create' },
@@ -158,14 +144,17 @@ const refreshLocalArchetype = async () => {
 
 // Function to initialize
 const initializeLocalArchetype = () => {
+    // Clear previous error messages
+    if (responseStore?.response?.errors) {
+        responseStore.response.errors = {};
+    }
+    
     if (props.aim == 'edit' && props.archetype) {
         refreshLocalArchetype();
     } else {
         localArchetype.value = {
             name: '',
             description: '',
-            category: null,
-            usage: null,
             notes: '',
             resource: props.resource ?? 'TOOL',
         };
@@ -174,49 +163,49 @@ const initializeLocalArchetype = () => {
 
 const emit = defineEmits(['stored', 'updated']);
 
-const refreshAutocompleteCategories = async (query) => {
-    const response = await api.get(route('categories.index'), {
-        params: { query },
-    });
-    autocompleteCategories.value = response.data.data;
-};
-
-const refreshAutocompleteUsages = async (query) => {
-    const response = await api.get(route('usages.index'), {
-        params: { query },
-    });
-    autocompleteUsages.value = response.data.data;
-};
-
 const onOpen = async () => {
-    refreshAutocompleteCategories();
-    refreshAutocompleteUsages();
     initializeLocalArchetype();
 };
-
-const debouncedAutocompleteCategorySearch = _.debounce(refreshAutocompleteCategories, 300);
-const debouncedAutocompleteUsageSearch = _.debounce(refreshAutocompleteUsages, 300);
 
 const onClose = () => {
     console.log('Dialog closed');
 };
 
 const save = async () => {
-    const response = await api.put(route('archetypes.update'), localArchetype.value);
+    try {
+        const response = await api.put(route('archetypes.update'), localArchetype.value);
 
-    if (response.success) {
-        emit('updated');
-        dialog.value = false;
+        if (response.data.success) {
+            responseStore.setSuccess('Archetype updated successfully');
+            emit('updated');
+            dialog.value = false;
+        }
+    } catch (error) {
+        console.error('Error updating archetype:', error);
+        responseStore.setError(error.response?.data?.message || 'Failed to update archetype');
+        if (error.response?.data?.errors) {
+            responseStore.response.errors = error.response.data.errors;
+        }
     }
 };
 
 const create = async () => {
-    const response = await api.post(route('archetypes.store'), localArchetype.value);
-    if (response?.success) {
-        emit('stored');
-        dialog.value = false;
+    try {
+        const response = await api.post(route('archetypes.store'), localArchetype.value);
+        if (response?.data?.success) {
+            responseStore.setSuccess('Archetype created successfully');
+            emit('stored');
+            dialog.value = false;
+        }
+    } catch (error) {
+        console.error('Error creating archetype:', error);
+        responseStore.setError(error.response?.data?.message || 'Failed to create archetype');
+        if (error.response?.data?.errors) {
+            responseStore.response.errors = error.response.data.errors;
+        }
     }
 };
 
 
 </script>
+

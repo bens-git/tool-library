@@ -145,6 +145,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import PageLayout from '@/Layouts/PageLayout.vue';
 import axios from 'axios';
+import { useResponseStore } from '@/Stores/response';
+
+const responseStore = useResponseStore();
 
 const archetypes = ref([]);
 const search = ref('');
@@ -287,6 +290,7 @@ const submitVote = async () => {
       reason: voteReason.value,
     });
     
+    responseStore.setSuccess('Vote submitted successfully');
     showVoteDialog.value = false;
     
     // Update the voted archetype in the list
@@ -298,6 +302,7 @@ const submitVote = async () => {
     }
   } catch (error) {
     console.error('Failed to submit vote:', error);
+    responseStore.setError(error.response?.data?.message || 'Failed to submit vote');
   }
 };
 

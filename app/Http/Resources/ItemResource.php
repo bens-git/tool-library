@@ -57,15 +57,9 @@ class ItemResource extends JsonResource
                 ];
             }),
 
-            // Images (important for your v-img)
-            'images' => $this->whenLoaded('images', function (): array {
-                return $this->resource->images->map(function ($image): array {
-                    return [
-                        'id' => $image->id,
-                        'url' => $image->url, // accessor on Image model
-                    ];
-                })->all();
-            }),
+            // Thumbnail (single image per item)
+            'thumbnail_path' => $this->resource->thumbnail_path,
+            'thumbnail_url' => $this->resource->thumbnail_url,
 
             // Access Value (ITC)
             'access_value' => $this->whenLoaded('accessValue', function () {
