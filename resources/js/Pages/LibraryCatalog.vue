@@ -193,14 +193,14 @@ const handleItemDeleted = (deletedItemId) => {
                                 <v-card-actions class="flex-wrap">
                                     <div class="d-flex flex-wrap ga-2" style="width: 100%">
                                         <ItemDialog
-                                            v-if="user && item.owned_by === user.id"
+                                            v-if="user && String(item.owned_by) === String(user.id)"
                                             :item="item"
                                             aim="edit"
                                             icon-only
                                         />
-                                        <ItemDialog v-if="!user || item.owned_by !== user.id" :item="item" aim="view" />
+                                        <ItemDialog v-if="!user || String(item.owned_by) !== String(user.id)" :item="item" aim="view" />
                                         <DeleteItemDialog 
-                                            v-if="user && item.owned_by === user.id" 
+                                            v-if="user && String(item.owned_by) === String(user.id)" 
                                             :item="item" 
                                             icon-only
                                             @deleted="handleItemDeleted"
