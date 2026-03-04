@@ -11,10 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Drop foreign key constraints first
-        Schema::table('items', function (Blueprint $table) {
-            $table->dropForeign(['brand_id']);
-        });
 
    
 
