@@ -16,10 +16,7 @@ return new class extends Migration
             $table->dropForeign(['brand_id']);
         });
 
-        // Drop brand_id column from items
-        Schema::table('items', function (Blueprint $table) {
-            $table->dropColumn('brand_id');
-        });
+   
 
         // Drop pivot tables
         Schema::dropIfExists('category_archetype');
