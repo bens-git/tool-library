@@ -21,7 +21,7 @@ use App\Models\CreditVote;
  * @property string|null $serial
  * @property string|null $purchased_at
  * @property string|null $manufactured_at
- * @property bool $make_item_unavailable
+ * @property string|null $thumbnail_path
  * @property string $created_at
  * @property string $updated_at
  */
