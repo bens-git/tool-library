@@ -19,7 +19,7 @@ class ConfirmLoanEmail extends Mailable implements ShouldQueue
     public function __construct(
         public $user,
         public $item,
-        public $rental
+        public $usage
     ) {}
 
     /**

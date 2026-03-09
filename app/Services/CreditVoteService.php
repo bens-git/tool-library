@@ -49,7 +49,7 @@ class CreditVoteService
         }
         
         // Get user's current balance for record
-        $userBalance = $user->itcBalance?->balance ?? 0;
+        $userBalance = $user->itcBalance->balance ?? 0;
         
         // Get or create access value
         $accessValue = ArchetypeAccessValue::firstOrNew(['archetype_id' => $archetype->id]);
@@ -156,7 +156,7 @@ class CreditVoteService
         return $votes->map(function ($vote) {
             return [
                 'archetype_id' => $vote->archetype_id,
-                'archetype_name' => $vote->archetype?->name ?? 'Unknown',
+                'archetype_name' => $vote->archetype->name ?? 'Unknown',
                 'vote_value' => $vote->vote_value,
                 'vote_date' => $vote->created_at->toIso8601String(),
             ];

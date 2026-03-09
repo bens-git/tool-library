@@ -11,16 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('conversations', function (Blueprint $table) {
+        Schema::create('message_poll_options', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['public', 'private'])->default('public');
-            $table->unsignedBigInteger('usage_id')->nullable();
+            $table->unsignedBigInteger('poll_id');
+            $table->string('option_text');
+            $table->integer('vote_count')->default(0);
             $table->timestamps();
 
-            $table->foreign('usage_id')
+            $table->foreign('poll_id')
                 ->references('id')
-                ->on('usages')
-                ->onDelete('set null');
+                ->on('message_polls')
+                ->onDelete('cascade');
+
+            $table->index('poll_id');
         });
     }
 
@@ -29,7 +32,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('conversations');
+        Schema::dropIfExists('message_poll_options');
     }
 };
 

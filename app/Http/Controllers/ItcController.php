@@ -65,7 +65,7 @@ class ItcController extends Controller
                     'balance_after' => $t->balance_after,
                     'description' => $t->description,
                     'item_id' => $t->item_id,
-                    'rental_id' => $t->rental_id,
+                    'usage_id' => $t->usage_id,
                     'created_at' => $t->created_at->toIso8601String(),
                 ];
             }),
@@ -84,7 +84,7 @@ class ItcController extends Controller
     }
 
     /**
-     * Check if user has enough credits for a rental
+     * Check if user has enough credits for a usage
      */
     public function checkBalance(Request $request)
     {

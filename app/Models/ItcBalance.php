@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float $lifetime_earned
  * @property float $lifetime_spent
  * @property \Carbon\Carbon|null $last_decay_at
+ * @property User $user
  */
 class ItcBalance extends Model
 {
@@ -64,4 +65,3 @@ class ItcBalance extends Model
         return number_format($this->balance, 2) . ' ITC';
     }
 }
-

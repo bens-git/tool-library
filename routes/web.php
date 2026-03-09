@@ -6,7 +6,7 @@ use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ItcController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RentalController;
+use App\Http\Controllers\UsageController;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -104,7 +104,7 @@ Route::middleware('auth')->group(function () {
 
 // Custom item routes
 Route::middleware('auth')->group(function () {
-    Route::get('/items/{itemId}/is-rented', [RentalController::class, 'isItemRented'])
+    Route::get('/items/{itemId}/is-rented', [UsageController::class, 'isItemRented'])
         ->name('item.is-rented');
     Route::post('/items/{itemId}/images', [ItemController::class, 'storeImage'])
         ->name('item-images.store');
@@ -112,14 +112,14 @@ Route::middleware('auth')->group(function () {
 
 
 Route::middleware('auth')->group(function () {
-    Route::resource('rentals', RentalController::class);
+    Route::resource('usages', UsageController::class);
 });
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/me/rentals', [RentalController::class, 'index'])
-        ->name('me.rentals.index');
+    Route::get('/me/usages', [UsageController::class, 'index'])
+        ->name('me.usages.index');
     
-    Route::get('/me/loans', [RentalController::class, 'getUserLoans'])
+    Route::get('/me/loans', [UsageController::class, 'getUserLoans'])
         ->name('me.loans.index');
 });
 
@@ -180,14 +180,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/messages/conversations/{conversationId}', [MessageController::class, 'show'])->name('messages.conversations.show');
     Route::post('/messages/conversations/{conversationId}', [MessageController::class, 'store'])->name('messages.conversations.store');
     
-    // Rental conversation
-    Route::get('/messages/rental/{rentalId}', [MessageController::class, 'getRentalConversation'])->name('messages.rental');
+    // Usage conversation
+    Route::get('/messages/usage/{usageId}', [MessageController::class, 'getUsageConversation'])->name('messages.usage');
     
     // Unread count
     Route::get('/messages/unread', [MessageController::class, 'unreadCount'])->name('messages.unread');
     
     // Mark community visited
     Route::post('/messages/community/visited', [MessageController::class, 'markCommunityVisited'])->name('messages.community.visited');
+
+    // Poll routes
+    Route::post('/messages/{messageId}/poll', [MessageController::class, 'createPoll'])->name('messages.poll.create');
+    Route::post('/polls/{pollId}/vote', [MessageController::class, 'votePoll'])->name('messages.poll.vote');
+    Route::get('/polls/{pollId}', [MessageController::class, 'getPoll'])->name('messages.poll.show');
+    Route::post('/polls/{pollId}/close', [MessageController::class, 'closePoll'])->name('messages.poll.close');
+
+    // Reaction routes
+    Route::post('/messages/{messageId}/reaction', [MessageController::class, 'addReaction'])->name('messages.reaction.add');
+    Route::delete('/messages/{messageId}/reaction', [MessageController::class, 'removeReaction'])->name('messages.reaction.remove');
 });
 
 

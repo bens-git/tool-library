@@ -28,7 +28,7 @@ return [
     // Vote cooldown (days)
     'vote_cooldown_days' => env('ITC_VOTE_COOLDOWN_DAYS', 7),
 
-    // Lending bonus multiplier (what % of rental cost lender earns)
+    // Lending bonus multiplier (what % of usage cost offerer earns)
     'lending_bonus_multiplier' => env('ITC_LENDING_BONUS_MULTIPLIER', 1.0),
 
     // Decay settings

@@ -205,7 +205,7 @@
                     @stored="onArchetypeStoredEdit"
                 />
 
-                <!-- Rental Section (View Mode) -->
+                <!-- Usage Section (View Mode) -->
                 <div v-if="aim === 'view'" class="mt-4">
                     <v-divider class="mb-4"></v-divider>
                     
@@ -239,7 +239,7 @@
                     
                     <!-- Duration Selection -->
                     <v-select
-                        v-model="rentalDuration"
+                        v-model="usageDuration"
                         :items="durationOptions"
                         label="Duration"
                         density="compact"
@@ -250,7 +250,7 @@
                     <!-- Time Credits Required -->
                     <div v-if="localItem.access_value?.current_daily_rate" class="mb-4">
                         <v-card variant="tonal" color="info" class="pa-3">
-                            <div class="text-subtitle-2 mb-1">Rental Cost</div>
+                            <div class="text-subtitle-2 mb-1">Usage Cost</div>
                             <div class="text-h5 font-weight-bold">
                                 {{ localItem.access_value.current_daily_rate }}
                                 <span class="text-body-2">credits / day</span>
@@ -271,13 +271,13 @@
 
                     <!-- Error Message -->
                     <v-alert 
-                        v-if="rentalError" 
+                        v-if="usageError" 
                         color="error" 
                         variant="tonal" 
                         class="mb-4"
                         density="compact"
                     >
-                        {{ rentalError }}
+                        {{ usageError }}
                     </v-alert>
                 </div>
 
@@ -339,8 +339,8 @@
                         color="success"
                         :text="getConfirmButtonText()"
                         variant="tonal"
-                        :loading="isConfirmingRental"
-                        @click="confirmRental"
+                        :loading="isConfirmingUsage"
+                        @click="confirmUsage"
                     ></v-btn>
                 </template>
             </v-card-actions>
@@ -403,13 +403,13 @@ const canProceed = computed(() => {
     return true;
 });
 
-// Rental state
+// Usage state
 const isItemRented = ref(false);
-const rentalError = ref('');
-const isConfirmingRental = ref(false);
+const usageError = ref('');
+const isConfirmingUsage = ref(false);
 
-// Rental duration
-const rentalDuration = ref(1); // default to 1 day
+// Usage duration
+const usageDuration = ref(1); // default to 1 day
 const durationOptions = [
     { title: '1 day', value: 1 },
     { title: '2 days', value: 2 },
@@ -499,8 +499,8 @@ const actionButtonIcon = computed(() => {
 
 // Get confirm button text based on resource type and duration
 const getConfirmButtonText = () => {
-    const duration = durationOptions.find(d => d.value === rentalDuration.value)?.title || '1 day';
-    const durationText = duration.replace('day', 'day rental').replace('week', 'week rental');
+    const duration = durationOptions.find(d => d.value === usageDuration.value)?.title || '1 day';
+    const durationText = duration.replace('day', 'day usage').replace('week', 'week usage');
     
     switch (resourceType.value) {
         case 'TOOL':
@@ -565,18 +565,18 @@ const refreshLocalItem = async () => {
 
     localItem.value = response.data.data;
     
-    // Check rental status
-    await checkRentalStatus();
+    // Check usage status
+    await checkUsageStatus();
 };
 
-// Check if item has an active rental
-const checkRentalStatus = async () => {
+// Check if item has an active usage
+const checkUsageStatus = async () => {
     isItemRented.value = false;
     try {
         const response = await api.get(route('item.is-rented', localItem.value.id));
         isItemRented.value = response.data.data === true;
     } catch (error) {
-        console.error('Error checking rental status:', error);
+        console.error('Error checking usage status:', error);
         isItemRented.value = false;
     }
 };
@@ -614,7 +614,7 @@ const onOpen = async () => {
 
 const onClose = () => {
     isItemRented.value = false;
-    rentalError.value = '';
+    usageError.value = '';
 };
 
 const onResourceTypeChange = () => {
@@ -698,30 +698,30 @@ const saveItem = async () => {
     }
 };
 
-const confirmRental = async () => {
-    isConfirmingRental.value = true;
-    rentalError.value = '';
+const confirmUsage = async () => {
+    isConfirmingUsage.value = true;
+    usageError.value = '';
     
     try {
-        await api.post(route('rentals.store'), {
+        await api.post(route('usages.store'), {
             item: localItem.value,
-            duration: rentalDuration.value,
+            duration: usageDuration.value,
         });
         
-        // Success - close dialog and redirect to My Rentals
+        // Success - close dialog and redirect to My Usages
         dialog.value = false;
-        router.visit('/my-rentals');
+        router.visit('/my-usages');
     } catch (error) {
-        console.error('Error creating rental:', error);
+        console.error('Error creating usage:', error);
         if (error.response?.data?.message) {
-            rentalError.value = error.response.data.message;
+            usageError.value = error.response.data.message;
         } else if (error.response?.data?.errors) {
-            rentalError.value = Object.values(error.response.data.errors).flat().join(', ');
+            usageError.value = Object.values(error.response.data.errors).flat().join(', ');
         } else {
-            rentalError.value = 'Failed to create rental. Please try again.';
+            usageError.value = 'Failed to create usage. Please try again.';
         }
     } finally {
-        isConfirmingRental.value = false;
+        isConfirmingUsage.value = false;
     }
 };
 

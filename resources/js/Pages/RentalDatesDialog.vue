@@ -31,7 +31,7 @@
                     <!-- Time Credits Required -->
                     <div v-if="localItem.access_value?.current_daily_rate" class="mb-4">
                         <v-card variant="tonal" color="info" class="pa-3">
-                            <div class="text-subtitle-2 mb-1">Rental Cost</div>
+                            <div class="text-subtitle-2 mb-1">Usage Cost</div>
                             <div class="text-h5 font-weight-bold">
                                 {{ localItem.access_value.current_daily_rate }}
                                 <span class="text-body-2">credits / day</span>
@@ -59,9 +59,9 @@
                     <v-btn
                         v-if="!isItemRented"
                         color="success"
-                        text="Confirm Rental"
+                        text="Confirm Usage"
                         variant="tonal"
-                        @click="confirmRental"
+                        @click="confirmUsage"
                     ></v-btn>
                 </v-card-actions>
             </v-card>
@@ -78,7 +78,7 @@ const dialog = shallowRef(false);
 
 const localItem = ref(null);
 const isItemRented = ref(false);
-const rentalError = ref('');
+const usageError = ref('');
 
 const props = defineProps({
     item: { type: Object, required: true },
@@ -97,15 +97,15 @@ watch(dialog, (newVal) => {
 const initialize = async () => {
     localItem.value = { ...props.item };
     isItemRented.value = false;
-    rentalError.value = '';
+    usageError.value = '';
     
-    // Check if item has an active rental
+    // Check if item has an active usage
     try {
         const response = await api.get(route('item.is-rented', localItem.value.id));
-        // If there's an active rental
+        // If there's an active usage
         isItemRented.value = response.data.data === true;
     } catch (error) {
-        console.error('Error checking rental status:', error);
+        console.error('Error checking usage status:', error);
         isItemRented.value = false;
     }
 };
@@ -116,22 +116,22 @@ const onOpen = async () => {
 
 const onClose = () => {
     isItemRented.value = false;
-    rentalError.value = '';
+    usageError.value = '';
 };
 
-const confirmRental = () => {
+const confirmUsage = () => {
     dialog.value = false;
-    router.post(route('rentals.store'), {
+    router.post(route('usages.store'), {
         item: localItem.value,
     }, {
         onSuccess: () => {
-            // Redirect to My Rentals where user can see contact info and message owner
-            router.visit('/my-rentals');
+            // Redirect to My Usages where user can see contact info and message owner
+            router.visit('/my-usages');
         },
         onError: (errors) => {
-            console.error('Error creating rental:', errors);
+            console.error('Error creating usage:', errors);
             if (errors.message) {
-                rentalError.value = errors.message;
+                usageError.value = errors.message;
             }
         }
     });

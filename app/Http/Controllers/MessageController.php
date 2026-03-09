@@ -6,7 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Models\Rental;
+use App\Models\MessagePoll;
+use App\Models\MessagePollOption;
+use App\Models\MessagePollVote;
+use App\Models\MessageReaction;
+use App\Models\Usage;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -18,9 +22,11 @@ class MessageController extends Controller
      */
     public function publicFeed(): JsonResponse
     {
+        $user = Auth::user();
+
         // Find the public conversation
         $publicConversation = Conversation::public()->first();
-        
+
         if (!$publicConversation) {
             // Create public conversation if it doesn't exist
             $publicConversation = Conversation::create([
@@ -32,8 +38,32 @@ class MessageController extends Controller
         $messages = Message::where('conversation_id', $publicConversation->id)
             ->where('is_system_message', false)
             ->with('user')
+            ->with('poll.options')
+            ->with('reactions.user')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
+
+        $messages->getCollection()->transform(function ($message) use ($user) {
+            return [
+                'id' => $message->id,
+                'conversation_id' => $message->conversation_id,
+                'user_id' => $message->user_id,
+                'body' => $message->body,
+                'is_system_message' => $message->is_system_message,
+                'created_at' => $message->created_at,
+
+                'user' => $message->user ? [
+                    'id' => $message->user->id,
+                    'name' => $message->user->name,
+                ] : null,
+
+                'poll' => $message->poll
+                    ? $this->formatPoll($message->poll, $user->id)
+                    : null,
+
+                'reactions' => $this->formatMessageReactions($message),
+            ];
+        });
 
         return response()->json($messages);
     }
@@ -86,12 +116,12 @@ class MessageController extends Controller
 
         $conversations = Conversation::forUser($user->id)
             ->private()
-            ->with(['latestMessage.user', 'participants', 'rental.item'])
+            ->with(['latestMessage.user', 'participants', 'usage.item'])
             ->orderBy('updated_at', 'desc')
             ->get()
             ->map(function ($conversation) use ($user) {
                 $otherParticipant = $conversation->getOtherParticipant($user->id);
-                
+
                 // Get unread count
                 $unreadCount = $conversation->messages()
                     ->where('user_id', '!=', $user->id)
@@ -103,17 +133,17 @@ class MessageController extends Controller
                 return [
                     'id' => $conversation->id,
                     'type' => $conversation->type,
-                    'rental_id' => $conversation->rental_id,
+                    'usage_id' => $conversation->usage_id,
                     'other_participant' => $otherParticipant ? [
                         'id' => $otherParticipant->id,
                         'name' => $otherParticipant->name,
                         'email' => $otherParticipant->email,
                     ] : null,
-                    'rental' => $conversation->rental ? [
-                        'id' => $conversation->rental->id,
+                    'usage' => $conversation->usage ? [
+                        'id' => $conversation->usage->id,
                         'item' => [
-                            'id' => $conversation->rental->item->id,
-                            'name' => $conversation->rental->item->name ?? $conversation->rental->item->archetype?->name,
+                            'id' => $conversation->usage->item->id,
+                            'name' => $conversation->usage->item->name ?? $conversation->usage->item->archetype?->name,
                         ],
                     ] : null,
                     'latest_message' => $conversation->latestMessage->first() ? [
@@ -151,9 +181,11 @@ class MessageController extends Controller
 
         $messages = $conversation->messages()
             ->with('user')
+            ->with('poll.options')
+            ->with('reactions.user')
             ->orderBy('created_at', 'asc')
             ->get()
-            ->map(function ($message) {
+            ->map(function ($message) use ($user) {
                 return [
                     'id' => $message->id,
                     'conversation_id' => $message->conversation_id,
@@ -165,6 +197,8 @@ class MessageController extends Controller
                         'id' => $message->user->id,
                         'name' => $message->user->name,
                     ] : null,
+                    'poll' => $message->poll->first() ? $this->formatPoll($message->poll->first(), $user->id) : null,
+                    'reactions' => $this->formatMessageReactions($message),
                 ];
             });
 
@@ -183,7 +217,7 @@ class MessageController extends Controller
             'conversation' => [
                 'id' => $conversation->id,
                 'type' => $conversation->type,
-                'rental_id' => $conversation->rental_id,
+                'usage_id' => $conversation->usage_id,
             ],
             'messages' => $messages,
         ]);
@@ -251,7 +285,7 @@ class MessageController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
-            'rental_id' => 'nullable|exists:rentals,id',
+            'usage_id' => 'nullable|exists:usages,id',
             'initial_message' => 'nullable|string|max:5000',
         ]);
 
@@ -261,16 +295,16 @@ class MessageController extends Controller
 
         $user = Auth::user();
         $targetUserId = $request->input('user_id');
-        $rentalId = $request->input('rental_id');
+        $usageId = $request->input('usage_id');
 
         // Can't start conversation with yourself
         if ($user->id === $targetUserId) {
             return response()->json(['message' => 'Cannot start conversation with yourself'], 400);
         }
 
-        // Check if conversation already exists for this rental
-        if ($rentalId) {
-            $existingConversation = Conversation::where('rental_id', $rentalId)
+        // Check if conversation already exists for this usage
+        if ($usageId) {
+            $existingConversation = Conversation::where('usage_id', $usageId)
                 ->where('type', 'private')
                 ->first();
 
@@ -285,7 +319,7 @@ class MessageController extends Controller
         // Create new conversation
         $conversation = Conversation::create([
             'type' => 'private',
-            'rental_id' => $rentalId,
+            'usage_id' => $usageId,
         ]);
 
         // Add participants
@@ -308,36 +342,36 @@ class MessageController extends Controller
     }
 
     /**
-     * create conversation for a Get or rental.
+     * create conversation for a Get or usage.
      */
-    public function getRentalConversation(int $rentalId): JsonResponse
+    public function getUsageConversation(int $usageId): JsonResponse
     {
         $user = Auth::user();
 
-        $rental = Rental::with('item.owner')->find($rentalId);
+        $usage = Usage::with('item.owner')->find($usageId);
 
-        if (!$rental) {
-            return response()->json(['message' => 'Rental not found'], 404);
+        if (!$usage) {
+            return response()->json(['message' => 'Usage not found'], 404);
         }
 
         // Check if user is either the renter or the owner
-        if ($rental->rented_by !== $user->id && $rental->item->owned_by !== $user->id) {
+        if ($usage->used_by !== $user->id && $usage->item->owned_by !== $user->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         // Find or create conversation
-        $conversation = Conversation::where('rental_id', $rentalId)
+        $conversation = Conversation::where('usage_id', $usageId)
             ->where('type', 'private')
             ->first();
 
         if (!$conversation) {
             $conversation = Conversation::create([
                 'type' => 'private',
-                'rental_id' => $rentalId,
+                'usage_id' => $usageId,
             ]);
 
             // Add participants
-            $conversation->participants()->attach([$rental->rented_by, $rental->item->owned_by]);
+            $conversation->participants()->attach([$usage->used_by, $usage->item->owned_by]);
         }
 
         return response()->json([
@@ -350,6 +384,7 @@ class MessageController extends Controller
      */
     public function unreadCount(): JsonResponse
     {
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
         $count = $user->unreadMessageCount();
@@ -362,14 +397,359 @@ class MessageController extends Controller
      */
     public function markCommunityVisited(): JsonResponse
     {
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
-        
+
         $user->updateLastCommunityVisit();
-        
+
         // Refresh the user model to get the updated timestamp
         $user->refresh();
 
         return response()->json(['message' => 'Community visit updated', 'last_visit' => $user->last_community_visit]);
     }
-}
 
+    // ============ POLL METHODS ============
+
+    /**
+     * Create a poll attached to a message.
+     */
+    public function createPoll(Request $request, int $messageId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'question' => 'required|string|max:500',
+            'options' => 'required|array|min:2|max:10',
+            'options.*' => 'required|string|max:200',
+            'is_multiple_choice' => 'boolean',
+            'expires_at' => 'nullable|date|after:now',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = Auth::user();
+        $message = Message::find($messageId);
+
+        if (!$message) {
+            return response()->json(['message' => 'Message not found'], 404);
+        }
+
+        // Check if user can create poll on this message
+        if (!$this->canUserInteractWithMessage($message, $user)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Check if poll already exists on this message
+        if ($message->poll()->exists()) {
+            return response()->json(['message' => 'Poll already exists on this message'], 400);
+        }
+
+        $poll = MessagePoll::create([
+            'message_id' => $messageId,
+            'question' => $request->input('question'),
+            'is_multiple_choice' => $request->input('is_multiple_choice', false),
+            'expires_at' => $request->input('expires_at'),
+        ]);
+
+        // Create options
+        $options = [];
+        foreach ($request->input('options') as $optionText) {
+            $options[] = MessagePollOption::create([
+                'poll_id' => $poll->id,
+                'option_text' => $optionText,
+            ]);
+        }
+
+        $poll->load('options');
+
+        return response()->json([
+            'message' => 'Poll created successfully',
+            'poll' => $this->formatPoll($poll, $user->id),
+        ], 201);
+    }
+
+    /**
+     * Vote on a poll.
+     */
+    public function votePoll(Request $request, int $pollId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'option_ids' => 'required|array|min:1',
+            'option_ids.*' => 'integer|exists:message_poll_options,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = Auth::user();
+        $poll = MessagePoll::with('options')->find($pollId);
+
+        if (!$poll) {
+            return response()->json(['message' => 'Poll not found'], 404);
+        }
+
+        // Check if user can vote
+        if (!$poll->canVote($user->id)) {
+            return response()->json(['message' => 'Cannot vote on this poll'], 400);
+        }
+
+        // Validate that all option_ids belong to this poll
+        $validOptionIds = $poll->options->pluck('id')->toArray();
+        foreach ($request->input('option_ids') as $optionId) {
+            if (!in_array($optionId, $validOptionIds)) {
+                return response()->json(['message' => 'Invalid option ID'], 400);
+            }
+        }
+
+        // Check multiple choice constraint
+        if (!$poll->is_multiple_choice && count($request->input('option_ids')) > 1) {
+            return response()->json(['message' => 'This poll only allows single choice'], 400);
+        }
+
+        // Remove existing votes
+        MessagePollVote::where('poll_id', $pollId)
+            ->where('user_id', $user->id)
+            ->delete();
+
+        // Add new votes
+        foreach ($request->input('option_ids') as $optionId) {
+            MessagePollVote::create([
+                'poll_id' => $pollId,
+                'option_id' => $optionId,
+                'user_id' => $user->id,
+            ]);
+
+            // Increment vote count
+            MessagePollOption::where('id', $optionId)->increment('vote_count');
+        }
+
+        $poll->refresh();
+        $poll->load('options');
+
+        return response()->json([
+            'message' => 'Vote recorded successfully',
+            'poll' => $this->formatPoll($poll, $user->id),
+        ]);
+    }
+
+    /**
+     * Get poll details.
+     */
+    public function getPoll(int $pollId): JsonResponse
+    {
+        $user = Auth::user();
+        $poll = MessagePoll::with('options')->find($pollId);
+
+        if (!$poll) {
+            return response()->json(['message' => 'Poll not found'], 404);
+        }
+
+        return response()->json([
+            'poll' => $this->formatPoll($poll, $user->id),
+        ]);
+    }
+
+    /**
+     * Close a poll.
+     */
+    public function closePoll(int $pollId): JsonResponse
+    {
+        $user = Auth::user();
+        $poll = MessagePoll::find($pollId);
+
+        if (!$poll) {
+            return response()->json(['message' => 'Poll not found'], 404);
+        }
+
+        // Check if user owns the message
+        if ($poll->message->user_id !== $user->id) {
+            return response()->json(['message' => 'Only the message author can close the poll'], 403);
+        }
+
+        $poll->update(['is_closed' => true]);
+
+        return response()->json([
+            'message' => 'Poll closed successfully',
+            'poll' => $this->formatPoll($poll, $user->id),
+        ]);
+    }
+
+    // ============ REACTION METHODS ============
+
+    /**
+     * Add or update a reaction on a message.
+     */
+    public function addReaction(Request $request, int $messageId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'emoji' => 'required|string|max:10',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = Auth::user();
+        $message = Message::find($messageId);
+
+        if (!$message) {
+            return response()->json(['message' => 'Message not found'], 404);
+        }
+
+        // Check if user can interact with this message
+        if (!$this->canUserInteractWithMessage($message, $user)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $emoji = $request->input('emoji');
+
+        // Check if reaction already exists
+        $existingReaction = MessageReaction::where('message_id', $messageId)
+            ->where('user_id', $user->id)
+            ->where('emoji', $emoji)
+            ->first();
+
+        if ($existingReaction) {
+            // Reaction already exists, return success
+            return response()->json([
+                'message' => 'Reaction already exists',
+                'reactions' => $this->getFormattedReactions($message),
+            ]);
+        }
+
+        // Remove existing reaction with different emoji (if any)
+        MessageReaction::where('message_id', $messageId)
+            ->where('user_id', $user->id)
+            ->delete();
+
+        // Create new reaction
+        MessageReaction::create([
+            'message_id' => $messageId,
+            'user_id' => $user->id,
+            'emoji' => $emoji,
+        ]);
+
+        return response()->json([
+            'message' => 'Reaction added successfully',
+            'reactions' => $this->getFormattedReactions($message),
+        ], 201);
+    }
+
+    /**
+     * Remove a reaction from a message.
+     */
+    public function removeReaction(Request $request, int $messageId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'emoji' => 'required|string|max:10',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = Auth::user();
+        $message = Message::find($messageId);
+
+        if (!$message) {
+            return response()->json(['message' => 'Message not found'], 404);
+        }
+
+        MessageReaction::where('message_id', $messageId)
+            ->where('user_id', $user->id)
+            ->where('emoji', $request->input('emoji'))
+            ->delete();
+
+        return response()->json([
+            'message' => 'Reaction removed successfully',
+            'reactions' => $this->getFormattedReactions($message),
+        ]);
+    }
+
+    // ============ HELPER METHODS ============
+
+    /**
+     * Check if user can interact with a message (is participant in conversation).
+     */
+    private function canUserInteractWithMessage(Message $message, User $user): bool
+    {
+        $conversation = $message->conversation;
+
+        // For public conversations, anyone can interact
+        if ($conversation && $conversation->type === 'public') {
+            return true;
+        }
+
+        // For private conversations, must be a participant
+        return $conversation && $conversation->hasParticipant($user->id);
+    }
+
+    /**
+     * Format a poll for JSON response.
+     */
+    private function formatPoll(MessagePoll $poll, int $userId): array
+    {
+        $options = $poll->options->map(function ($option) use ($userId) {
+            return [
+                'id' => $option->id,
+                'option_text' => $option->option_text,
+                'vote_count' => $option->vote_count,
+                'has_voted' => $option->hasUserVoted($userId),
+            ];
+        });
+
+        $totalVotes = $options->sum('vote_count');
+
+        return [
+            'id' => $poll->id,
+            'message_id' => $poll->message_id,
+            'question' => $poll->question,
+            'is_multiple_choice' => $poll->is_multiple_choice,
+            'is_closed' => $poll->is_closed,
+            'expires_at' => $poll->expires_at,
+            'has_expired' => $poll->hasExpired(),
+            'has_user_voted' => $poll->hasUserVoted($userId),
+            'user_vote_ids' => $poll->getUserVotes($userId),
+            'total_votes' => $totalVotes,
+            'options' => $options,
+            'can_vote' => $poll->canVote($userId),
+        ];
+    }
+
+    /**
+     * Get formatted reactions for a message.
+     */
+    private function getFormattedReactions(Message $message): array
+    {
+        $reactions = $message->reactions()->with('user')->get();
+
+        return $reactions->groupBy('emoji')->map(function ($grouped, $emoji) {
+            return [
+                'emoji' => $emoji,
+                'count' => $grouped->count(),
+                'user_ids' => $grouped->pluck('user_id')->toArray(),
+                'user_names' => $grouped->pluck('user.name')->toArray(),
+            ];
+        })->values()->toArray();
+    }
+
+    /**
+     * Format reactions for a message model.
+     */
+    private function formatMessageReactions($message): array
+    {
+        if (!$message->reactions || $message->reactions->isEmpty()) {
+            return [];
+        }
+
+        return $message->reactions->groupBy('emoji')->map(function ($grouped, $emoji) {
+            return [
+                'emoji' => $emoji,
+                'count' => $grouped->count(),
+                'user_ids' => $grouped->pluck('user_id')->toArray(),
+                'user_names' => $grouped->pluck('user.name')->toArray(),
+            ];
+        })->values()->toArray();
+    }
+}

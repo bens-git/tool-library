@@ -390,10 +390,10 @@
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
-  "resources/js/Pages/RentalDatesDialog.vue": {
-    "file": "assets/RentalDatesDialog-BHiHMhea.js",
-    "name": "RentalDatesDialog",
-    "src": "resources/js/Pages/RentalDatesDialog.vue",
+  "resources/js/Pages/UsageDatesDialog.vue": {
+    "file": "assets/UsageDatesDialog-BHiHMhea.js",
+    "name": "UsageDatesDialog",
+    "src": "resources/js/Pages/UsageDatesDialog.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
@@ -430,7 +430,7 @@
       "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue",
       "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue",
       "resources/js/Pages/PublicFeed.vue",
-      "resources/js/Pages/RentalDatesDialog.vue"
+      "resources/js/Pages/UsageDatesDialog.vue"
     ],
     "css": [
       "assets/app-BI06mMwl.css"

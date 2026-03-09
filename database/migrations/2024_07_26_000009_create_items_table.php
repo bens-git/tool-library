@@ -20,13 +20,14 @@ class CreateItemsTable extends Migration
             $table->decimal('purchase_value', 10, 2)->nullable();
             $table->dateTime('purchased_at')->nullable();
             $table->dateTime('manufactured_at')->nullable();
+            $table->string('thumbnail_path')->nullable();
             $table->foreignId('owned_by')->constrained('users')->onDelete('cascade');
-            $table->foreignId('type_id')->constrained('types');
-            $table->foreignId('brand_id')->nullable()->constrained('brands');
+            $table->foreignId('archetype_id')->constrained('archetypes');
+            $table->boolean('make_item_unavailable')->default(false);
             $table->timestamps();
             $table->unique('id');
             $table->index('owned_by');
-            $table->index('type_id');
+            $table->index('archetype_id');
         });
     }
 

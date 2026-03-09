@@ -36,30 +36,10 @@ class ItemResource extends JsonResource
                 ];
             }),
 
-            'brand' => $this->whenLoaded('brand', function () {
-                return [
-                    'id' => $this->resource->brand->id,
-                    'name' => $this->resource->brand->name,
-                ];
-            }),
-
-            'category' => $this->whenLoaded('category', function () {
-                return [
-                    'id' => $this->resource->category->id,
-                    'name' => $this->resource->category->name,
-                ];
-            }),
-
-            'usage' => $this->whenLoaded('usage', function () {
-                return [
-                    'id' => $this->resource->usage->id,
-                    'name' => $this->resource->usage->name,
-                ];
-            }),
+           
 
             // Thumbnail (single image per item)
             'thumbnail_path' => $this->resource->thumbnail_path,
-            'thumbnail_url' => $this->resource->thumbnail_url,
 
             // Access Value (ITC)
             'access_value' => $this->whenLoaded('accessValue', function () {
@@ -74,9 +54,9 @@ class ItemResource extends JsonResource
             }),
 
             // Fallback if access value isn't loaded but we have the relationship
-            'current_daily_rate' => $this->resource->accessValue?->current_daily_rate ?? 1.0,
-            'base_credit_value' => $this->resource->accessValue?->base_credit_value ?? 1.0,
-            'vote_count' => $this->resource->accessValue?->vote_count ?? 0,
+            'current_daily_rate' => $this->resource->accessValue->current_daily_rate ?? 1.0,
+            'base_credit_value' => $this->resource->accessValue->base_credit_value ?? 1.0,
+            'vote_count' => $this->resource->accessValue->vote_count ?? 0,
 
             // Optional: featured flag
             'is_featured' => $this->resource->is_featured ?? false,

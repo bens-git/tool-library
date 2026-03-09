@@ -9,7 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ConfirmRentalDeletionEmail extends Mailable implements ShouldQueue
+class ConfirmUsageDeletionEmail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -19,7 +19,7 @@ class ConfirmRentalDeletionEmail extends Mailable implements ShouldQueue
     public function __construct(
         public $user,
         public $item,
-        public $rental
+        public $usage
     ) {}
 
     /**
@@ -28,7 +28,7 @@ class ConfirmRentalDeletionEmail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Rental Cancelled',
+            subject: 'Usage Cancelled',
         );
     }
 
@@ -38,7 +38,7 @@ class ConfirmRentalDeletionEmail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.rental-deleted',
+            view: 'emails.usage-deleted',
         );
     }
 

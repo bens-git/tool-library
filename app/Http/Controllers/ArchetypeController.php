@@ -35,11 +35,11 @@ class ArchetypeController extends Controller
             ->leftJoin('users as owner', 'items.owned_by', '=', 'owner.id')
             ->leftJoin('archetype_access_values', 'archetypes.id', '=', 'archetype_access_values.archetype_id');
 
-        $query->leftJoin('rentals', function ($join) use ($startDate, $endDate) {
-            $join->on('items.id', '=', 'rentals.item_id')
+        $query->leftJoin('usages', function ($join) use ($startDate, $endDate) {
+            $join->on('items.id', '=', 'usages.item_id')
                 ->where(function ($query) use ($startDate, $endDate) {
-                    $query->where('rentals.starts_at', '<=', $endDate)
-                        ->where('rentals.ends_at', '>=', $startDate);
+                    $query->where('usages.starts_at', '<=', $endDate)
+                        ->where('usages.ends_at', '>=', $startDate);
                 });
         });
 
@@ -51,8 +51,8 @@ class ArchetypeController extends Controller
             DB::raw('COALESCE(archetype_access_values.current_daily_rate, ' . ArchetypeAccessValue::DEFAULT_DAILY_RATE . ') as current_daily_rate'),
             DB::raw('COALESCE(archetype_access_values.base_credit_value, ' . ArchetypeAccessValue::DEFAULT_DAILY_RATE . ') as base_credit_value'),
             DB::raw('COALESCE(archetype_access_values.vote_count, 0) as vote_count'),
-            DB::raw('COUNT(DISTINCT CASE WHEN rentals.id IS NULL THEN items.id END) as available_item_count'),
-            DB::raw('COUNT(DISTINCT CASE WHEN rentals.id IS NOT NULL THEN rentals.item_id END) as rented_item_count'),
+            DB::raw('COUNT(DISTINCT CASE WHEN usages.id IS NULL THEN items.id END) as available_item_count'),
+            DB::raw('COUNT(DISTINCT CASE WHEN usages.id IS NOT NULL THEN usages.item_id END) as rented_item_count'),
             DB::raw('GROUP_CONCAT(DISTINCT items.id ORDER BY items.owned_by ASC SEPARATOR ", ") as item_ids')
         );
 
@@ -224,52 +224,6 @@ class ArchetypeController extends Controller
             ]);
         }
 
-        // Fetch the archetype images
-        $archetypeImages = DB::table('archetype_images')
-            ->select('archetype_id', 'id', 'path')
-            ->whereIn('archetype_id', $archetypeIds)
-            ->get()
-            ->groupBy('archetype_id');
-
-        // Determine which archetypes are missing images
-        $archetypesMissingImages = array_diff($archetypeIds, array_keys($archetypeImages->toArray()));
-
-        // Fetch random item thumbnails for archetypes missing archetype images
-        $itemThumbnails = Item::whereIn('archetype_id', $archetypesMissingImages)
-            ->whereNotNull('thumbnail_path')
-            ->select('archetype_id', 'thumbnail_path')
-            ->inRandomOrder()
-            ->get()
-            ->groupBy('archetype_id');
-
-        // Combine both archetype images and item thumbnails
-        $combinedImages = $archetypeImages->mapWithKeys(function ($imageGroup, $archetypeId) {
-            return [
-                $archetypeId => $imageGroup->map(function ($image) {
-                    return [
-                        'id' => $image->id,
-                        'path' => '/storage/' . $image->path
-                    ];
-                })
-            ];
-        });
-
-        // Merge in the item thumbnails where archetype images are missing
-        foreach ($itemThumbnails as $archetypeId => $items) {
-            if (!isset($combinedImages[$archetypeId])) {
-                $firstItem = $items->first();
-                $combinedImages[$archetypeId] = collect([
-                    [
-                        'path' => '/storage/' . $firstItem->thumbnail_path
-                    ]
-                ]);
-            }
-        }
-
-        // Combine archetypes with their images
-        foreach ($archetypesArray as &$archetype) {
-            $archetype['images'] = $combinedImages->get($archetype['id'], []);
-        }
 
         return response()->json([
             'total' => $totalCount,

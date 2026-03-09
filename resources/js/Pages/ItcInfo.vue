@@ -58,7 +58,7 @@
                 <v-list-item>
                   <template #prepend><v-icon color="success">mdi-handshake</v-icon></template>
                   <v-list-item-title>Lending Tools</v-list-item-title>
-                  <v-list-item-subtitle>Earn credits when others borrow your tools. You receive 100% of the rental rate.</v-list-item-subtitle>
+                  <v-list-item-subtitle>Earn credits when others borrow your tools. You receive 100% of the usage rate.</v-list-item-subtitle>
                 </v-list-item>
                 <v-list-item>
                   <template #prepend><v-icon color="success">mdi-vote</v-icon></template>
@@ -172,7 +172,7 @@
                 <v-expansion-panel title="Can I have negative credits?">
                   <v-expansion-panel-text>
                     No. Your balance cannot go negative. If you don't have enough credits, 
-                    rentals will be declined.
+                    usages will be declined.
                   </v-expansion-panel-text>
                 </v-expansion-panel>
                 <v-expansion-panel title="Do credits expire?">
@@ -197,7 +197,7 @@
                 <v-expansion-panel title="What if a borrowed tool is damaged?">
                   <v-expansion-panel-text>
                     Credit system is separate from tool condition. Resolve issues through messaging. 
-                    Document damage and communicate with lender.
+                    Document damage and communicate with offerer.
                   </v-expansion-panel-text>
                 </v-expansion-panel>
                 <v-expansion-panel title="Where can I see my transactions?">

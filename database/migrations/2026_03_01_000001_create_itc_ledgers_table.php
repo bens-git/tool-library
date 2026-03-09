@@ -14,9 +14,9 @@ return new class extends Migration
     {
         Schema::create('itc_ledgers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('item_id')->nullable()->constrained()->onDelete('set null');
-            $table->foreignId('rental_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('item_id')->nullable()->constrained('items')->onDelete('set null');
+            $table->foreignId('usage_id')->nullable()->constrained('usages')->onDelete('set null');
             $table->string('type'); // earned, spent, decay, bonus, penalty
             $table->string('category'); // lending, borrowing, maintenance, admin, voting_bonus
             $table->decimal('amount', 15, 2);
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();
-            
+
             $table->index(['user_id', 'created_at']);
             $table->index('type');
             $table->index('item_id');
@@ -39,4 +39,3 @@ return new class extends Migration
         Schema::dropIfExists('itc_ledgers');
     }
 };
-

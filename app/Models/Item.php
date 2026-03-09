@@ -72,19 +72,19 @@ class Item extends Model
     }
 
     /**
-     * rentals
+     * usages
      *
      * @return HasMany
      */
-    public function rentals(): HasMany
+    public function usages(): HasMany
     {
-        return $this->hasMany(Rental::class);
+        return $this->hasMany(Usage::class);
     }
 
     /**
      * Get the item's access value (credit cost)
      */
-    public function accessValue()
+    public function accessValue(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(ItemAccessValue::class);
     }
@@ -92,9 +92,23 @@ class Item extends Model
     /**
      * Get credit votes for this item
      */
-    public function creditVotes()
+    public function creditVotes(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(CreditVote::class);
+    }
+
+    /**
+     * Get the archetype's access value for this item
+     * This returns the flat rate credit value based on the archetype
+     */
+    public function getArchetypeCreditValue(): float
+    {
+        if ($this->archetype) {
+            return $this->archetype->getCurrentCreditValue();
+        }
+        
+        // Fallback to item's own access value if no archetype
+        return $this->getCurrentCreditRate();
     }
 
     /**
@@ -106,11 +120,12 @@ class Item extends Model
     }
 
     /**
-     * Calculate credit cost for a rental period
+     * Calculate credit cost for a usage (flat rate based on archetype)
+     * This is now a flat fee regardless of duration
      */
-    public function calculateCreditCost(int $days): float
+    public function calculateCreditCost(int $days = 1): float
     {
-        $rate = $this->getCurrentCreditRate();
-        return $rate * $days;
+        // Return flat rate from archetype - duration no longer matters
+        return $this->getArchetypeCreditValue();
     }
 }

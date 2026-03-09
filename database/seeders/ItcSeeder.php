@@ -74,7 +74,7 @@ class ItcSeeder extends Seeder
                     ItcLedger::create([
                         'user_id' => $user->id,
                         'item_id' => null,
-                        'rental_id' => null,
+                        'usage_id' => null,
                         'type' => 'bonus',
                         'category' => 'admin',
                         'amount' => self::INITIAL_BONUS,

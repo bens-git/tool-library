@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Message extends Model
 {
@@ -46,6 +47,24 @@ class Message extends Model
     }
 
     /**
+     * Get the poll attached to this message (if any).
+     *
+     * @return HasOne<MessagePoll, $this>
+     */
+    public function poll(): HasOne
+    {
+        return $this->hasOne(MessagePoll::class, 'message_id');
+    }
+
+    /**
+     * Get the reactions for this message.
+     */
+    public function reactions(): HasMany
+    {
+        return $this->hasMany(MessageReaction::class, 'message_id');
+    }
+
+    /**
      * Check if a specific user has read this message.
      */
     public function isReadBy(int $userId): bool
@@ -65,5 +84,21 @@ class Message extends Model
             ]);
         }
     }
-}
 
+    /**
+     * Get reactions grouped by emoji with user info.
+     */
+    public function getReactionsWithUsersAttribute()
+    {
+        $reactions = $this->reactions()->with('user')->get();
+
+        return $reactions->groupBy('emoji')->map(function ($grouped) {
+            return [
+                'emoji' => $grouped->first()->emoji,
+                'users' => $grouped->pluck('user.name'),
+                'count' => $grouped->count(),
+                'user_ids' => $grouped->pluck('user_id'),
+            ];
+        })->values();
+    }
+}

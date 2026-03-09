@@ -11,20 +11,20 @@ class Conversation extends Model
 {
     protected $fillable = [
         'type',
-        'rental_id',
+        'usage_id',
     ];
 
     protected $casts = [
         'type' => 'string',
-        'rental_id' => 'integer',
+        'usage_id' => 'integer',
     ];
 
     /**
-     * Get the rental associated with this conversation (for private rentals).
+     * Get the usage associated with this conversation (for private usages).
      */
-    public function rental(): BelongsTo
+    public function usage(): BelongsTo
     {
-        return $this->belongsTo(Rental::class);
+        return $this->belongsTo(Usage::class);
     }
 
     /**
@@ -65,11 +65,15 @@ class Conversation extends Model
      */
     public function getOtherParticipant(int $currentUserId): ?User
     {
-        return $this->participants()
+        /** @var User|null $user */
+        $user = $this->participants()
             ->where('user_id', '!=', $currentUserId)
             ->first();
+
+        return $user;
     }
 
+    
     /**
      * Scope to filter public conversations.
      */
@@ -96,4 +100,3 @@ class Conversation extends Model
         });
     }
 }
-

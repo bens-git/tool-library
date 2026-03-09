@@ -257,14 +257,14 @@ class ItemController extends Controller
     {
         DB::transaction(function () use ($id) {
             $user = Auth::user();
-            $item = Item::with('rentals')->where('id', $id)->where('owned_by', $user->id)->first();
+            $item = Item::with('usages')->where('id', $id)->where('owned_by', $user->id)->first();
 
             if (!$item) {
                 return response()->json(['message' => 'Item not found or you do not have permission to delete it'], 404);
             }
 
-            $hasActiveRental = $item->rentals->contains('status', 'active');
-            if ($hasActiveRental) {
+            $hasActiveUsage = $item->usages->contains('status', 'active');
+            if ($hasActiveUsage) {
                 abort(404, "Item can not be deleted because it is currently rented");
             }
 
@@ -273,7 +273,7 @@ class ItemController extends Controller
                 Storage::disk('public')->delete($item->thumbnail_path);
             }
 
-            $item->rentals()->delete();
+            $item->usages()->delete();
             $item->delete();
         });
         

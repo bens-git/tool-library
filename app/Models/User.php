@@ -77,7 +77,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getItcBalanceValue(): float
     {
-        return $this->itcBalance?->balance ?? 0;
+        return $this->itcBalance->balance ?? 0;
     }
 
     /**
@@ -106,22 +106,18 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get unread message count for this user.
+     * Get unread message count for this user using SQL.
      */
     public function unreadMessageCount(): int
     {
-        $conversations = $this->conversations()->with('messages')->get();
-        $count = 0;
-        
-        foreach ($conversations as $conversation) {
-            foreach ($conversation->messages as $message) {
-                if ($message->user_id !== $this->id && !$message->isReadBy($this->id)) {
-                    $count++;
-                }
-            }
-        }
-        
-        return $count;
+        return \App\Models\Message::whereHas('conversation.participants', function ($query) {
+            $query->where('user_id', $this->id);
+        })
+            ->where('user_id', '!=', $this->id)
+            ->whereDoesntHave('reads', function ($query) {
+                $query->where('user_id', $this->id);
+            })
+            ->count();
     }
 
     /**
@@ -131,11 +127,11 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         // Get the public conversation
         $publicConversation = Conversation::public()->first();
-        
+
         if (!$publicConversation) {
             return false;
         }
-        
+
         // If user has never visited community, check for posts created in the last hour
         if (!$this->last_community_visit) {
             $oneHourAgo = now()->subHour();
@@ -144,7 +140,7 @@ class User extends Authenticatable implements MustVerifyEmail
                 ->where('created_at', '>', $oneHourAgo)
                 ->exists();
         }
-        
+
         // Check if there are any posts since last visit
         return Message::where('conversation_id', $publicConversation->id)
             ->where('is_system_message', false)

@@ -6,59 +6,59 @@
       <v-col cols="12" md="8">
         <v-list lines="five">
           <!-- Show offerings -->
-          <template v-if="rentals.length">
-            <v-list-item v-for="rental in rentals" :key="rental.id">
+          <template v-if="usages.length">
+            <v-list-item v-for="usage in usages" :key="usage.id">
               <v-list-item-title class="text-h6 mb-1">
-                {{ rental.item?.name || rental.item?.archetype?.name || 'Loading...' }}
+                {{ usage.item?.name || usage.item?.archetype?.name || 'Loading...' }}
               </v-list-item-title>
               <v-list-item-subtitle>
                 <div class="mb-2">
                   <v-chip 
-                    :color="getStatusColor(rental.status)" 
+                    :color="getStatusColor(usage.status)" 
                     size="small"
                     class="mr-2"
                   >
-                    {{ rental.status }}
+                    {{ usage.status }}
                   </v-chip>
                   <span class="text-caption text-grey">
-                    Offered: {{ formatDate(rental.rented_at) }}
+                    Offered: {{ formatDate(usage.rented_at) }}
                   </span>
                 </div>
 
                 <!-- Owner Contact Info -->
-                <div v-if="rental.owner" class="mb-3 pa-2 bg-grey-lighten-4 rounded">
+                <div v-if="usage.owner" class="mb-3 pa-2 bg-grey-lighten-4 rounded">
                   <div class="text-caption font-weight-bold">Owner</div>
-                  <div class="text-body-2">{{ rental.owner.name }}</div>
-                  <div class="text-caption text-grey">{{ rental.owner.email }}</div>
+                  <div class="text-body-2">{{ usage.owner.name }}</div>
+                  <div class="text-caption text-grey">{{ usage.owner.email }}</div>
                 </div>
 
                 <v-btn
-                  v-if="rental.conversation_id && (rental.status === 'booked' || rental.status === 'active' || rental.status === 'holding')"
+                  v-if="usage.conversation_id && (usage.status === 'booked' || usage.status === 'active' || usage.status === 'holding')"
                   color="primary"
                   size="small"
                   class="mt-2 mr-2"
-                  :href="'/messages?conversation=' + rental.conversation_id"
+                  :href="'/messages?conversation=' + usage.conversation_id"
                 >
                   <v-icon start size="small">mdi-message</v-icon>
                   Contact Owner
                 </v-btn>
 
                 <v-btn
-                  v-if="rental.status === 'booked'"
+                  v-if="usage.status === 'booked'"
                   color="red"
                   small
                   class="mt-2"
-                  @click="confirmCancel(rental.id)"
+                  @click="confirmCancel(usage.id)"
                 >
                   Cancel Offering
                 </v-btn>
 
                 <v-btn
-                  v-if="rental.status === 'booked'"
+                  v-if="usage.status === 'booked'"
                   color="green"
                   small
                   class="mt-2 ml-2"
-                  @click="confirmRentalActive(rental.id)"
+                  @click="confirmUsageActive(usage.id)"
                 >
                   Mark as Active
                 </v-btn>
@@ -97,9 +97,9 @@ import { useResponseStore } from '@/Stores/response';
 
 const responseStore = useResponseStore();
 
-const rentals = ref([]);
+const usages = ref([]);
 const showCancelDialog = ref(false);
-const rentalToCancel = ref(null);
+const usageToCancel = ref(null);
 
 const getStatusColor = (status) => {
   const colors = {
@@ -118,39 +118,39 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString();
 };
 
-const refreshRentals = async () => {
+const refreshUsages = async () => {
   try {
     const response = await api.get(route('me.loans.index'));
-    rentals.value = response.data.data || [];
+    usages.value = response.data.data || [];
   } catch (e) {
     console.error(e);
   }
 };
 
-const confirmCancel = (rentalId) => {
-  rentalToCancel.value = rentalId;
+const confirmCancel = (usageId) => {
+  usageToCancel.value = usageId;
   showCancelDialog.value = true;
 };
 
 const handleConfirmCancel = async () => {
   try {
-    await api.delete(route('rentals.destroy', rentalToCancel.value));
+    await api.delete(route('usages.destroy', usageToCancel.value));
     showCancelDialog.value = false;
     responseStore.setSuccess('Offering cancelled successfully');
-    refreshRentals();
+    refreshUsages();
   } catch (e) {
     console.error(e);
     responseStore.setError(e.response?.data?.message || 'Failed to cancel offering');
   }
 };
 
-const confirmRentalActive = async (rentalId) => {
+const confirmUsageActive = async (usageId) => {
   try {
-    await api.patch(route('rentals.update', rentalId), {
+    await api.patch(route('usages.update', usageId), {
       status: 'active'
     });
     responseStore.setSuccess('Offering marked as active');
-    refreshRentals();
+    refreshUsages();
   } catch (e) {
     console.error(e);
     responseStore.setError(e.response?.data?.message || 'Failed to update offering');
@@ -158,7 +158,7 @@ const confirmRentalActive = async (rentalId) => {
 };
 
 onMounted(() => {
-  refreshRentals();
+  refreshUsages();
 });
 </script>
 

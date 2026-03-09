@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $user_id
  * @property int|null $item_id
- * @property int|null $rental_id
+ * @property int|null $usage_id
  * @property string $type (earned, spent, decay, bonus, penalty)
  * @property string $category (lending, borrowing, maintenance, admin, voting_bonus)
  * @property float $amount
@@ -24,7 +24,7 @@ class ItcLedger extends Model
     protected $fillable = [
         'user_id',
         'item_id',
-        'rental_id',
+        'usage_id',
         'type',
         'category',
         'amount',
@@ -70,11 +70,11 @@ class ItcLedger extends Model
     }
 
     /**
-     * Get the related rental (if any)
+     * Get the related usage (if any)
      */
-    public function rental(): BelongsTo
+    public function usage(): BelongsTo
     {
-        return $this->belongsTo(Rental::class);
+        return $this->belongsTo(Usage::class);
     }
 
     /**
