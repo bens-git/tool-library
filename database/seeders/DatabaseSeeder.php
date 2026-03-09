@@ -5,58 +5,78 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Exception;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Tables that should never be truncated by this seeder
+     */
+    protected array $protectedTables = [
+        'migrations', // keep migration history intact
+    ];
+
     public function run()
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        // Wrap the seeding process in a DB transaction
+        DB::beginTransaction();
 
-        $tables = DB::select('SHOW TABLES');
+        try {
+            // Disable foreign key checks for truncation
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        $database = config('database.connections.mysql.database');
+            $tables = DB::select('SHOW TABLES');
+            $database = config('database.connections.mysql.database');
+            $key = "Tables_in_{$database}";
 
-        $key = "Tables_in_{$database}";
+            foreach ($tables as $table) {
+                $tableName = $table->$key;
 
-        foreach ($tables as $table) {
-            DB::table($table->$key)->truncate();
-        }
+                if (in_array($tableName, $this->protectedTables)) {
+                    $this->command->info("Skipping protected table: $tableName");
+                    continue;
+                }
 
-
-        // 2️⃣ Automatically seed all JSON files
-        $jsonPath = database_path('seeders/data');
-        $files = File::files($jsonPath);
-
-        foreach ($files as $file) {
-            $fileName = $file->getFilename();
-            $tableName = pathinfo($fileName, PATHINFO_FILENAME); // file name without .json
-
-            $this->command->info("Seeding table: $tableName from $fileName");
-
-            $json = File::get($file->getRealPath());
-            $data = json_decode($json, true);
-
-            if (!$data) {
-                $this->command->warn("No data found in $fileName, skipping.");
-                continue;
+                $this->command->info("Truncating table: $tableName");
+                DB::table($tableName)->truncate();
             }
 
-            DB::table($tableName)->insert(array_map(function ($row) {
-                // Automatically add timestamps if missing
-                if (!isset($row['created_at'])) $row['created_at'] = now();
-                if (!isset($row['updated_at'])) $row['updated_at'] = now();
-                return $row;
-            }, $data));
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+            // Seed JSON data
+            $jsonPath = database_path('seeders/data');
+            $files = File::exists($jsonPath) ? File::files($jsonPath) : [];
+
+            foreach ($files as $file) {
+                $tableName = pathinfo($file->getFilename(), PATHINFO_FILENAME);
+                $this->command->info("Seeding table: $tableName from {$file->getFilename()}");
+
+                $json = File::get($file->getRealPath());
+                $data = json_decode($json, true);
+
+                if (empty($data)) {
+                    $this->command->warn("No data found in {$file->getFilename()}, skipping.");
+                    continue;
+                }
+
+                DB::table($tableName)->insert(array_map(function ($row) {
+                    $row['created_at'] = $row['created_at'] ?? now();
+                    $row['updated_at'] = $row['updated_at'] ?? now();
+                    return $row;
+                }, $data));
+            }
+
+            // Seed ITC data
+            $this->call([ItcSeeder::class]);
+
+            // Commit the transaction
+            DB::commit();
+            $this->command->info('All seeders finished successfully.');
+        } catch (Exception $e) {
+            // Rollback everything if something fails
+            DB::rollBack();
+            $this->command->error('Seeding failed: ' . $e->getMessage());
+            throw $e;
         }
-
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-
-
-        $this->command->info('All JSON seeders finished.');
-
-        // Seed ITC data (balances and item access values)
-        $this->call([
-            ItcSeeder::class,
-        ]);
     }
 }
