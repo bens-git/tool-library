@@ -66,7 +66,7 @@ Route::get('/credit-voting', function () {
 
 // Messages Pages
 Route::get('/messages', function () {
-    return Inertia::render('Messages');
+    return Inertia::render('MessagesList');
 })->middleware(['auth', 'verified'])->name('messages');
 
 Route::get('/community', function () {
