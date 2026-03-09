@@ -36,10 +36,11 @@ class ItemResource extends JsonResource
                 ];
             }),
 
-           
-
             // Thumbnail (single image per item)
             'thumbnail_path' => $this->resource->thumbnail_path,
+            'thumbnail_url' => $this->resource->thumbnail_path 
+                ? asset('storage/' . $this->resource->thumbnail_path) 
+                : null,
 
             // Access Value (ITC)
             'access_value' => $this->whenLoaded('accessValue', function () {
