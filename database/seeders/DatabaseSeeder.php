@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->command->info('Starting database seeding...');
 
-        // 1️⃣ Disable foreign key checks for truncation
+        // 1️⃣ Disable foreign key checks for truncation and seeding
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         $tables = DB::select('SHOW TABLES');
@@ -39,7 +39,6 @@ class DatabaseSeeder extends Seeder
             DB::table($tableName)->truncate();
         }
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // 2️⃣ Transactional JSON seeding
         $jsonPath = database_path('seeders/data');
@@ -84,5 +83,6 @@ class DatabaseSeeder extends Seeder
         $this->command->info('ITC seeding completed.');
 
         $this->command->info('Database seeding finished successfully!');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 }

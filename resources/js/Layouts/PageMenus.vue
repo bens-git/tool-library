@@ -3,7 +3,7 @@
         <!-- Show Nav Icon Only on Mobile -->
         <v-app-bar-nav-icon @click="drawer = !drawer" />
 
-        <v-btn v-if="!mobile" :class="{ 'v-btn--active': isActive('/landing-page') }" to="/" text>
+        <v-btn v-if="!mobile" :class="{ 'v-btn--active': isActive('/') }" to="/" text>
             <v-icon size="32" color="primary">mdi-handshake</v-icon>
             <span class="logo-text">{{ appTitle }}</span>
         </v-btn>
@@ -37,13 +37,13 @@
 
                 <v-list-item v-for="link in drawerLinks" :key="link">
                     <v-btn
-                        :class="{ 'v-btn--active': route().current(link.route) }"
-                        :color="route().current(link.route) ? 'primary' : undefined"
-                        :variant="route().current(link.route) ? 'flat' : 'text'"
+                        :class="{ 'v-btn--active': isActive(link.path) }"
+                        :color="isActive(link.path) ? 'primary' : undefined"
+                        :variant="isActive(link.path) ? 'flat' : 'text'"
                         :prepend-icon="link.icon"
                         :text="link.text"
                         block
-                        @click="router.visit(link.route)"
+                        :href="link.path"
                     ></v-btn>
                 </v-list-item>
             </v-list>
@@ -53,8 +53,8 @@
         <template v-if="!mobile">
             <v-btn
                 v-if="!user"
-                :color="route().current('login') ? 'primary' : undefined"
-                :variant="route().current('login') ? 'flat' : 'text'"
+                :color="isActive('/login') ? 'primary' : undefined"
+                :variant="isActive('/login') ? 'flat' : 'text'"
                 prepend-icon="mdi-login"
                 @click="goToLogin"
                 >Login</v-btn
@@ -62,8 +62,8 @@
 
             <v-btn
                 v-if="!user"
-                :color="route().current('register') ? 'primary' : undefined"
-                :variant="route().current('register') ? 'flat' : 'text'"
+                :color="isActive('/register') ? 'primary' : undefined"
+                :variant="isActive('/register') ? 'flat' : 'text'"
                 prepend-icon="mdi-account-plus"
                 text="Register"
                 @click="goToRegister"
@@ -71,8 +71,8 @@
 
             <v-btn
                 v-if="!user"
-                :color="route().current('password.request') ? 'primary' : undefined"
-                :variant="route().current('password.request') ? 'flat' : 'text'"
+                :color="isActive('/forgot-password') ? 'primary' : undefined"
+                :variant="isActive('/forgot-password') ? 'flat' : 'text'"
                 prepend-icon="mdi-lock-reset"
                 text="Forgot Password"
                 @click="goToForgotPassword"
@@ -81,9 +81,9 @@
 
         <!-- Catalog - Icon on Mobile, Text on Desktop -->
         <v-btn
-            :class="{ 'v-btn--active': route().current('library-catalog') }"
-            :color="route().current('library-catalog') ? 'primary' : undefined"
-            :variant="route().current('library-catalog') ? 'flat' : 'text'"
+            :class="{ 'v-btn--active': isActive('/library-catalog') }"
+            :color="isActive('/library-catalog') ? 'primary' : undefined"
+            :variant="isActive('/library-catalog') ? 'flat' : 'text'"
             :prepend-icon="mobile ? 'mdi-book' : 'mdi-book'"
             :text="!mobile ? 'Catalog' : undefined"
             @click="router.visit('library-catalog')"
@@ -92,9 +92,9 @@
         <!-- Messages - Icon on Mobile (when logged in), Text on Desktop -->
         <v-btn
             v-if="user"
-            :class="{ 'v-btn--active': route().current('messages') }"
-            :color="route().current('messages') ? 'primary' : undefined"
-            :variant="route().current('messages') ? 'flat' : 'text'"
+            :class="{ 'v-btn--active': isActive('/messages') }"
+            :color="isActive('/messages') ? 'primary' : undefined"
+            :variant="isActive('/messages') ? 'flat' : 'text'"
             :prepend-icon="mobile ? 'mdi-message' : 'mdi-message'"
             :text="!mobile ? 'Messages' : undefined"
             @click="router.visit('messages')"
@@ -114,12 +114,12 @@
         <!-- Community - Icon on Mobile (when logged in), Text on Desktop -->
         <v-btn
             v-if="user"
-            :class="{ 'v-btn--active': route().current('community') }"
-            :color="route().current('community') ? 'primary' : undefined"
-            :variant="route().current('community') ? 'flat' : 'text'"
+            :class="{ 'v-btn--active': isActive('/community') }"
+            :color="isActive('/community') ? 'primary' : undefined"
+            :variant="isActive('/community') ? 'flat' : 'text'"
             :prepend-icon="mobile ? 'mdi-account-group' : 'mdi-account-group'"
             :text="!mobile ? 'Community' : undefined"
-            @click="router.visit('community')"
+            href="/community"
         >
             <template #append>
                 <span 
@@ -141,9 +141,9 @@
         <!-- App Title -->
         <div class="drawer-btns drawer-header">
             <v-btn
-                :class="{ 'v-btn--active': route().current('landing-page') }"
-                :color="route().current('landing-page') ? 'primary' : undefined"
-                :variant="route().current('landing-page') ? 'flat' : 'text'"
+                :class="{ 'v-btn--active': isActive('/') }"
+                :color="isActive('/') ? 'primary' : undefined"
+                :variant="isActive('/') ? 'flat' : 'text'"
                 block
                 @click="router.visit('/')"
             >
@@ -158,9 +158,9 @@
 
         <div class="drawer-btns">
             <v-btn
-                :class="{ 'v-btn--active': route().current('library-catalog') }"
-                :color="route().current('library-catalog') ? 'primary' : undefined"
-                :variant="route().current('library-catalog') ? 'flat' : 'text'"
+                :class="{ 'v-btn--active': isActive('/library-catalog') }"
+                :color="isActive('/library-catalog') ? 'primary' : undefined"
+                :variant="isActive('/library-catalog') ? 'flat' : 'text'"
                 prepend-icon="mdi-book"
                 text="Catalog"
                 @click="router.visit('library-catalog')"
@@ -172,9 +172,9 @@
             <v-btn
                 v-for="link in drawerLinks"
                 :key="link"
-                :class="{ 'v-btn--active': route().current(link.route) }"
-                :color="route().current(link.route) ? 'primary' : undefined"
-                :variant="route().current(link.route) ? 'flat' : 'text'"
+                :class="{ 'v-btn--active': isActive(link.path) }"
+                :color="isActive(link.path) ? 'primary' : undefined"
+                :variant="isActive(link.path) ? 'flat' : 'text'"
                 :prepend-icon="link.icon"
                 :text="link.text"
                 @click="router.visit(link.route)"
@@ -185,8 +185,8 @@
         <div class="drawer-btns">
             <v-btn
                 v-if="!user"
-                :color="route().current('login') ? 'primary' : undefined"
-                :variant="route().current('login') ? 'flat' : 'text'"
+                :color="isActive('/login') ? 'primary' : undefined"
+                :variant="isActive('/login') ? 'flat' : 'text'"
                 prepend-icon="mdi-login"
                 text="Login"
                 @click="goToLogin"
@@ -194,8 +194,8 @@
 
             <v-btn
                 v-if="!user"
-                :color="route().current('register') ? 'primary' : undefined"
-                :variant="route().current('register') ? 'flat' : 'text'"
+                :color="isActive('/register') ? 'primary' : undefined"
+                :variant="isActive('/register') ? 'flat' : 'text'"
                 prepend-icon="mdi-account-plus"
                 text="Register"
                 @click="goToRegister"
@@ -203,8 +203,8 @@
 
             <v-btn
                 v-if="!user"
-                :color="route().current('password.request') ? 'primary' : undefined"
-                :variant="route().current('password.request') ? 'flat' : 'text'"
+                :color="isActive('/forgot-password') ? 'primary' : undefined"
+                :variant="isActive('/forgot-password') ? 'flat' : 'text'"
                 prepend-icon="mdi-lock-reset"
                 text="Forgot Password"
                 @click="goToForgotPassword"
@@ -224,21 +224,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useDisplay } from 'vuetify';
 import { router, usePage } from '@inertiajs/vue3';
 
 const page = usePage();
-
 const { mobile } = useDisplay();
 const drawer = ref(false);
 const appTitle = import.meta.env.VITE_APP_NAME;
 const user = page.props.auth?.user;
 const notifications = page.props.notifications;
 
-const drawerLinks = ref([]);
+// Use window.location for reliable route matching - always reflects actual browser URL
+const currentPath = computed(() => window.location.pathname);
 
-const isActive = (path) => route.path === path;
+const isActive = (path) => currentPath.value === path;
+
+const drawerLinks = ref([]);
 
 onMounted(async () => {
     setupLinks();
@@ -247,12 +249,12 @@ onMounted(async () => {
 const setupLinks = () => {
     if (user) {
         drawerLinks.value = [
-            { text: 'My Usage', route: 'my-usage' },
-            { text: 'My Offerings', route: 'my-offerings' },
-            { text: 'Messages', route: 'messages', icon: 'mdi-message' },
-            { text: 'Community', route: 'community', icon: 'mdi-account-group' },
-            { text: 'Time Credits', route: 'itc' },
-            { text: 'Vote on Rates', route: 'credit-voting' },
+            { text: 'My Usage', route: 'my-usage', path: '/my-usage' },
+            { text: 'My Offerings', route: 'my-offerings', path: '/my-offerings' },
+            { text: 'Messages', route: 'messages', icon: 'mdi-message', path: '/messages' },
+            { text: 'Community', route: 'community', icon: 'mdi-account-group', path: '/community' },
+            { text: 'Time Credits', route: 'itc', path: '/itc' },
+            { text: 'Vote on Rates', route: 'credit-voting', path: '/credit-voting' },
         ];
     } else {
         drawerLinks.value = [];

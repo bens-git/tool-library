@@ -327,7 +327,7 @@ onMounted(() => {
                     </v-btn>
                 </div>
                 
-                <!-- Reactions Display -->
+<!-- Reactions Display -->
                 <div class="mt-3 d-flex align-center">
                     <div v-if="post.reactions && post.reactions.length" class="d-flex flex-wrap">
                         <v-chip
@@ -339,6 +339,7 @@ onMounted(() => {
                             @click="removeReaction(post.id, reaction.emoji)"
                         >
                             {{ reaction.emoji }} {{ reaction.count }}
+                            <v-tooltip activator="parent" location="top">{{ reaction.user_names?.join(', ') || 'No users' }}</v-tooltip>
                         </v-chip>
                     </div>
                     

@@ -494,6 +494,11 @@ class MessageController extends Controller
             return response()->json(['message' => 'Cannot vote on this poll'], 400);
         }
 
+        // Check if user has already voted on this poll (prevent multiple votes)
+        if ($poll->hasUserVoted($user->id)) {
+            return response()->json(['message' => 'You have already voted on this poll'], 400);
+        }
+
         // Validate that all option_ids belong to this poll
         $validOptionIds = $poll->options->pluck('id')->toArray();
         foreach ($request->input('option_ids') as $optionId) {
@@ -506,11 +511,6 @@ class MessageController extends Controller
         if (!$poll->is_multiple_choice && count($request->input('option_ids')) > 1) {
             return response()->json(['message' => 'This poll only allows single choice'], 400);
         }
-
-        // Remove existing votes
-        MessagePollVote::where('poll_id', $pollId)
-            ->where('user_id', $user->id)
-            ->delete();
 
         // Add new votes
         foreach ($request->input('option_ids') as $optionId) {

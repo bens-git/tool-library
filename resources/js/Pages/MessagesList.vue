@@ -463,6 +463,7 @@ onMounted(() => {
                                             @click="removeReaction(message.id, reaction.emoji)"
                                         >
                                             {{ reaction.emoji }} {{ reaction.count }}
+                                            <v-tooltip activator="parent" location="top">{{ reaction.user_names?.join(', ') || 'No users' }}</v-tooltip>
                                         </v-chip>
                                     </div>
                                     
@@ -609,3 +610,4 @@ onMounted(() => {
     border: 1px solid #e0e0e0;
 }
 </style>
+
