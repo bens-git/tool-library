@@ -1,1 +1,0 @@
-import{O as s,m as a,x as i}from"./app-Dv-M6XmO.js";const r=s("loading",()=>{const e=i(0),n=a(()=>e.value>0);function o(){e.value++}function t(){e.value>0&&e.value--}return{isLoading:n,start:o,finish:t}});export{r as u};

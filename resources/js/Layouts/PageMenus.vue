@@ -3,7 +3,7 @@
         <!-- Show Nav Icon Only on Mobile -->
         <v-app-bar-nav-icon @click="drawer = !drawer" />
 
-        <v-btn v-if="!mobile" :class="{ 'v-btn--active': isActive('/') }" to="/" text>
+        <v-btn v-if="!mobile" :class="{ 'v-btn--active': isActive('/') }" text @click="goToLandingPage">
             <v-icon size="32" color="primary">mdi-handshake</v-icon>
             <span class="logo-text">{{ appTitle }}</span>
         </v-btn>
@@ -285,6 +285,10 @@ const goToForgotPassword = () => {
 
 const goToLogout = () => {
     router.visit('/logout-page');
+};
+
+const goToLandingPage = () => {
+    router.visit('/');
 };
 </script>
 

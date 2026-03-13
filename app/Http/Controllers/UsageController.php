@@ -145,8 +145,13 @@ class UsageController extends Controller
             'is_system_message' => true,
         ]);
 
-        // Return redirect to my-usages page
-        return redirect()->route('my-usages');
+// Return JSON with redirect for Inertia/AJAX frontend handling
+        return response()->json([
+            'success' => true,
+            'message' => 'Usage booked successfully! Check My Usage page.',
+            'redirect_url' => route('my-usage'),
+            'usage' => $usage->load(['item', 'item.owner'])
+        ]);
     }
 
     /**
@@ -340,6 +345,22 @@ class UsageController extends Controller
             // Handle errors
             return response()->json(['message' => 'Failed to cancel usage', 'error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Check if an item is rented (has active usage).
+     *
+     * @param int $itemId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function isItemRented($itemId)
+    {
+        $hasActiveUsage = Usage::where('item_id', $itemId)
+            ->where('status', '!=', 'completed')
+            ->where('status', '!=', 'cancelled')
+            ->exists();
+
+        return response()->json(['data' => $hasActiveUsage]);
     }
 }
 

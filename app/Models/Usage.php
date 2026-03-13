@@ -35,23 +35,13 @@ class Usage extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'rented_by');
-    }
-
-    /**
-     * renter
-     *
-     * @return BelongsTo
-     */
-    public function renter(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'rented_by');
+        return $this->belongsTo(User::class, 'used_by');
     }
 
     /**
      * Get the conversation for this usage (if exists).
      */
-    public function conversation():HasOne
+    public function conversation(): HasOne
     {
         return $this->hasOne(Conversation::class);
     }
@@ -59,8 +49,9 @@ class Usage extends Model
     /**
      * Get the item owner.
      */
-    public function owner(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function owner(): BelongsTo
     {
         return $this->item->owner();
     }
 }
+

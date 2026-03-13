@@ -12,8 +12,11 @@ use App\Models\MessagePollVote;
 use App\Models\MessageReaction;
 use App\Models\Usage;
 use App\Models\User;
+use App\Notifications\NewPollNotification;
+use App\Notifications\NewPrivateMessageNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Notification;
 
 class MessageController extends Controller
 {
@@ -197,7 +200,7 @@ class MessageController extends Controller
                         'id' => $message->user->id,
                         'name' => $message->user->name,
                     ] : null,
-                    'poll' => $message->poll->first() ? $this->formatPoll($message->poll->first(), $user->id) : null,
+'poll' => $message->poll ? $this->formatPoll($message->poll, $user->id) : null,
                     'reactions' => $this->formatMessageReactions($message),
                 ];
             });
@@ -260,6 +263,15 @@ class MessageController extends Controller
 
         // Update conversation timestamp
         $conversation->touch();
+
+        // Send email notification to other participants about the new private message
+        $otherParticipants = $conversation->participants()
+            ->where('user_id', '!=', $user->id)
+            ->get();
+        
+        if ($otherParticipants->isNotEmpty()) {
+            Notification::send($otherParticipants, new NewPrivateMessageNotification($message, $user));
+        }
 
         return response()->json([
             'message' => 'Message sent successfully',
@@ -325,14 +337,20 @@ class MessageController extends Controller
         // Add participants
         $conversation->participants()->attach([$user->id, $targetUserId]);
 
-        // Add initial message if provided
+        // Add initial message if provided and notify the recipient
         if ($request->filled('initial_message')) {
-            Message::create([
+            $initialMessage = Message::create([
                 'conversation_id' => $conversation->id,
                 'user_id' => $user->id,
                 'body' => $request->input('initial_message'),
                 'is_system_message' => false,
             ]);
+
+            // Send email notification to the recipient about the new private message
+            $targetUser = User::find($targetUserId);
+            if ($targetUser) {
+                $targetUser->notify(new NewPrivateMessageNotification($initialMessage, $user));
+            }
         }
 
         return response()->json([
@@ -461,6 +479,10 @@ class MessageController extends Controller
         }
 
         $poll->load('options');
+
+        // Send email notification to all users about the new poll
+        $allUsers = User::where('id', '!=', $user->id)->get();
+        Notification::send($allUsers, new NewPollNotification($poll, $message));
 
         return response()->json([
             'message' => 'Poll created successfully',

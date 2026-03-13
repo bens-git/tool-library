@@ -708,9 +708,9 @@ const confirmUsage = async () => {
             duration: usageDuration.value,
         });
         
-        // Success - close dialog and redirect to My Usages
+        // Success - close dialog and redirect to My Usage (fixed path)
         dialog.value = false;
-        router.visit('/my-usages');
+        router.visit(route('my-usage'));
     } catch (error) {
         console.error('Error creating usage:', error);
         if (error.response?.data?.message) {
